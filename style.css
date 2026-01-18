@@ -1,0 +1,239 @@
+/* style.css - Styles de base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+  color: #333;
+}
+
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.app-header h1 {
+  color: #5d5fef;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.day-progress {
+  background: #eef2ff;
+  color: #5d5fef;
+  padding: 8px 15px;
+  border-radius: 50px;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.challenge-container {
+  background: #f9f9ff;
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  border: 1px solid #e0e7ff;
+}
+
+#challenge-title {
+  color: #4f46e5;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+#challenge-description {
+  line-height: 1.6;
+  margin-bottom: 25px;
+  white-space: pre-line;
+}
+
+.validate-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.validate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+.validate-btn.completed {
+  background: #d1fae5;
+  color: #065f46;
+  cursor: default;
+}
+
+.validate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.calendar-section {
+  margin-bottom: 30px;
+}
+
+.calendar-section h3 {
+  margin-bottom: 15px;
+  color: #5d5fef;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.calendar-day {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.calendar-day:hover {
+  transform: scale(1.1);
+}
+
+.calendar-day.completed {
+  background: #10b981;
+  color: white;
+}
+
+.calendar-day.current {
+  background: #f59e0b;
+  color: white;
+  border-color: #d97706;
+}
+
+.calendar-day.missed {
+  background: #ef4444;
+  color: white;
+}
+
+.calendar-day.upcoming {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.notifications-settings {
+  background: #f0f9ff;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+}
+
+.notifications-settings h3 {
+  color: #5d5fef;
+  margin-bottom: 15px;
+}
+
+.time-selector {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.time-selector label {
+  font-weight: bold;
+  color: #374151;
+}
+
+.time-selector select {
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 2px solid #d1d5db;
+  background: white;
+  font-size: 1rem;
+}
+
+.secondary-btn {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #4f46e5;
+}
+
+.app-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.systeme-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  text-decoration: none;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.systeme-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .app-container {
+    padding: 15px;
+  }
+  
+  .calendar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  }
+  
+  .calendar-day {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+}
