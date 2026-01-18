@@ -5,31 +5,6 @@ const DefisEnvol = [
   {
     jour: 1,
     titre: "Reprendre contact avec ton environnement",
-    description: "Aujourd’hui, observe ton quotidien sans chercher à corriger. Note ce qui te stimule, t’épuise ou t’agresse subtilement.",
-    termine: false,
-    dateValidation: null
-  },
-  {
-    jour: 2,
-    titre: "Ton corps capte plus que tu ne crois",
-    description: "Prends conscience des écrans et ondes autour de toi. Sans jugement, remarque comment ton corps réagit.",
-    termine: false,
-    dateValidation: null
-  },
-  {
-    jour: 3,
-    titre: "L'information de l'eau",
-    description: "Bois un verre d'eau en conscience. Pose une intention simple avant de boire. Observe.",
-    termine: false,
-    dateValidation: null
-  },
-// data/defis.js
-// Vos 77 défis transformés en structure JavaScript
-
-const DefisEnvol = [
-  {
-    jour: 1,
-    titre: "Reprendre contact avec ton environnement",
     description: "Aujourd'hui, observe ton quotidien sans chercher à corriger. Note ce qui te stimule, t'épuise ou t'agresse subtilement.",
     termine: false,
     dateValidation: null
