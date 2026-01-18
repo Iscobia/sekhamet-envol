@@ -6,7 +6,6 @@ self.addEventListener('fetch', (event) => {
 
   // ICI, METTEZ VOTRE LOGIQUE DE CACHE EXISTANTE (exclusion .wav, etc.)
   // ...
-});
 
 
 
