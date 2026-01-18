@@ -18,6 +18,25 @@
     <!-- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script> -->
     
     <title>ENVOL - Défi Quotidien</title>
+
+    <!-- Dans le <head> de index.html -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignal = window.OneSignal || [];
+  OneSignal.push(function() {
+    OneSignal.init({
+      appId: "VOTRE_APP_ID_ICI", // ← Collez-le ici !
+      safari_web_id: "", // Laissé vide pour l'instant
+      notifyButton: {
+        enable: false, // Cache le bouton intégré
+      },
+      allowLocalhostAsSecureOrigin: true,
+    });
+    
+    // Demande automatique de permission
+    OneSignal.showSlidedownPrompt();
+  });
+</script>
 </head>
 <body>
     <div class="app-container">
