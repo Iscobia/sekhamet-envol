@@ -1,3 +1,15 @@
+self.addEventListener('fetch', (event) => {
+  // LAISSER TOUTES LES REQUÊTES OneSignal PASSER SANS INTERFÉRENCE
+  if (event.request.url.includes('onesignal.com') || event.request.url.includes('OneSignalSDK')) {
+    return; // Laisse le navigateur/OneSignal gérer
+  }
+
+  // ICI, METTEZ VOTRE LOGIQUE DE CACHE EXISTANTE (exclusion .wav, etc.)
+  // ...
+});
+
+
+
 // service-worker.js
 const CACHE_NAME = 'envol-pwa-v1.0';
 const ASSETS_TO_CACHE = [
