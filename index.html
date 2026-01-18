@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Configuration PWA -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icônes pour différents appareils -->
+    <link rel="icon" href="/assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- OneSignal (nous l'ajouterons plus tard) -->
+    <!-- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script> -->
+    
+    <title>ENVOL - Défi Quotidien</title>
+</head>
+<body>
+    <div class="app-container">
+        <!-- En-tête -->
+        <header class="app-header">
+            <h1>ENVOL - Jour <span id="current-day">1</span></h1>
+            <div class="day-progress">Jour <span id="day-current">1</span>/77</div>
+        </header>
+        
+        <!-- Défi du jour -->
+        <main class="challenge-container">
+            <h2 id="challenge-title">Chargement...</h2>
+            <p id="challenge-description">Chargement du défi...</p>
+            
+            <button id="mark-done-btn" class="validate-btn">
+                ✅ Marquer comme accompli
+            </button>
+        </main>
+        
+        <!-- Calendrier -->
+        <section class="calendar-section">
+            <h3>📅 Progression</h3>
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- Les 77 jours seront ajoutés par JavaScript -->
+            </div>
+        </section>
+        
+        <!-- Notifications -->
+        <section class="notifications-settings">
+            <h3>🔔 Notifications</h3>
+            <div class="time-selector">
+                <label>Heure de rappel :</label>
+                <select id="notification-time">
+                    <option value="08:00">08:00</option>
+                    <option value="09:00" selected>09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="18:00">18:00</option>
+                </select>
+            </div>
+            <button id="test-notification-btn" class="secondary-btn">
+                Tester une notification maintenant
+            </button>
+        </section>
+        
+        <!-- Lien vers Systeme.io -->
+        <footer class="app-footer">
+            <a href="https://coaching.sekhamet.com/school/course/envol/" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               class="systeme-btn">
+                📚 Accéder à ENVOL sur Systeme.io
+            </a>
+        </footer>
+    </div>
+    
+    <!-- Scripts JavaScript -->
+    <script src="/data/defis.js"></script>
+    <script src="/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker enregistré'))
+                    .catch(err => console.log('Erreur Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>
