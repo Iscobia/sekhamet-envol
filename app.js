@@ -179,4 +179,43 @@ window.addEventListener('appinstalled', () => {
 });
 
 
+// Dans votre PWA (app.js) - Affiche un overlay au premier lancement
+function showInstallOverlay() {
+  if (localStorage.getItem('install_prompt_shown')) return;
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'install-overlay';
+  overlay.innerHTML = `
+    <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center;">
+      <div style="background:white; padding:30px; border-radius:20px; max-width:400px; text-align:center;">
+        <h2>Installer ENVOL ?</h2>
+        <p>Pour un accès rapide depuis votre écran d'accueil :</p>
+        <div id="install-instructions">
+          <p><strong>Android :</strong> Menu → "Ajouter à l'écran d'accueil"</p>
+          <p><strong>iOS :</strong> Partager → "Sur l'écran d'accueil"</p>
+        </div>
+        <button id="close-overlay" style="margin-top:20px; padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:8px;">
+          Compris, merci !
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  document.getElementById('close-overlay').addEventListener('click', () => {
+    overlay.remove();
+    localStorage.setItem('install_prompt_shown', 'true');
+  });
+  
+  // Fermer après 10 secondes
+  setTimeout(() => {
+    if (document.getElementById('install-overlay')) {
+      document.getElementById('install-overlay').remove();
+      localStorage.setItem('install_prompt_shown', 'true');
+    }
+  }, 10000);
+}
 
+// Appeler au chargement
+showInstallOverlay();
