@@ -126,3 +126,57 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
   }
 });
+
+
+// Gestion de l'installation PWA (bouton d'installation sur l'écran d'accueil)
+let deferredPrompt;
+const installButton = document.createElement('button');
+
+// Écouter l'événement beforeinstallprompt
+window.addEventListener('beforeinstallprompt', (event) => {
+  console.log('👍 beforeinstallprompt déclenché');
+  // Empêche l'affichage automatique
+  event.preventDefault();
+  deferredPrompt = event;
+  
+  // Créer/s'afficher le bouton d'installation
+  installButton.id = 'install-pwa-btn';
+  installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
+  installButton.className = 'install-btn';
+  installButton.style.display = 'block';
+  
+  // Ajouter le bouton avant le footer
+  const footer = document.querySelector('.app-footer');
+  if (footer) {
+    footer.parentNode.insertBefore(installButton, footer);
+  }
+});
+
+// Gérer le clic sur le bouton d'installation
+installButton.addEventListener('click', async () => {
+  if (!deferredPrompt) {
+    // Fallback pour les navigateurs qui ne supportent pas l'API
+    alert("Pour installer l'application :\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : partager → \"Sur l'écran d'accueil\"");
+    return;
+  }
+  
+  // Affiche l'invite d'installation native
+  deferredPrompt.prompt();
+  
+  // Attendre le choix de l'utilisateur
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User response: ${outcome}`);
+  
+  // Réinitialiser
+  deferredPrompt = null;
+  installButton.style.display = 'none';
+});
+
+// Vérifier si l'app est déjà installée
+window.addEventListener('appinstalled', () => {
+  console.log('PWA installée avec succès !');
+  installButton.style.display = 'none';
+});
+
+
+
