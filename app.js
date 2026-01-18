@@ -219,3 +219,56 @@ function showInstallOverlay() {
 
 // Appeler au chargement
 showInstallOverlay();
+
+
+
+// Gestion des notifications OneSignal
+function setupOneSignalNotifications() {
+  if (typeof OneSignal === 'undefined') return;
+  
+  // Programmer une notification pour le jour actuel
+  function programmerNotificationDefi(jour) {
+    const defi = getDefiByDay(jour);
+    const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+    
+    // Créer une date pour aujourd'hui à l'heure choisie
+    const [heures, minutes] = heureNotification.split(':');
+    const dateNotification = new Date();
+    dateNotification.setHours(parseInt(heures), parseInt(minutes), 0);
+    
+    // Si l'heure est déjà passée aujourd'hui, programmer pour demain
+    if (dateNotification < new Date()) {
+      dateNotification.setDate(dateNotification.getDate() + 1);
+    }
+    
+    // Envoyer la notification programmée
+    OneSignal.sendNotification(
+      `🎯 Jour ${jour} : ${defi.titre}`,
+      defi.description.substring(0, 100) + '...', // Texte tronqué
+      [], // Tous les utilisateurs
+      {
+        // Bouton dans la notification
+        buttons: [{ id: "done", text: "✅ Marquer comme fait" }],
+        // Ouvrir l'app au clic
+        url: `https://iscobia.github.io/sekhamet-envol/?jour=${jour}`,
+        // Données personnalisées
+        data: { jour: jour, type: 'defi_quotidien' }
+      }
+    );
+  }
+  
+  // Écouter les clics sur les boutons de notification
+  OneSignal.on('notificationClick', function(event) {
+    if (event.data.buttons && event.data.buttons[0].id === "done") {
+      const jour = event.data.additionalData.jour;
+      // Marquer le défi comme fait
+      const defi = getDefiByDay(jour);
+      defi.termine = true;
+      defi.dateValidation = new Date().toISOString();
+      saveProgression();
+      
+      // Rediriger vers l'app
+      window.location.href = `/?jour=${jour}`;
+    }
+  });
+}
