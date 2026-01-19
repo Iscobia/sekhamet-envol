@@ -5,12 +5,12 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 // 2. VOTRE LOGIQUE DE CACHE EXISTANTE (à copier-coller depuis votre backup)
 const CACHE_NAME = 'envol-pwa-v1.0';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/data/defis.js',
-  '/manifest.json'
+  '/sekhamet-envol/',
+  '/sekhamet-envol/index.html',
+  '/sekhamet-envol/style.css',
+  '/sekhamet-envol/app.js',
+  '/sekhamet-envol/data/defis.js',
+  '/sekhamet-envol/manifest.json'
 ];
 
 self.addEventListener('install', event => {
