@@ -30,14 +30,14 @@ body {
 }
 
 .app-header h1 {
-  color: #5d5fef;
+  color: #0b252f;
   font-size: 1.8rem;
   margin-bottom: 10px;
 }
 
 .day-progress {
   background: #eef2ff;
-  color: #5d5fef;
+  color: #0b252f;
   padding: 8px 15px;
   border-radius: 50px;
   display: inline-block;
@@ -99,7 +99,7 @@ body {
 
 .calendar-section h3 {
   margin-bottom: 15px;
-  color: #5d5fef;
+  color: #0b252f;
 }
 
 .calendar-grid {
@@ -163,7 +163,7 @@ body {
 }
 
 .notifications-settings h3 {
-  color: #5d5fef;
+  color: #0b252f;
   margin-bottom: 15px;
 }
 
