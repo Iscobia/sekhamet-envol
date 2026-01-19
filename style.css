@@ -115,19 +115,16 @@ body {
 }
 
 .calendar-day {
-  width: 100%;
-  max-width: 50px;
+  width: 50px ;
   height: 50px;
   display: flex;
   align-items: center;
-  aspect-ratio: 1 / 1;
   justify-content: center;
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
-  margin: 0 auto;
 }
 
 
