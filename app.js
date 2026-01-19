@@ -202,59 +202,45 @@ setTimeout(checkForUpdates, 5000);
   }
   
   // Générer le calendrier visuel des 77 jours
-  function genererCalendrier() {
-    if (!calendarGrid) return;
+ function genererCalendrier() {
+  if (!calendarGrid) return;
+  
+  calendarGrid.innerHTML = '';
+  
+  for (let jour = 1; jour <= 77; jour++) {
+    const defi = getDefiByDay(jour);
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.textContent = jour;
     
-    calendarGrid.innerHTML = ''; // Vider le calendrier
-    
-    for (let jour = 1; jour <= 77; jour++) {
-      const defi = getDefiByDay(jour);
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = jour;
-      
-      // Déterminer l'icône selon l'état
-      if (defi.termine) {
-        dayElement.classList.add('completed'); // ✅
-      } else if (jour === jourActuel) {
-        dayElement.classList.add('current');   // Jour actuel = ⏳
-      } else if (jour < jourActuel && !defi.termine) {
-        dayElement.classList.add('missed');    // Jours passés non validés = ❌
-      } else {
-        dayElement.classList.add('upcoming');  // 🕔
-      }
-      
-      
-      // Ajouter un clic pour voir un défi spécifique
-      dayElement.addEventListener('click', function() {
-        afficherDefiDuJour(jour);
-      });
-      
-      calendarGrid.appendChild(dayElement);
+    // LOGIQUE CORRIGÉE :
+    // 1. D'abord vérifier si terminé
+    if (defi.termine) {
+      dayElement.classList.add('completed'); // ✅
+    } 
+    // 2. Ensuite vérifier si c'est le jour actuel (même si pas encore terminé)
+    else if (jour === jourActuel) {
+      dayElement.classList.add('current');   // ⏳ Jour EN COURS
     }
+    // 3. Ensuite vérifier si c'est un jour passé NON terminé
+    else if (jour < jourActuel) {
+      dayElement.classList.add('missed');    // ❌ Jour passé manqué
+    }
+    // 4. Sinon c'est un jour futur
+    else {
+      dayElement.classList.add('upcoming');  // 🕔
+    }
+    
+    dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
+    calendarGrid.appendChild(dayElement);
   }
   
+  // Centrez le calendrier après génération
+  centrerCalendrierSurJour(jourActuel);
+}
+  
   // ========== ÉVÉNEMENTS ==========
-  // Marquer un défi comme terminé (NOUVELLE VERSION - anti-speed running)
-  if (markDoneButton) {
-    // Supprimez d'abord tous les écouteurs existants
-    const newMarkDoneButton = markDoneButton.cloneNode(true);
-    markDoneButton.parentNode.replaceChild(newMarkDoneButton, markDoneButton);
-    
-    // Ajoutez le nouvel écouteur
-    newMarkDoneButton.addEventListener('click', function() {
-      const defi = getDefiByDay(jourActuel);
-      defi.termine = true;
-      defi.dateValidation = new Date().toISOString();
-      saveProgression();
-      
-      // MAJ UI mais NE PAS changer jourActuel immédiatement
-      afficherDefiDuJour(jourActuel);
-      
-      // Feedback
-      alert("Défi validé ! À demain pour le prochain.");
-    });
-  }
+ 
   
   // Gérer les paramètres de notification
   const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
@@ -544,54 +530,44 @@ document.getElementById('test-notification-android-btn')?.addEventListener('clic
 
 // 3. Détection Android pour afficher/masquer cette section
 function detecterAndroidEtNotifications() {
-  // Cibler UNIQUEMENT la section notifications Android
-  const androidSection = document.querySelector('.trouble-item:has(#allow-notifications-btn)');
+  // 1. Cibler UNIQUEMENT la section notifications Android
+  const androidNotificationSection = document.getElementById('allow-notifications-btn')?.closest('.trouble-item');
   
-  if (!androidSection) return;
-  
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  
-  console.log('Détection:', { isAndroid, isiOS });
-  
-  // Masquer uniquement si iOS ou si pas Android du tout
-  if (isiOS || !isAndroid) {
-    androidSection.style.display = 'none';
-    console.log('Section Android masquée (iOS ou non-Android)');
-  } else {
-    androidSection.style.display = 'block';
-    console.log('Section Android affichée (Android détecté)');
+  if (androidNotificationSection) {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     
-    // Vérifier l'état des notifications pour le feedback
-    if (typeof OneSignal !== 'undefined') {
-      setTimeout(async () => {
-        try {
-          const permission = await OneSignal.getNotificationPermission();
-          const note = androidSection.querySelector('.small-note');
-          if (note && permission === 'granted') {
-            note.textContent = '✓ Notifications déjà activées sur cet appareil.';
-            note.style.color = '#10b981';
-          }
-        } catch (e) {
-          // Ignorer silencieusement
-        }
-      }, 2000);
+    console.log('📱 Détection:', { isAndroid, isiOS, section: androidNotificationSection });
+    
+    // Masquer UNIQUEMENT si iOS
+    if (isiOS) {
+      console.log('📱 Section notifications masquée (iOS)');
+      androidNotificationSection.style.display = 'none';
+    } else {
+      // Sur Android, toujours afficher
+      androidNotificationSection.style.display = 'block';
+      console.log('📱 Section notifications affichée (Android)');
     }
   }
   
-  // TOUTES les autres sections doivent rester visibles
+  // 2. TOUTES les autres sections "trouble-item" doivent RESTER VISIBLES
   document.querySelectorAll('.trouble-item').forEach(section => {
-    if (section !== androidSection && section.style.display === 'none') {
+    // Ne pas toucher à la section notifications si on l'a déjà gérée
+    if (section !== androidNotificationSection) {
       section.style.display = 'block';
+      section.style.visibility = 'visible';
+      section.style.opacity = '1';
     }
   });
+  
+  console.log('🔍 Sections trouble-item trouvées:', document.querySelectorAll('.trouble-item').length);
 }
 
-// Appeler la détection au chargement
+// GARDEZ cet appel au chargement
 document.addEventListener('DOMContentLoaded', detecterAndroidEtNotifications);
 
 
-// 3. Supprimer la progression
+// 4. Supprimer la progression
 document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
   if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés et vous recommencerez au Jour 1.\n\nCette action est irréversible !')) {
     return;
