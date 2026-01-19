@@ -1,171 +1,6 @@
-// app.js - Logique principale de l'application
+// app.js - Logique principale de l'application - VERSION CORRIGÉE
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialiser l'app
-  initializeApp();
-  
-  // Éléments DOM
-  const currentDayElement = document.getElementById('current-day');
-  const dayCurrentElement = document.getElementById('day-current');
-  const challengeTitleElement = document.getElementById('challenge-title');
-  const challengeDescriptionElement = document.getElementById('challenge-description');
-  const markDoneButton = document.getElementById('mark-done-btn');
-  const calendarGrid = document.getElementById('calendar-grid');
-  const notificationTimeSelect = document.getElementById('notification-time');
-  const testNotificationButton = document.getElementById('test-notification-btn');
-  
-  // Récupérer le jour actuel
-  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-  
-  // Afficher le défi du jour
-  function afficherDefiDuJour(jour) {
-    const defi = getDefiByDay(jour);
-    
-    // Mettre à jour l'interface
-    currentDayElement.textContent = jour;
-    dayCurrentElement.textContent = jour;
-    challengeTitleElement.textContent = defi.titre;
-    challengeDescriptionElement.textContent = defi.description;
-    
-    // Mettre à jour le bouton selon l'état
-    if (defi.termine) {
-      markDoneButton.textContent = '✅ Déjà accompli';
-      markDoneButton.disabled = true;
-      markDoneButton.classList.add('completed');
-    } else {
-      markDoneButton.textContent = '✅ Marquer comme accompli';
-      markDoneButton.disabled = false;
-      markDoneButton.classList.remove('completed');
-    }
-
-  // Dans app.js - Nouvelle logique pour avancer les jours
-function peutPasserAuJourSuivant() {
-  const aujourdhui = new Date().toLocaleDateString('fr-FR');
-  const dernierChangement = localStorage.getItem('dernier_changement_jour');
-  
-  // Si c'est le premier jour OU si on a changé de jour calendaire
-  if (!dernierChangement || dernierChangement !== aujourdhui) {
-    localStorage.setItem('dernier_changement_jour', aujourdhui);
-    return true;
-  }
-  return false;
-}
-
-// Modifier la fonction de validation du défi
-markDoneButton.addEventListener('click', function() {
-  const defi = getDefiByDay(jourActuel);
-  defi.termine = true;
-  defi.dateValidation = new Date().toISOString();
-  saveProgression();
-  
-  // MAJ UI mais NE PAS changer jourActuel immédiatement
-  afficherDefiDuJour(jourActuel);
-  
-  // Feedback
-  alert("Défi validé ! À demain pour le prochain.");
-});
-
-// Fonction séparée pour avancer le jour (à appeler à minuit ou au lancement)
-function verifierEtAvancerJour() {
-  if (peutPasserAuJourSuivant() && jourActuel < 77) {
-    jourActuel++;
-    localStorage.setItem('jour_actuel', jourActuel.toString());
-  }
-  afficherDefiDuJour(jourActuel);
-}
-
-// Appeler au chargement
-verifierEtAvancerJour();
-    
-    // Générer le calendrier
-    genererCalendrier();
-  }
-  
-  // Générer le calendrier visuel des 77 jours
-  function genererCalendrier() {
-    calendarGrid.innerHTML = ''; // Vider le calendrier
-    
-    for (let jour = 1; jour <= 77; jour++) {
-      const defi = getDefiByDay(jour);
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = jour;
-      
-      // Déterminer l'icône selon l'état
-      if (defi.termine) {
-        dayElement.classList.add('completed'); // ✅
-      } else if (jour === jourActuel) {
-        dayElement.classList.add('current');   // ⏳
-      } else if (jour < jourActuel) {
-        dayElement.classList.add('missed');    // ❌
-      } else {
-        dayElement.classList.add('upcoming');  // 🕔
-      }
-      
-      // Ajouter un clic pour voir un défi spécifique
-      dayElement.addEventListener('click', function() {
-        afficherDefiDuJour(jour);
-      });
-      
-      calendarGrid.appendChild(dayElement);
-    }
-  }
-  
-  // Marquer un défi comme terminé
-  markDoneButton.addEventListener('click', function() {
-    const defi = getDefiByDay(jourActuel);
-    defi.termine = true;
-    defi.dateValidation = new Date().toISOString();
-    
-    saveProgression();
-    afficherDefiDuJour(jourActuel);
-    
-    // Passer au jour suivant si possible
-    if (jourActuel < 77) {
-      jourActuel++;
-      localStorage.setItem('jour_actuel', jourActuel.toString());
-      
-      // Petit délai avant d'afficher le nouveau défi
-      setTimeout(() => {
-        afficherDefiDuJour(jourActuel);
-      }, 1000);
-    }
-  });
-  
-  // Gérer les paramètres de notification
-  const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
-  notificationTimeSelect.value = heureSauvegardee;
-  
-  notificationTimeSelect.addEventListener('change', function() {
-    localStorage.setItem('heure_notification', this.value);
-    console.log('Heure de notification mise à jour :', this.value);
-    // Ici, vous intégrerez la programmation OneSignal plus tard
-  });
-  
-  // Bouton de test de notification
-  testNotificationButton.addEventListener('click', function() {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const defi = getDefiByDay(jourActuel);
-      new Notification(`🎯 Défi ENVOL - Jour ${jourActuel}`, {
-        body: defi.titre,
-        icon: '/assets/icons/icon-192.png'
-      });
-    } else {
-      alert('Veuillez autoriser les notifications dans les paramètres de votre navigateur.');
-    }
-  });
-  
-  // Afficher le défi du jour actuel
-  afficherDefiDuJour(jourActuel);
-  
-  // Demander la permission pour les notifications
-  if ('Notification' in window && Notification.permission === 'default') {
-    setTimeout(() => {
-      Notification.requestPermission();
-    }, 2000);
-  }
-});
-
+// ========== FONCTIONS GLOBALES ==========
 // Fonction pour centrer le calendrier sur le jour actuel
 function centrerCalendrierSurJour(jour) {
   const index = jour - 1;
@@ -180,67 +15,7 @@ function centrerCalendrierSurJour(jour) {
   }
 }
 
-// Appelez cette fonction après avoir généré le calendrier
-// Dans votre fonction afficherDefiDuJour(), après genererCalendrier();
-function afficherDefiDuJour(jour) {
-  // ... votre code existant ...
-  genererCalendrier();
-  centrerCalendrierSurJour(jour); // <-- AJOUTEZ CETTE LIGNE
-}
-
-
-// Gestion de l'installation PWA (bouton d'installation sur l'écran d'accueil)
-let deferredPrompt;
-const installButton = document.createElement('button');
-
-// Écouter l'événement beforeinstallprompt
-window.addEventListener('beforeinstallprompt', (event) => {
-  console.log('👍 beforeinstallprompt déclenché');
-  // Empêche l'affichage automatique
-  event.preventDefault();
-  deferredPrompt = event;
-  
-  // Créer/s'afficher le bouton d'installation
-  installButton.id = 'install-pwa-btn';
-  installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
-  installButton.className = 'install-btn';
-  installButton.style.display = 'block';
-  
-  // Ajouter le bouton avant le footer
-  const footer = document.querySelector('.app-footer');
-  if (footer) {
-    footer.parentNode.insertBefore(installButton, footer);
-  }
-});
-
-// Gérer le clic sur le bouton d'installation
-installButton.addEventListener('click', async () => {
-  if (!deferredPrompt) {
-    // Fallback pour les navigateurs qui ne supportent pas l'API
-    alert("Pour installer l'application :\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : partager → \"Sur l'écran d'accueil\"");
-    return;
-  }
-  
-  // Affiche l'invite d'installation native
-  deferredPrompt.prompt();
-  
-  // Attendre le choix de l'utilisateur
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`User response: ${outcome}`);
-  
-  // Réinitialiser
-  deferredPrompt = null;
-  installButton.style.display = 'none';
-});
-
-// Vérifier si l'app est déjà installée
-window.addEventListener('appinstalled', () => {
-  console.log('PWA installée avec succès !');
-  installButton.style.display = 'none';
-});
-
-
-// Dans votre PWA (app.js) - Affiche un overlay au premier lancement
+// Affiche un overlay au premier lancement
 function showInstallOverlay() {
   if (localStorage.getItem('install_prompt_shown')) return;
   
@@ -278,61 +53,236 @@ function showInstallOverlay() {
   }, 10000);
 }
 
-// Appeler au chargement
-showInstallOverlay();
-
-
-
-// Gestion des notifications OneSignal
-function setupOneSignalNotifications() {
-  if (typeof OneSignal === 'undefined') return;
+// ========== LOGIQUE PRINCIPALE ==========
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialiser l'app
+  initializeApp();
   
-  // Programmer une notification pour le jour actuel
-  function programmerNotificationDefi(jour) {
-    const defi = getDefiByDay(jour);
-    const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+  // Éléments DOM
+  const currentDayElement = document.getElementById('current-day');
+  const dayCurrentElement = document.getElementById('day-current');
+  const challengeTitleElement = document.getElementById('challenge-title');
+  const challengeDescriptionElement = document.getElementById('challenge-description');
+  const markDoneButton = document.getElementById('mark-done-btn');
+  const calendarGrid = document.getElementById('calendar-grid');
+  const notificationTimeSelect = document.getElementById('notification-time');
+  const testNotificationButton = document.getElementById('test-notification-btn');
+  
+  // Récupérer le jour actuel
+  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+  
+  // ========== LOGIQUE ANTI-SPEED RUNNING ==========
+  function peutPasserAuJourSuivant() {
+    const aujourdhui = new Date().toLocaleDateString('fr-FR');
+    const dernierChangement = localStorage.getItem('dernier_changement_jour');
     
-    // Créer une date pour aujourd'hui à l'heure choisie
-    const [heures, minutes] = heureNotification.split(':');
-    const dateNotification = new Date();
-    dateNotification.setHours(parseInt(heures), parseInt(minutes), 0);
-    
-    // Si l'heure est déjà passée aujourd'hui, programmer pour demain
-    if (dateNotification < new Date()) {
-      dateNotification.setDate(dateNotification.getDate() + 1);
+    // Si c'est le premier jour OU si on a changé de jour calendaire
+    if (!dernierChangement || dernierChangement !== aujourdhui) {
+      localStorage.setItem('dernier_changement_jour', aujourdhui);
+      return true;
     }
-    
-    // Envoyer la notification programmée
-    OneSignal.sendNotification(
-      `🎯 Jour ${jour} : ${defi.titre}`,
-      defi.description.substring(0, 100) + '...', // Texte tronqué
-      [], // Tous les utilisateurs
-      {
-        // Bouton dans la notification
-        buttons: [{ id: "done", text: "✅ Marquer comme fait" }],
-        // Ouvrir l'app au clic
-        url: `https://iscobia.github.io/sekhamet-envol/?jour=${jour}`,
-        // Données personnalisées
-        data: { jour: jour, type: 'defi_quotidien' }
-      }
-    );
+    return false;
   }
   
-  // Écouter les clics sur les boutons de notification
-  OneSignal.on('notificationClick', function(event) {
-    if (event.data.buttons && event.data.buttons[0].id === "done") {
-      const jour = event.data.additionalData.jour;
-      // Marquer le défi comme fait
+  function verifierEtAvancerJour() {
+    if (peutPasserAuJourSuivant() && jourActuel < 77) {
+      jourActuel++;
+      localStorage.setItem('jour_actuel', jourActuel.toString());
+    }
+    afficherDefiDuJour(jourActuel);
+  }
+  
+  // ========== FONCTIONS D'AFFICHAGE ==========
+  // Afficher le défi du jour
+  function afficherDefiDuJour(jour) {
+    const defi = getDefiByDay(jour);
+    
+    // Mettre à jour l'interface
+    if (currentDayElement) currentDayElement.textContent = jour;
+    if (dayCurrentElement) dayCurrentElement.textContent = jour;
+    if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
+    if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
+    
+    // Mettre à jour le bouton selon l'état
+    if (markDoneButton) {
+      if (defi.termine) {
+        markDoneButton.textContent = '✅ Déjà accompli';
+        markDoneButton.disabled = true;
+        markDoneButton.classList.add('completed');
+      } else {
+        markDoneButton.textContent = '✅ Marquer comme accompli';
+        markDoneButton.disabled = false;
+        markDoneButton.classList.remove('completed');
+      }
+    }
+    
+    // Générer le calendrier
+    genererCalendrier();
+    centrerCalendrierSurJour(jour); // <-- CENTRER LE CALENDRIER
+  }
+  
+  // Générer le calendrier visuel des 77 jours
+  function genererCalendrier() {
+    if (!calendarGrid) return;
+    
+    calendarGrid.innerHTML = ''; // Vider le calendrier
+    
+    for (let jour = 1; jour <= 77; jour++) {
       const defi = getDefiByDay(jour);
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      dayElement.textContent = jour;
+      
+      // Déterminer l'icône selon l'état
+      if (defi.termine) {
+        dayElement.classList.add('completed'); // ✅
+      } else if (jour === jourActuel) {
+        dayElement.classList.add('current');   // ⏳
+      } else if (jour < jourActuel) {
+        dayElement.classList.add('missed');    // ❌
+      } else {
+        dayElement.classList.add('upcoming');  // 🕔
+      }
+      
+      // Ajouter un clic pour voir un défi spécifique
+      dayElement.addEventListener('click', function() {
+        afficherDefiDuJour(jour);
+      });
+      
+      calendarGrid.appendChild(dayElement);
+    }
+  }
+  
+  // ========== ÉVÉNEMENTS ==========
+  // Marquer un défi comme terminé (NOUVELLE VERSION - anti-speed running)
+  if (markDoneButton) {
+    // Supprimez d'abord tous les écouteurs existants
+    const newMarkDoneButton = markDoneButton.cloneNode(true);
+    markDoneButton.parentNode.replaceChild(newMarkDoneButton, markDoneButton);
+    
+    // Ajoutez le nouvel écouteur
+    newMarkDoneButton.addEventListener('click', function() {
+      const defi = getDefiByDay(jourActuel);
       defi.termine = true;
       defi.dateValidation = new Date().toISOString();
       saveProgression();
       
-      // Rediriger vers l'app
-      window.location.href = `/?jour=${jour}`;
-    }
-  });
-}
+      // MAJ UI mais NE PAS changer jourActuel immédiatement
+      afficherDefiDuJour(jourActuel);
+      
+      // Feedback
+      alert("Défi validé ! À demain pour le prochain.");
+    });
+  }
+  
+  // Gérer les paramètres de notification
+  const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
+  if (notificationTimeSelect) {
+    notificationTimeSelect.value = heureSauvegardee;
+    
+    notificationTimeSelect.addEventListener('change', function() {
+      localStorage.setItem('heure_notification', this.value);
+      console.log('Heure de notification mise à jour :', this.value);
+    });
+  }
+  
+  // ========== NOTIFICATIONS ONESIGNAL ==========
+  // Bouton de test de notification
+  if (testNotificationButton) {
+    testNotificationButton.addEventListener('click', async function() {
+      // 1. Vérifier si OneSignal est prêt
+      if (typeof OneSignal === 'undefined') {
+        alert("OneSignal n'est pas encore chargé. Veuillez patienter quelques secondes.");
+        return;
+      }
 
-// Bouton de rappel manuel dans l'interface (un lien "Activer les notifications")
-OneSignal.showSlidedownPrompt()
+      // 2. Vérifier et demander la permission si nécessaire
+      const permission = await OneSignal.getNotificationPermission();
+      
+      if (permission === 'default') {
+        // Affiche la bannière de demande de permission
+        OneSignal.showSlidedownPrompt();
+        return;
+      }
+
+      if (permission === 'denied') {
+        alert("Vous avez bloqué les notifications. Pour les réactiver, allez dans les paramètres de votre navigateur/site.");
+        return;
+      }
+
+      // 3. Envoyer la notification de test IN-APP (toast)
+      const defi = getDefiByDay(jourActuel);
+      
+      OneSignal.sendSelfNotification(
+        `🎯 ENVOL - Jour ${jourActuel}`,
+        `${defi.titre}`,
+        { url: window.location.href }
+      );
+      
+      console.log("Notification de test envoyée !");
+    });
+  }
+  
+  // ========== INITIALISATION ==========
+  // Afficher le défi du jour actuel
+  verifierEtAvancerJour();
+  
+  // Afficher l'overlay d'installation
+  showInstallOverlay();
+  
+  // Demander la permission pour les notifications
+  if ('Notification' in window && Notification.permission === 'default') {
+    setTimeout(() => {
+      Notification.requestPermission();
+    }, 2000);
+  }
+});
+
+// ========== GESTION PWA ==========
+let deferredPrompt;
+const installButton = document.createElement('button');
+
+// Écouter l'événement beforeinstallprompt
+window.addEventListener('beforeinstallprompt', (event) => {
+  console.log('👍 beforeinstallprompt déclenché');
+  event.preventDefault();
+  deferredPrompt = event;
+  
+  // Créer/s'afficher le bouton d'installation
+  installButton.id = 'install-pwa-btn';
+  installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
+  installButton.className = 'install-btn';
+  installButton.style.display = 'block';
+  
+  // Ajouter le bouton avant le footer
+  const footer = document.querySelector('.app-footer');
+  if (footer) {
+    footer.parentNode.insertBefore(installButton, footer);
+  }
+});
+
+// Gérer le clic sur le bouton d'installation
+installButton.addEventListener('click', async () => {
+  if (!deferredPrompt) {
+    alert("Pour installer l'application :\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : partager → \"Sur l'écran d'accueil\"");
+    return;
+  }
+  
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`User response: ${outcome}`);
+  
+  deferredPrompt = null;
+  installButton.style.display = 'none';
+});
+
+// Vérifier si l'app est déjà installée
+window.addEventListener('appinstalled', () => {
+  console.log('PWA installée avec succès !');
+  installButton.style.display = 'none';
+});
+
+// ========== SUPPRIMEZ CES LIGNES ==========
+// NE GARDEZ PAS CES LIGNES - ELLES SONT DÉPLACÉES OU DUPLIQUÉES :
+// 1. La deuxième fonction `afficherDefiDuJour` à la fin
+// 2. L'appel isolé `OneSignal.showSlidedownPrompt()` à la fin
