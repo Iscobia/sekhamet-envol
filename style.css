@@ -94,7 +94,8 @@ body {
 }
 
 .calendar-section {
-  margin-bottom: 30px;
+  margin: 25px auto;
+  max-width: 95%;
 }
 
 .calendar-section h3 {
@@ -115,7 +116,10 @@ body {
 }
 
 .calendar-day {
-  width: 50px ;
+  width: 100% ;
+  aspect-ratio: 1 / 1; /* Garde les cases carrées */
+  max-width: 50px;
+  margin: 0 auto;
   height: 50px;
   display: flex;
   align-items: center;
