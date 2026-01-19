@@ -94,8 +94,7 @@ body {
 }
 
 .calendar-section {
-  margin: 25px auto;
-  max-width: 95%;
+  margin-bottom: 30px;
 }
 
 .calendar-section h3 {
@@ -105,10 +104,10 @@ body {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(10, 1fr); /* 10 colonnes au lieu de auto-fill */
+  grid-template-columns: repeat(10, 1fr);
   gap: 8px;
-  max-height: 180px; /* 3 lignes de 50px + gap */
-  overflow-y: hidden; /* Cache le défilement vertical */
+  max-height: 180px;
+  overflow-y: hidden;
   padding: 15px;
   background: #f8fafc;
   border-radius: 12px;
@@ -116,24 +115,19 @@ body {
 }
 
 .calendar-day {
-  width: 100% ;
-  aspect-ratio: 1 / 1; /* Garde les cases carrées */
+  width: 100%;
   max-width: 50px;
-  margin: 0 auto;
   height: 50px;
   display: flex;
   align-items: center;
+  aspect-ratio: 1 / 1;
   justify-content: center;
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
-}
-
-
-.calendar-day:hover {
-  transform: scale(1.1);
+  margin: 0 auto;
 }
 
 .calendar-day.completed {
@@ -155,6 +149,10 @@ body {
 .calendar-day.upcoming {
   background: #e0e7ff;
   color: #4f46e5;
+}
+
+.calendar-day:hover {
+  transform: scale(1.1);
 }
 
 .notifications-settings {
