@@ -217,12 +217,13 @@ setTimeout(checkForUpdates, 5000);
       if (defi.termine) {
         dayElement.classList.add('completed'); // ✅
       } else if (jour === jourActuel) {
-        dayElement.classList.add('current');   // ⏳
-      } else if (jour < jourActuel) {
-        dayElement.classList.add('missed');    // ❌
+        dayElement.classList.add('current');   // Jour actuel = ⏳
+      } else if (jour < jourActuel && !defi.termine) {
+        dayElement.classList.add('missed');    // Jours passés non validés = ❌
       } else {
         dayElement.classList.add('upcoming');  // 🕔
       }
+      
       
       // Ajouter un clic pour voir un défi spécifique
       dayElement.addEventListener('click', function() {
@@ -543,36 +544,47 @@ document.getElementById('test-notification-android-btn')?.addEventListener('clic
 
 // 3. Détection Android pour afficher/masquer cette section
 function detecterAndroidEtNotifications() {
-  const sectionAndroid = document.querySelector('.trouble-item:has(#allow-notifications-btn)');
-  if (!sectionAndroid) return;
+  // Cibler UNIQUEMENT la section notifications Android
+  const androidSection = document.querySelector('.trouble-item:has(#allow-notifications-btn)');
+  
+  if (!androidSection) return;
   
   const isAndroid = /Android/i.test(navigator.userAgent);
-  const isChrome = /Chrome/i.test(navigator.userAgent);
+  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   
-  // Masquer si pas Android ou si iOS
-  if (!isAndroid || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    sectionAndroid.style.display = 'none';
-    return;
-  }
+  console.log('Détection:', { isAndroid, isiOS });
   
-  // Sur Android Chrome, vérifier si notifications déjà activées
-  if (isChrome && typeof OneSignal !== 'undefined') {
-    setTimeout(async () => {
-      try {
-        const permission = await OneSignal.getNotificationPermission();
-        if (permission === 'granted') {
-          // Option: afficher un indicateur "✓ Déjà activées"
-          const note = sectionAndroid.querySelector('.small-note');
-          if (note) {
+  // Masquer uniquement si iOS ou si pas Android du tout
+  if (isiOS || !isAndroid) {
+    androidSection.style.display = 'none';
+    console.log('Section Android masquée (iOS ou non-Android)');
+  } else {
+    androidSection.style.display = 'block';
+    console.log('Section Android affichée (Android détecté)');
+    
+    // Vérifier l'état des notifications pour le feedback
+    if (typeof OneSignal !== 'undefined') {
+      setTimeout(async () => {
+        try {
+          const permission = await OneSignal.getNotificationPermission();
+          const note = androidSection.querySelector('.small-note');
+          if (note && permission === 'granted') {
             note.textContent = '✓ Notifications déjà activées sur cet appareil.';
             note.style.color = '#10b981';
           }
+        } catch (e) {
+          // Ignorer silencieusement
         }
-      } catch (e) {
-        // Ignorer les erreurs silencieusement
-      }
-    }, 2000);
+      }, 2000);
+    }
   }
+  
+  // TOUTES les autres sections doivent rester visibles
+  document.querySelectorAll('.trouble-item').forEach(section => {
+    if (section !== androidSection && section.style.display === 'none') {
+      section.style.display = 'block';
+    }
+  });
 }
 
 // Appeler la détection au chargement
