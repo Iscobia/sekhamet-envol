@@ -67,6 +67,76 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendarGrid = document.getElementById('calendar-grid');
   const notificationTimeSelect = document.getElementById('notification-time');
   const testNotificationButton = document.getElementById('test-notification-btn');
+
+  // ========== SECTION DÉPANNAGE ==========
+
+// 1. Deuxième bouton de test (identique au premier)
+document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
+  // Utilisez la même logique que votre bouton test-notification-btn existant
+  // Copiez-collez le code de gestion des notifications ici
+});
+
+// 2. Bouton "Vider le cache"
+document.getElementById('clear-cache-btn')?.addEventListener('click', async function() {
+  const btn = this;
+  const originalText = btn.textContent;
+  
+  if (!confirm("Vider le cache ? L'application se rechargera mais tes défis validés seront conservés.")) {
+    return;
+  }
+  
+  btn.textContent = 'Nettoyage en cours...';
+  btn.disabled = true;
+  
+  try {
+    // Option A : Message au Service Worker (méthode propre)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const messageChannel = new MessageChannel();
+      
+      messageChannel.port1.onmessage = (event) => {
+        if (event.data.success) {
+          console.log('Cache vidé avec succès');
+          window.location.reload(); // Rechargement forcé
+        }
+      };
+      
+      navigator.serviceWorker.controller.postMessage(
+        { action: 'CLEAR_CACHE' },
+        [messageChannel.port2]
+      );
+    } 
+    // Option B : Fallback simple
+    else {
+      // Supprime uniquement le cache des ressources, PAS le localStorage
+      if (caches && caches.delete) {
+        await caches.delete(CACHE_NAME);
+      }
+      window.location.reload();
+    }
+  } catch (error) {
+    console.error('Erreur lors du nettoyage:', error);
+    alert("Une erreur est survenue. Essayez de fermer et rouvrir l'application.");
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+// 3. Vérification automatique des mises à jour
+function checkForUpdates() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.update(); // Vérifie les mises à jour
+        // Toutes les 24h
+        setInterval(() => reg.update(), 24 * 60 * 60 * 1000);
+      }
+    });
+  }
+}
+
+// Appeler au démarrage
+setTimeout(checkForUpdates, 5000);
   
   // Récupérer le jour actuel
   let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
