@@ -84,20 +84,25 @@
 <section class="troubleshooting">
   <h3>🛠️ Problème technique ?</h3>
   
-  <div class="trouble-item">
-    <p><strong>Tu aimerais vérifier si tes notifications fonctionnent ?</strong></p>
-    <button id="test-notification-btn-2" class="secondary-btn">
-      🔔 Tester une notification maintenant
+<div class="trouble-item">
+  <p><strong>Tu veux changer de téléphone, sécuriser ta progression ou tu as eu un souci technique ?</strong></p>
+  <div class="backup-buttons">
+    <button id="export-backup-btn" class="backup-btn">
+      📤 Exporter ma sauvegarde
+    </button>
+    <button id="import-backup-btn" class="backup-btn">
+      📥 Importer ma progression
     </button>
   </div>
-  
-  <div class="trouble-item">
-    <p><strong>L'app a un comportement bizarre et tu aimerais la rafraîchir sans perdre ta progression ?</strong></p>
-    <button id="clear-cache-btn" class="warning-btn">
-      🗑️ Vider le cache maintenant
-    </button>
-    <p class="small-note">(Ne supprime pas tes défis validés)</p>
-  </div>
+</div>
+
+<div class="trouble-item warning">
+  <p><strong>Tu veux recommencer ton défi de zéro ?</strong></p>
+  <button id="reset-progress-btn" class="danger-btn">
+    ⚠️ Je supprime ma progression
+  </button>
+  <p class="small-note">Attention : cette action est irréversible !</p>
+</div>
 </section>
         </footer>
     </div>
