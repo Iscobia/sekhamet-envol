@@ -362,7 +362,99 @@ window.addEventListener('appinstalled', () => {
   installButton.style.display = 'none';
 });
 
-// ========== SUPPRIMEZ CES LIGNES ==========
-// NE GARDEZ PAS CES LIGNES - ELLES SONT DÉPLACÉES OU DUPLIQUÉES :
-// 1. La deuxième fonction `afficherDefiDuJour` à la fin
-// 2. L'appel isolé `OneSignal.showSlidedownPrompt()` à la fin
+// ========== GESTION SAUVEGARDES ==========
+
+// 1. Exporter la sauvegarde
+document.getElementById('export-backup-btn')?.addEventListener('click', function() {
+  const backupData = {
+    version: '1.0',
+    timestamp: new Date().toISOString(),
+    progression: JSON.parse(localStorage.getItem('defis_envol') || '[]'),
+    jourActuel: localStorage.getItem('jour_actuel'),
+    dernierChangement: localStorage.getItem('dernier_changement_jour'),
+    heureNotification: localStorage.getItem('heure_notification')
+  };
+  
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  
+  a.href = url;
+  a.download = `sauvegarde-envol-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('✅ Sauvegarde exportée ! Conservez ce fichier précieusement.');
+});
+
+// 2. Importer la sauvegarde
+document.getElementById('import-backup-btn')?.addEventListener('click', function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const backupData = JSON.parse(event.target.result);
+        
+        // Validation basique
+        if (!backupData.progression || !backupData.jourActuel) {
+          throw new Error('Format de sauvegarde invalide');
+        }
+        
+        if (confirm(`Importer la sauvegarde du ${new Date(backupData.timestamp).toLocaleDateString('fr-FR')} ? Votre progression actuelle sera écrasée.`)) {
+          localStorage.setItem('defis_envol', JSON.stringify(backupData.progression));
+          localStorage.setItem('jour_actuel', backupData.jourActuel);
+          if (backupData.dernierChangement) {
+            localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
+          }
+          if (backupData.heureNotification) {
+            localStorage.setItem('heure_notification', backupData.heureNotification);
+          }
+          
+          alert('✅ Progression importée avec succès !');
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('Erreur import:', error);
+        alert('❌ Fichier de sauvegarde invalide ou corrompu.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  
+  input.click();
+});
+
+// 3. Supprimer la progression
+document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
+  if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés et vous recommencerez au Jour 1.\n\nCette action est irréversible !')) {
+    return;
+  }
+  
+  if (!confirm('DERNIÈRE CHANCE :\nAppuyez sur "Annuler" pour garder votre progression.\n"OK" pour tout supprimer.')) {
+    return;
+  }
+  
+  // Réinitialisation
+  DefisEnvol.forEach(defi => {
+    defi.termine = false;
+    defi.dateValidation = null;
+  });
+  
+  localStorage.setItem('defis_envol', JSON.stringify(DefisEnvol));
+  localStorage.setItem('jour_actuel', '1');
+  localStorage.removeItem('dernier_changement_jour');
+  localStorage.setItem('heure_notification', '08:00');
+  localStorage.removeItem('install_prompt_shown'); // Pour revoir le splash screen
+  
+  alert('🗑️ Progression supprimée. Vous recommencez au Jour 1.');
+  window.location.reload();
+});
