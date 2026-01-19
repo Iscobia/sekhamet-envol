@@ -270,3 +270,58 @@ body {
 .install-btn:active {
   transform: translateY(0);
 }
+
+
+/*style de la section de dépannage*/
+
+/* Section dépannage */
+.troubleshooting {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 25px 0;
+}
+
+.troubleshooting h3 {
+  color: #ea580c;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.trouble-item {
+  margin-bottom: 25px;
+}
+
+.trouble-item:last-child {
+  margin-bottom: 0;
+}
+
+.trouble-item p {
+  margin-bottom: 10px;
+  color: #431407;
+}
+
+.warning-btn {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s;
+}
+
+.warning-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+}
+
+.small-note {
+  font-size: 0.85rem;
+  color: #9a3412;
+  margin-top: 8px;
+  font-style: italic;
+}
