@@ -37,6 +37,45 @@ document.addEventListener('DOMContentLoaded', function() {
       markDoneButton.disabled = false;
       markDoneButton.classList.remove('completed');
     }
+
+  // Dans app.js - Nouvelle logique pour avancer les jours
+function peutPasserAuJourSuivant() {
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  const dernierChangement = localStorage.getItem('dernier_changement_jour');
+  
+  // Si c'est le premier jour OU si on a changé de jour calendaire
+  if (!dernierChangement || dernierChangement !== aujourdhui) {
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
+    return true;
+  }
+  return false;
+}
+
+// Modifier la fonction de validation du défi
+markDoneButton.addEventListener('click', function() {
+  const defi = getDefiByDay(jourActuel);
+  defi.termine = true;
+  defi.dateValidation = new Date().toISOString();
+  saveProgression();
+  
+  // MAJ UI mais NE PAS changer jourActuel immédiatement
+  afficherDefiDuJour(jourActuel);
+  
+  // Feedback
+  alert("Défi validé ! À demain pour le prochain.");
+});
+
+// Fonction séparée pour avancer le jour (à appeler à minuit ou au lancement)
+function verifierEtAvancerJour() {
+  if (peutPasserAuJourSuivant() && jourActuel < 77) {
+    jourActuel++;
+    localStorage.setItem('jour_actuel', jourActuel.toString());
+  }
+  afficherDefiDuJour(jourActuel);
+}
+
+// Appeler au chargement
+verifierEtAvancerJour();
     
     // Générer le calendrier
     genererCalendrier();
@@ -94,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Gérer les paramètres de notification
-  const heureSauvegardee = localStorage.getItem('heure_notification') || '09:00';
+  const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
   notificationTimeSelect.value = heureSauvegardee;
   
   notificationTimeSelect.addEventListener('change', function() {
@@ -272,3 +311,6 @@ function setupOneSignalNotifications() {
     }
   });
 }
+
+// Bouton de rappel manuel dans l'interface (un lien "Activer les notifications")
+OneSignal.showSlidedownPrompt()
