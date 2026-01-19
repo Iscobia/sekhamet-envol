@@ -166,6 +166,28 @@ verifierEtAvancerJour();
   }
 });
 
+// Fonction pour centrer le calendrier sur le jour actuel
+function centrerCalendrierSurJour(jour) {
+  const index = jour - 1;
+  const grid = document.getElementById('calendar-grid');
+  if (!grid) return;
+  
+  const days = grid.children;
+  if (days[index]) {
+    // Calcul pour centrer (jour 8 serait à la 2ème ligne)
+    const row = Math.floor(index / 10);
+    grid.scrollTop = row * (50 + 8); // hauteur case + gap
+  }
+}
+
+// Appelez cette fonction après avoir généré le calendrier
+// Dans votre fonction afficherDefiDuJour(), après genererCalendrier();
+function afficherDefiDuJour(jour) {
+  // ... votre code existant ...
+  genererCalendrier();
+  centrerCalendrierSurJour(jour); // <-- AJOUTEZ CETTE LIGNE
+}
+
 
 // Gestion de l'installation PWA (bouton d'installation sur l'écran d'accueil)
 let deferredPrompt;
