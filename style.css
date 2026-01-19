@@ -301,6 +301,21 @@ body {
   margin-bottom: 10px;
   color: #431407;
 }
+/*-------------------------------------------*/
+/* FORCER l'affichage des sections dépannage */
+.trouble-item {
+  display: block !important; /* Force l'affichage */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Sauf la section Android sur iOS */
+.trouble-item:has(#allow-notifications-btn) {
+  /* La fonction JS gère l'affichage */
+}
+/*-------------------------------------------*/
+
+
 
 .warning-btn {
   background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
