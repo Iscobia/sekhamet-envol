@@ -213,34 +213,46 @@ setTimeout(checkForUpdates, 5000);
     dayElement.className = 'calendar-day';
     dayElement.textContent = jour;
     
-    // LOGIQUE CORRIGÉE :
-    // 1. D'abord vérifier si terminé
+    // LOGIQUE CORRIGÉE - ORDRE CRITIQUE !
     if (defi.termine) {
-      dayElement.classList.add('completed'); // ✅
-    } 
-    // 2. Ensuite vérifier si c'est le jour actuel (même si pas encore terminé)
-    else if (jour === jourActuel) {
-      dayElement.classList.add('current');   // ⏳ Jour EN COURS
-    }
-    // 3. Ensuite vérifier si c'est un jour passé NON terminé
-    else if (jour < jourActuel) {
-      dayElement.classList.add('missed');    // ❌ Jour passé manqué
-    }
-    // 4. Sinon c'est un jour futur
-    else {
-      dayElement.classList.add('upcoming');  // 🕔
+      dayElement.classList.add('completed'); // ✅ Terminé
+    } else if (jour === jourActuel) {
+      dayElement.classList.add('current');   // ⏳ En cours (même si pas encore terminé)
+    } else if (jour < jourActuel) {
+      dayElement.classList.add('missed');    // ❌ Passé et non terminé
+    } else {
+      dayElement.classList.add('upcoming');  // 🕔 Futur
     }
     
     dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
     calendarGrid.appendChild(dayElement);
   }
   
-  // Centrez le calendrier après génération
   centrerCalendrierSurJour(jourActuel);
 }
   
   // ========== ÉVÉNEMENTS ==========
- 
+
+  // Marquer un défi comme terminé (NOUVELLE VERSION - anti-speed running)
+if (markDoneButton) {
+  // Supprimez d'abord tous les écouteurs existants
+  const newMarkDoneButton = markDoneButton.cloneNode(true);
+  markDoneButton.parentNode.replaceChild(newMarkDoneButton, markDoneButton);
+  
+  // Ajoutez le nouvel écouteur
+  newMarkDoneButton.addEventListener('click', function() {
+    const defi = getDefiByDay(jourActuel);
+    defi.termine = true;
+    defi.dateValidation = new Date().toISOString();
+    saveProgression();
+    
+    // MAJ UI mais NE PAS changer jourActuel immédiatement
+    afficherDefiDuJour(jourActuel);
+    
+    // Feedback
+    alert("Défi validé ! À demain pour le prochain.");
+  });
+}
   
   // Gérer les paramètres de notification
   const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
