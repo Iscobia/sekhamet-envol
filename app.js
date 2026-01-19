@@ -1,5 +1,7 @@
 // app.js - Logique principale de l'application - VERSION CORRIGÉE
 
+const CACHE_NAME = 'envol-pwa-v2.0'; // DOIT ÊTRE LE MÊME QUE service-worker.js
+
 // ========== FONCTIONS GLOBALES ==========
 // Fonction pour centrer le calendrier sur le jour actuel
 function centrerCalendrierSurJour(jour) {
@@ -90,33 +92,41 @@ document.getElementById('clear-cache-btn')?.addEventListener('click', async func
   
   try {
     // Option A : Message au Service Worker (méthode propre)
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      const messageChannel = new MessageChannel();
-      
-      messageChannel.port1.onmessage = (event) => {
-        if (event.data.success) {
-          console.log('Cache vidé avec succès');
-          window.location.reload(); // Rechargement forcé
-        }
-      };
-      
-      navigator.serviceWorker.controller.postMessage(
-        { action: 'CLEAR_CACHE' },
-        [messageChannel.port2]
-      );
-    } 
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Méthode via MessageChannel (plus fiable)
+      return new Promise((resolve) => {
+        const messageChannel = new MessageChannel();
+        
+        messageChannel.port1.onmessage = (event) => {
+          if (event.data.success) {
+            console.log('Cache vidé, rechargement...');
+            setTimeout(() => window.location.reload(), 500);
+          } else {
+            console.error('Échec vidage cache:', event.data.error);
+            alert("Le cache n'a pas pu être vidé. Essayez de fermer et rouvrir l'application.");
+          }
+          btn.textContent = originalText;
+          btn.disabled = false;
+          resolve();
+        };
+        
+        navigator.serviceWorker.controller.postMessage(
+          { action: 'CLEAR_CACHE' },
+          [messageChannel.port2]
+        );
+      });
+    }
     // Option B : Fallback simple
     else {
-      // Supprime uniquement le cache des ressources, PAS le localStorage
-      if (caches && caches.delete) {
+      // Fallback simple : Supprime uniquement le cache des ressources, PAS le localStorage
+      if ('caches' in window) {
         await caches.delete(CACHE_NAME);
       }
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 500);
     }
   } catch (error) {
-    console.error('Erreur lors du nettoyage:', error);
+    console.error('Erreur:', error);
     alert("Une erreur est survenue. Essayez de fermer et rouvrir l'application.");
-  } finally {
     btn.textContent = originalText;
     btn.disabled = false;
   }
