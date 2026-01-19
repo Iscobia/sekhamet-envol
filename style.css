@@ -130,17 +130,6 @@ body {
   margin: 0 auto;
 }
 
-/* Pour centrer le jour actuel, ajoutez un script qui fait défiler */
-function centrerCalendrierSurJour(jour) {
-  const index = jour - 1;
-  const grid = document.getElementById('calendar-grid');
-  const days = grid.children;
-  if (days[index]) {
-    // Calcul pour centrer (jour 8 serait à la 2ème ligne)
-    const row = Math.floor(index / 10);
-    grid.scrollTop = row * (50 + 8); // hauteur case + gap
-  }
-}
 
 .calendar-day:hover {
   transform: scale(1.1);
