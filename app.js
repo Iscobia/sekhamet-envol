@@ -433,6 +433,152 @@ document.getElementById('import-backup-btn')?.addEventListener('click', function
   input.click();
 });
 
+// Soucis avec les notifications :
+
+// ========== GESTION NOTIFICATIONS ANDROID ==========
+
+// 1. Bouton "Autoriser les notifications"
+document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
+  const btn = this;
+  const originalText = btn.textContent;
+  
+  btn.textContent = 'Vérification...';
+  btn.disabled = true;
+  
+  try {
+    // Méthode OneSignal (préférée)
+    if (typeof OneSignal !== 'undefined') {
+      const permission = await OneSignal.getNotificationPermission();
+      
+      if (permission === 'default') {
+        // Affiche la bannière de demande
+        OneSignal.showSlidedownPrompt();
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 3000);
+        return;
+      }
+      
+      if (permission === 'granted') {
+        alert('✅ Notifications déjà autorisées !');
+      } else {
+        alert('Vous avez bloqué les notifications. Pour les réactiver :\n\n1. Ouvrez les paramètres Chrome\n2. Allez dans "Paramètres du site"\n3. Trouvez "ENVOL" et autorisez les notifications');
+      }
+    } 
+    // Fallback API standard
+    else if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      
+      if (permission === 'granted') {
+        alert('✅ Notifications autorisées avec succès !');
+      } else if (permission === 'denied') {
+        alert('Vous avez bloqué les notifications. Consultez les paramètres de votre navigateur.');
+      }
+    } else {
+      alert('Votre navigateur ne supporte pas les notifications ou OneSignal n\'est pas chargé.');
+    }
+  } catch (error) {
+    console.error('Erreur permission notifications:', error);
+    alert('Une erreur est survenue lors de la demande de permission.');
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+// 2. Bouton "Envoyer une notif' test"
+document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
+  const btn = this;
+  const originalText = btn.textContent;
+  
+  btn.textContent = 'Préparation...';
+  btn.disabled = true;
+  
+  try {
+    // Vérifier OneSignal d'abord
+    if (typeof OneSignal !== 'undefined') {
+      const permission = await OneSignal.getNotificationPermission();
+      
+      if (permission === 'granted') {
+        // Envoyer une notification in-app (toast)
+        const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+        const defi = getDefiByDay(jourActuel);
+        
+        OneSignal.sendSelfNotification(
+          `🎯 Test ENVOL - Jour ${jourActuel}`,
+          `${defi.titre}\nSi tu vois ceci, les notifications fonctionnent !`,
+          { url: window.location.href }
+        );
+        
+        alert('✅ Notification de test envoyée !\n\nElle devrait apparaître en haut de l\'écran.');
+      } else if (permission === 'default') {
+        alert('Veuillez d\'abord autoriser les notifications en utilisant le bouton "Autoriser les notifications".');
+      } else {
+        alert('Notifications bloquées. Autorisez-les d\'abord dans les paramètres de votre navigateur.');
+      }
+    } 
+    // Fallback API standard (moins fiable)
+    else if ('Notification' in window && Notification.permission === 'granted') {
+      const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+      const defi = getDefiByDay(jourActuel);
+      
+      new Notification(`🎯 Test ENVOL - Jour ${jourActuel}`, {
+        body: `${defi.titre}\nNotification test`,
+        icon: '/sekhamet-envol/assets/icons/ENVOL-192.png'
+      });
+      
+      alert('✅ Notification système envoyée !');
+    } else {
+      alert('Impossible d\'envoyer une notification.\n\n1. Vérifiez que OneSignal est chargé\n2. Autorisez les notifications si demandé');
+    }
+  } catch (error) {
+    console.error('Erreur notification test:', error);
+    alert('Erreur lors de l\'envoi de la notification :\n' + error.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+// 3. Détection Android pour afficher/masquer cette section
+function detecterAndroidEtNotifications() {
+  const sectionAndroid = document.querySelector('.trouble-item:has(#allow-notifications-btn)');
+  if (!sectionAndroid) return;
+  
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isChrome = /Chrome/i.test(navigator.userAgent);
+  
+  // Masquer si pas Android ou si iOS
+  if (!isAndroid || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    sectionAndroid.style.display = 'none';
+    return;
+  }
+  
+  // Sur Android Chrome, vérifier si notifications déjà activées
+  if (isChrome && typeof OneSignal !== 'undefined') {
+    setTimeout(async () => {
+      try {
+        const permission = await OneSignal.getNotificationPermission();
+        if (permission === 'granted') {
+          // Option: afficher un indicateur "✓ Déjà activées"
+          const note = sectionAndroid.querySelector('.small-note');
+          if (note) {
+            note.textContent = '✓ Notifications déjà activées sur cet appareil.';
+            note.style.color = '#10b981';
+          }
+        }
+      } catch (e) {
+        // Ignorer les erreurs silencieusement
+      }
+    }, 2000);
+  }
+}
+
+// Appeler la détection au chargement
+document.addEventListener('DOMContentLoaded', detecterAndroidEtNotifications);
+
+
 // 3. Supprimer la progression
 document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
   if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés et vous recommencerez au Jour 1.\n\nCette action est irréversible !')) {
