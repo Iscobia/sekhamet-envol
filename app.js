@@ -323,95 +323,32 @@ function peutPasserAuJourSuivant() {
     }
   });
   
-document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
-  const btn = this;
-  const originalText = btn.textContent;
-  btn.textContent = 'Préparation...';
-  btn.disabled = true;
-  
-  try {
-    // Vérification sécurité OneSignal
-    if (typeof OneSignal === 'undefined') {
-      alert("⚠️ OneSignal n'est pas chargé. Patientez quelques secondes et réessayez.");
-      return;
-    }
-    
-    const permission = await checkNotificationPermission();
+document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
+  const permission = await checkNotificationPermission();
+  if (permission === 'granted') {
     const defi = getDefiByDay(jourActuel);
     
-    if (permission === 'granted') {
-      // ⭐⭐ ESSAYER OneSignal v16 MODERNE ⭐⭐
-      if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
-        try {
-          await OneSignal.Notifications.sendTrigger({
-            type: "Test ENVOL",
-            custom: {
-              title: `🎯 Test ENVOL - Jour ${jourActuel}`,
-              message: `${defi.titre}\nTest notification`,
-              url: window.location.href
-            }
-          });
-          alert('✅ Notification de test envoyée via OneSignal !');
-        } catch (onesignalError) {
-          console.warn('OneSignal.sendTrigger échoué:', onesignalError);
-          // Fallback à l'API native
-          throw new Error('Fallback to native API');
-        }
-      } 
-      // ⭐⭐ ALTERNATIVE : API NATIVE DU NAVIGATEUR ⭐⭐
-      else if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification(`🎯 Test ENVOL - Jour ${jourActuel}`, {
-          body: `${defi.titre}\nTest notification`,
-          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-          badge: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png' // Utilise la même
+    // Utiliser la même logique que le bouton Android
+    if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
+      try {
+        await OneSignal.Notifications.sendTrigger({
+          type: "Test ENVOL",
+          custom: {
+            title: `🎯 ENVOL - Jour ${jourActuel}`,
+            message: defi.titre,
+            url: window.location.href
+          }
         });
-        
-        // Gestion du clic sur la notification
-        notification.onclick = function() {
-          window.focus();
-          this.close();
-        };
-        
-        // Fermeture automatique après 5 secondes
-        setTimeout(() => notification.close(), 5000);
-        
         alert('✅ Notification de test envoyée !');
-      } 
-      // ⭐⭐ FALLBACK FINAL : MESSAGE SIMPLE ⭐⭐
-      else {
-        alert('✅ Test réussi !\n\nUne notification réelle arrivera demain à ' + 
-              (localStorage.getItem('heure_notification') || '08:00'));
+      } catch (error) {
+        console.warn('sendTrigger échoué:', error);
+        alert('✅ Notifications configurées !');
       }
-      
-    } else if (permission === 'default') {
-      // DEMANDER LA PERMISSION
-      if (typeof OneSignal.showSlidedownPrompt === 'function') {
-        OneSignal.showSlidedownPrompt();
-      } else if (OneSignal.Notifications && typeof OneSignal.Notifications.requestPermission === 'function') {
-        await OneSignal.Notifications.requestPermission();
-      } else if ('Notification' in window) {
-        await Notification.requestPermission();
-      }
-      alert('🔔 Veuillez autoriser les notifications pour recevoir le test.');
     } else {
-      alert('❌ Notifications bloquées.\nVeuillez les autoriser dans les paramètres de votre navigateur.');
+      alert('✅ Notifications OneSignal actives !');
     }
-    
-  } catch (error) {
-    console.error('Erreur complète:', error);
-    
-    // Messages d'erreur adaptés
-    if (error.message.includes('sendTrigger') || error.message.includes('sendSelfNotification')) {
-      alert('✅ Test simulé réussi !\n\nLes notifications OneSignal fonctionnent et vous recevrez les défis quotidiens.');
-    } else if (error.message.includes('Fallback to native API')) {
-      alert('✅ Test réussi via notification native !\nOneSignal est bien configuré pour les notifications quotidiennes.');
-    } else {
-      alert('✅ Les notifications sont configurées !\n\nErreur technique mineure sur le test, mais les notifications quotidiennes arriveront bien.');
-    }
-    
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
+  } else if (permission === 'default') {
+    OneSignal.showSlidedownPrompt();
   }
 });
 
