@@ -10,13 +10,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./assets/icons/ENVOL-192.png",
+      "src": "./assets/icons/ENVOL-192_sansMarges.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./assets/icons/ENVOL-512.png",
+      "src": "./assets/icons/ENVOL-512_SansMarges.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
