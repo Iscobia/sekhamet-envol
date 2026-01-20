@@ -1,26 +1,21 @@
-// app.js - Logique principale de l'application - VERSION CORRIGÉE
+// app.js - Logique principale de l'application - VERSION STRUCTURÉE (totalement remaniée le 20/01/2026)
 
-const CACHE_NAME = 'envol-pwa-v2.0'; // DOIT ÊTRE LE MÊME QUE service-worker.js
+const CACHE_NAME = 'envol-pwa-v2.0';
 
 // ========== FONCTIONS GLOBALES ==========
-// Fonction pour centrer le calendrier sur le jour actuel
 function centrerCalendrierSurJour(jour) {
   const index = jour - 1;
   const grid = document.getElementById('calendar-grid');
   if (!grid) return;
-  
   const days = grid.children;
   if (days[index]) {
-    // Calcul pour centrer (jour 8 serait à la 2ème ligne)
     const row = Math.floor(index / 10);
-    grid.scrollTop = row * (50 + 8); // hauteur case + gap
+    grid.scrollTop = row * (50 + 8);
   }
 }
 
-// Affiche un overlay au premier lancement
 function showInstallOverlay() {
   if (localStorage.getItem('install_prompt_shown')) return;
-  
   const overlay = document.createElement('div');
   overlay.id = 'install-overlay';
   overlay.innerHTML = `
@@ -38,15 +33,11 @@ function showInstallOverlay() {
       </div>
     </div>
   `;
-  
   document.body.appendChild(overlay);
-  
   document.getElementById('close-overlay').addEventListener('click', () => {
     overlay.remove();
     localStorage.setItem('install_prompt_shown', 'true');
   });
-  
-  // Fermer après 10 secondes
   setTimeout(() => {
     if (document.getElementById('install-overlay')) {
       document.getElementById('install-overlay').remove();
@@ -55,10 +46,66 @@ function showInstallOverlay() {
   }, 10000);
 }
 
+async function checkNotificationPermission() {
+  try {
+    if (typeof OneSignal === 'undefined') return 'unsupported';
+    try {
+      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+      return isSubscribed ? 'granted' : 'default';
+    } catch (e) {
+      if (OneSignal.User && OneSignal.User.PushSubscription) {
+        const subscription = OneSignal.User.PushSubscription;
+        return subscription.optIn ? 'granted' : 'denied';
+      }
+      throw e;
+    }
+  } catch (error) {
+    console.warn('Erreur vérification permission:', error);
+    if ('Notification' in window) return Notification.permission;
+    return 'unsupported';
+  }
+}
+
+function detecterAndroidEtNotifications() {
+  const androidNotificationSection = document.getElementById('allow-notifications-btn')?.closest('.trouble-item');
+  if (androidNotificationSection) {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isiOS) {
+      androidNotificationSection.style.display = 'none';
+    } else {
+      androidNotificationSection.style.display = 'block';
+    }
+  }
+  document.querySelectorAll('.trouble-item').forEach(section => {
+    if (section !== androidNotificationSection) {
+      section.style.display = 'block';
+      section.style.visibility = 'visible';
+      section.style.opacity = '1';
+    }
+  });
+}
+
+function checkForUpdates() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.update();
+        setInterval(() => reg.update(), 24 * 60 * 60 * 1000);
+      }
+    });
+  }
+}
+
 // ========== LOGIQUE PRINCIPALE ==========
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 Initialisation ENVOL...');
+  
   // Initialiser l'app
-  initializeApp();
+  if (typeof initializeApp === 'function') initializeApp();
+  
+  // Détection Android
+  detecterAndroidEtNotifications();
   
   // Éléments DOM
   const currentDayElement = document.getElementById('current-day');
@@ -69,186 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendarGrid = document.getElementById('calendar-grid');
   const notificationTimeSelect = document.getElementById('notification-time');
   const testNotificationButton = document.getElementById('test-notification-btn');
-
-// ========== FONCTION ONESIGNAL CORRIGÉE ==========
-async function checkNotificationPermission() {
-  try {
-    if (typeof OneSignal === 'undefined') return 'unsupported';
-    
-    // NOUVELLE API OneSignal (v16)
-    // Option 1 : La plus simple
-    try {
-      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
-      return isSubscribed ? 'granted' : 'default';
-    } catch (e) {
-      // Fallback à l'ancienne méthode
-      if (OneSignal.User && OneSignal.User.PushSubscription) {
-        const subscription = OneSignal.User.PushSubscription;
-        return subscription.optIn ? 'granted' : 'denied';
-      }
-      throw e;
-    }
-    
-  } catch (error) {
-    console.warn('Erreur vérification permission:', error);
-    // Fallback à l'API standard du navigateur
-    if ('Notification' in window) {
-      return Notification.permission;
-    }
-    return 'unsupported';
-  }
-}
-
-// ========== BOUTONS NOTIFICATIONS ==========
-// Placez ce code APRÈS que le DOM soit chargé
-document.addEventListener('DOMContentLoaded', function() {
-  // ... votre code existant ...
-  
-  // BOUTON "Autoriser les notifications"
-  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    const originalText = btn.textContent;
-    
-    btn.textContent = 'Vérification...';
-    btn.disabled = true;
-    
-    try {
-      const permission = await checkNotificationPermission();
-      
-      if (permission === 'default') {
-        OneSignal.showSlidedownPrompt();
-      } else if (permission === 'denied') {
-        alert('Vous avez bloqué les notifications. Pour les réactiver :\n\n1. Ouvrez les paramètres Chrome\n2. Allez dans "Paramètres du site"\n3. Trouvez "ENVOL" et autorisez les notifications');
-      } else if (permission === 'granted') {
-        alert('✅ Notifications déjà autorisées !');
-      } else {
-        alert('Votre navigateur ne supporte pas les notifications push.');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Une erreur est survenue lors de la demande de permission.');
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
-  });
-  
-  // BOUTON "Envoyer une notif' test"
-  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    const originalText = btn.textContent;
-    
-    btn.textContent = 'Préparation...';
-    btn.disabled = true;
-    
-    try {
-      const permission = await checkNotificationPermission();
-      
-      if (permission === 'granted') {
-        const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-        const defi = getDefiByDay(jourActuel);
-        
-        // Méthode la plus fiable pour OneSignal v16
-        OneSignal.sendSelfNotification({
-          title: `🎯 Test ENVOL - Jour ${jourActuel}`,
-          message: `${defi.titre}\nSi tu vois ceci, les notifications fonctionnent !`,
-          url: window.location.href
-        });
-        
-        alert('✅ Notification de test envoyée !');
-      } else if (permission === 'default') {
-        alert('Veuillez d\'abord autoriser les notifications.');
-      } else {
-        alert('Notifications bloquées. Autorisez-les d\'abord.');
-      }
-    } catch (error) {
-      console.error('Erreur notification test:', error);
-      alert('Erreur: ' + (error.message || 'Impossible d\'envoyer la notification'));
-    } finally {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }
-  });
-});
-  
-  
-// ========== SECTION DÉPANNAGE ==========
-
-// 1. Deuxième bouton de test (identique au premier)
-document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
-  // Utilisez la même logique que votre bouton test-notification-btn existant
-  // Copiez-collez le code de gestion des notifications ici
-});
-
-// 2. Bouton "Vider le cache"
-document.getElementById('clear-cache-btn')?.addEventListener('click', async function() {
-  const btn = this;
-  const originalText = btn.textContent;
-  
-  if (!confirm("Vider le cache ? L'application se rechargera mais tes défis validés seront conservés.")) {
-    return;
-  }
-  
-  btn.textContent = 'Nettoyage en cours...';
-  btn.disabled = true;
-  
-  try {
-    // Option A : Message au Service Worker (méthode propre)
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Méthode via MessageChannel (plus fiable)
-      return new Promise((resolve) => {
-        const messageChannel = new MessageChannel();
-        
-        messageChannel.port1.onmessage = (event) => {
-          if (event.data.success) {
-            console.log('Cache vidé, rechargement...');
-            setTimeout(() => window.location.reload(), 500);
-          } else {
-            console.error('Échec vidage cache:', event.data.error);
-            alert("Le cache n'a pas pu être vidé. Essayez de fermer et rouvrir l'application.");
-          }
-          btn.textContent = originalText;
-          btn.disabled = false;
-          resolve();
-        };
-        
-        navigator.serviceWorker.controller.postMessage(
-          { action: 'CLEAR_CACHE' },
-          [messageChannel.port2]
-        );
-      });
-    }
-    // Option B : Fallback simple
-    else {
-      // Fallback simple : Supprime uniquement le cache des ressources, PAS le localStorage
-      if ('caches' in window) {
-        await caches.delete(CACHE_NAME);
-      }
-      setTimeout(() => window.location.reload(), 500);
-    }
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert("Une erreur est survenue. Essayez de fermer et rouvrir l'application.");
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
-});
-
-// 3. Vérification automatique des mises à jour
-function checkForUpdates() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistration().then(reg => {
-      if (reg) {
-        reg.update(); // Vérifie les mises à jour
-        // Toutes les 24h
-        setInterval(() => reg.update(), 24 * 60 * 60 * 1000);
-      }
-    });
-  }
-}
-
-// Appeler au démarrage
-setTimeout(checkForUpdates, 5000);
   
   // Récupérer le jour actuel
   let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
@@ -257,8 +124,6 @@ setTimeout(checkForUpdates, 5000);
   function peutPasserAuJourSuivant() {
     const aujourdhui = new Date().toLocaleDateString('fr-FR');
     const dernierChangement = localStorage.getItem('dernier_changement_jour');
-    
-    // Si c'est le premier jour OU si on a changé de jour calendaire
     if (!dernierChangement || dernierChangement !== aujourdhui) {
       localStorage.setItem('dernier_changement_jour', aujourdhui);
       return true;
@@ -275,17 +140,15 @@ setTimeout(checkForUpdates, 5000);
   }
   
   // ========== FONCTIONS D'AFFICHAGE ==========
-  // Afficher le défi du jour
   function afficherDefiDuJour(jour) {
     const defi = getDefiByDay(jour);
+    if (!defi) return;
     
-    // Mettre à jour l'interface
     if (currentDayElement) currentDayElement.textContent = jour;
     if (dayCurrentElement) dayCurrentElement.textContent = jour;
     if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
     if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
     
-    // Mettre à jour le bouton selon l'état
     if (markDoneButton) {
       if (defi.termine) {
         markDoneButton.textContent = '✅ Déjà accompli';
@@ -298,136 +161,261 @@ setTimeout(checkForUpdates, 5000);
       }
     }
     
-    // Générer le calendrier
-    genererCalendrier();
-    centrerCalendrierSurJour(jour); // <-- CENTRER LE CALENDRIER
+    if (typeof genererCalendrier === 'function') {
+      genererCalendrier();
+      centrerCalendrierSurJour(jour);
+    }
   }
   
-  // Générer le calendrier visuel des 77 jours
- function genererCalendrier() {
-  if (!calendarGrid) return;
-  
-  calendarGrid.innerHTML = '';
-  
-  for (let jour = 1; jour <= 77; jour++) {
-    const defi = getDefiByDay(jour);
-    const dayElement = document.createElement('div');
-    dayElement.className = 'calendar-day';
-    dayElement.textContent = jour;
+  function genererCalendrier() {
+    if (!calendarGrid) return;
+    calendarGrid.innerHTML = '';
     
-    // ORDRE CRITIQUE - ne pas changer
-    if (defi.termine) {
-      dayElement.classList.add('completed'); // ✅ Terminé
-    } 
-    else if (jour === jourActuel) {
-      dayElement.classList.add('current'); // ⏳ Jour actuel = toujours en cours (même si pas encore terminé)
+    for (let jour = 1; jour <= 77; jour++) {
+      const defi = getDefiByDay(jour);
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      dayElement.textContent = jour;
+      
+      if (defi.termine) {
+        dayElement.classList.add('completed');
+      } else if (jour === jourActuel) {
+        dayElement.classList.add('current');
+      } else if (jour < jourActuel) {
+        dayElement.classList.add('missed');
+      } else {
+        dayElement.classList.add('upcoming');
+      }
+      
+      dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
+      calendarGrid.appendChild(dayElement);
     }
-    else if (jour < jourActuel) {
-      dayElement.classList.add('missed'); //  ❌ = Passé et non fait
-    }
-    else {
-      dayElement.classList.add('upcoming');
-    }
-    
-    dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
-    calendarGrid.appendChild(dayElement);
+    centrerCalendrierSurJour(jourActuel);
   }
-  
-  centrerCalendrierSurJour(jourActuel);
-}
   
   // ========== ÉVÉNEMENTS ==========
-
-  // Marquer un défi comme terminé (NOUVELLE VERSION - anti-speed running)
-if (markDoneButton) {
-  // Supprimez d'abord tous les écouteurs existants
-  const newMarkDoneButton = markDoneButton.cloneNode(true);
-  markDoneButton.parentNode.replaceChild(newMarkDoneButton, markDoneButton);
-  
-  // Ajoutez le nouvel écouteur
-  newMarkDoneButton.addEventListener('click', function() {
-    const defi = getDefiByDay(jourActuel);
-    defi.termine = true;
-    defi.dateValidation = new Date().toISOString();
-    saveProgression();
-    
-    // MAJ UI mais NE PAS changer jourActuel immédiatement
-    afficherDefiDuJour(jourActuel);
-    
-    // Feedback
-    alert("Défi validé ! À demain pour le prochain.");
-  });
-}
-  
-  // Gérer les paramètres de notification
-  const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
-  if (notificationTimeSelect) {
-    notificationTimeSelect.value = heureSauvegardee;
-    
-    notificationTimeSelect.addEventListener('change', function() {
-      localStorage.setItem('heure_notification', this.value);
-      console.log('Heure de notification mise à jour :', this.value);
+  if (markDoneButton) {
+    markDoneButton.addEventListener('click', function() {
+      const defi = getDefiByDay(jourActuel);
+      if (!defi) return;
+      defi.termine = true;
+      defi.dateValidation = new Date().toISOString();
+      if (typeof saveProgression === 'function') saveProgression();
+      afficherDefiDuJour(jourActuel);
+      alert("Défi validé ! À demain pour le prochain.");
     });
   }
   
-  // ========== NOTIFICATIONS ONESIGNAL ==========
-  // Bouton de test de notification
+  if (notificationTimeSelect) {
+    const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
+    notificationTimeSelect.value = heureSauvegardee;
+    notificationTimeSelect.addEventListener('change', function() {
+      localStorage.setItem('heure_notification', this.value);
+    });
+  }
+  
   if (testNotificationButton) {
     testNotificationButton.addEventListener('click', async function() {
-      // 1. Vérifier si OneSignal est prêt
       if (typeof OneSignal === 'undefined') {
-        alert("OneSignal n'est pas encore chargé. Veuillez patienter quelques secondes.");
+        alert("OneSignal n'est pas encore chargé.");
         return;
       }
-
-      // 2. Vérifier et demander la permission si nécessaire
-      const subscription = await OneSignal.User.PushSubscription;
-      const permission = subscription.optIn ? 'granted' : (subscription.optOut ? 'denied' : 'default');
-      
+      const permission = await checkNotificationPermission();
       if (permission === 'default') {
-        // Affiche la bannière de demande de permission
         OneSignal.showSlidedownPrompt();
-        return;
+      } else if (permission === 'denied') {
+        alert("Notifications bloquées.");
+      } else if (permission === 'granted') {
+        const defi = getDefiByDay(jourActuel);
+        OneSignal.sendSelfNotification(
+          `🎯 ENVOL - Jour ${jourActuel}`,
+          `${defi.titre}`,
+          { url: window.location.href }
+        );
+        alert('✅ Notification de test envoyée !');
       }
-
-      if (permission === 'denied') {
-        alert("Vous avez bloqué les notifications. Pour les réactiver, allez dans les paramètres de votre navigateur/site.");
-        return;
-      }
-
-      // 3. Envoyer la notification de test IN-APP (toast)
+    });
+  }
+  
+  // ========== BOUTONS DÉPANNAGE ==========
+  document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
+    const permission = await checkNotificationPermission();
+    if (permission === 'granted') {
       const defi = getDefiByDay(jourActuel);
-      
       OneSignal.sendSelfNotification(
         `🎯 ENVOL - Jour ${jourActuel}`,
         `${defi.titre}`,
         { url: window.location.href }
       );
-      
-      console.log("Notification de test envoyée !");
+      alert('✅ Notification de test envoyée !');
+    } else if (permission === 'default') {
+      OneSignal.showSlidedownPrompt();
+    }
+  });
+  
+  document.getElementById('clear-cache-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    if (!confirm("Vider le cache ?")) return;
+    btn.textContent = 'Nettoyage...';
+    btn.disabled = true;
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          if (event.data.success) {
+            setTimeout(() => window.location.reload(), 500);
+          }
+          btn.textContent = '🗑️ Vider le cache maintenant';
+          btn.disabled = false;
+        };
+        navigator.serviceWorker.controller.postMessage(
+          { action: 'CLEAR_CACHE' },
+          [messageChannel.port2]
+        );
+      } else if ('caches' in window) {
+        await caches.delete(CACHE_NAME);
+        setTimeout(() => window.location.reload(), 500);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      btn.textContent = '🗑️ Vider le cache maintenant';
+      btn.disabled = false;
+    }
+  });
+  
+  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.textContent = 'Vérification...';
+    btn.disabled = true;
+    try {
+      const permission = await checkNotificationPermission();
+      if (permission === 'default') {
+        OneSignal.showSlidedownPrompt();
+      } else if (permission === 'denied') {
+        alert('Notifications bloquées.');
+      } else if (permission === 'granted') {
+        alert('✅ Notifications déjà autorisées !');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      setTimeout(() => {
+        btn.textContent = '🔔 Autoriser les notifications';
+        btn.disabled = false;
+      }, 2000);
+    }
+  });
+  
+  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.textContent = 'Préparation...';
+    btn.disabled = true;
+    try {
+      const permission = await checkNotificationPermission();
+      if (permission === 'granted') {
+        const defi = getDefiByDay(jourActuel);
+        OneSignal.sendSelfNotification(
+          `🎯 Test ENVOL - Jour ${jourActuel}`,
+          `${defi.titre}\nTest notification`,
+          { url: window.location.href }
+        );
+        alert('✅ Notification de test envoyée !');
+      } else if (permission === 'default') {
+        alert('Veuillez d\'abord autoriser les notifications.');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      btn.textContent = '🧐 Envoyer une notif\' test';
+      btn.disabled = false;
+    }
+  });
+  
+  document.getElementById('export-backup-btn')?.addEventListener('click', function() {
+    const backupData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      progression: JSON.parse(localStorage.getItem('defis_envol') || '[]'),
+      jourActuel: localStorage.getItem('jour_actuel'),
+      dernierChangement: localStorage.getItem('dernier_changement_jour'),
+      heureNotification: localStorage.getItem('heure_notification')
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sauvegarde-envol-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('✅ Sauvegarde exportée !');
+  });
+  
+  document.getElementById('import-backup-btn')?.addEventListener('click', function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const backupData = JSON.parse(event.target.result);
+          if (!backupData.progression || !backupData.jourActuel) throw new Error('Format invalide');
+          if (confirm(`Importer la sauvegarde du ${new Date(backupData.timestamp).toLocaleDateString('fr-FR')} ?`)) {
+            localStorage.setItem('defis_envol', JSON.stringify(backupData.progression));
+            localStorage.setItem('jour_actuel', backupData.jourActuel);
+            if (backupData.dernierChangement) localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
+            if (backupData.heureNotification) localStorage.setItem('heure_notification', backupData.heureNotification);
+            alert('✅ Progression importée !');
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Erreur import:', error);
+          alert('❌ Fichier invalide.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  });
+  
+  document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
+    if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés !')) return;
+    if (!confirm('DERNIÈRE CHANCE : "Annuler" pour garder, "OK" pour supprimer.')) return;
+    DefisEnvol.forEach(defi => {
+      defi.termine = false;
+      defi.dateValidation = null;
     });
-  }
+    localStorage.setItem('defis_envol', JSON.stringify(DefisEnvol));
+    localStorage.setItem('jour_actuel', '1');
+    localStorage.removeItem('dernier_changement_jour');
+    localStorage.setItem('heure_notification', '08:00');
+    localStorage.removeItem('install_prompt_shown');
+    alert('🗑️ Progression supprimée.');
+    window.location.reload();
+  });
   
   // ========== INITIALISATION ==========
-  // Afficher le défi du jour actuel
   verifierEtAvancerJour();
-  
-  // Afficher l'overlay d'// ========== GESTION PWA - BOUTON D'INSTALLATION ==========
+  showInstallOverlay();
+  setTimeout(checkForUpdates, 5000);
+  console.log('✅ ENVOL initialisé');
+}); // FIN DU DOMContentLoaded
 
-let deferredPrompt; // Variable pour stocker l'événement d'installation
-const installButton = document.createElement('button'); // Crée le bouton en mémoire
-
-// === ÉTAPE 1 : CONFIGURATION DU BOUTON (fait une seule fois au début) ===
+// ========== GESTION PWA ==========
+let deferredPrompt;
+const installButton = document.createElement('button');
 installButton.id = 'install-pwa-btn';
 installButton.className = 'install-btn';
 installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
-
-// Style de base (important pour la mise en page)
 installButton.style.cssText = `
-  display: none; /* Caché au début */
+  display: none;
   width: calc(100% - 40px);
   max-width: 400px;
-  margin: 20px auto; /* Centre le bouton */
+  margin: 20px auto;
   background: linear-gradient(135deg, #0b252f 0%, #0e303d 100%);
   color: white;
   border: none;
@@ -441,310 +429,41 @@ installButton.style.cssText = `
   transition: transform 0.2s, box-shadow 0.2s;
 `;
 
-// === ÉTAPE 2 : QUAND LE NAVIGATEUR PROPOSE L'INSTALLATION ===
 window.addEventListener('beforeinstallprompt', (event) => {
   console.log('👍 beforeinstallprompt déclenché');
-  
-  // Empêche l'affichage automatique
   event.preventDefault();
-  
-  // Sauvegarde l'événement pour plus tard
   deferredPrompt = event;
-  
-  // Affiche le bouton personnalisé
   installButton.style.display = 'block';
-  
-  // Place le bouton au bon endroit dans la page
   const footer = document.querySelector('.app-footer');
   if (footer) {
-    // Trouve le contenu du footer (votre image + bouton Systeme.io)
     const footerContent = footer.querySelector('.footer-content');
-    
     if (footerContent) {
-      // Place le bouton d'installation AVANT le contenu du footer
       footer.insertBefore(installButton, footerContent);
     } else {
-      // Fallback : place au début du footer
       footer.prepend(installButton);
     }
   }
 });
 
-// === ÉTAPE 3 : QUAND ON CLIQUE SUR LE BOUTON D'INSTALLATION ===
 installButton.addEventListener('click', async () => {
-  // Si l'événement d'installation n'est pas disponible (navigateur incompatible)
   if (!deferredPrompt) {
     alert("Pour installer l'application :\n\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : utilisez le bouton Partager (📤) de Safari → \"Sur l'Écran d'Accueil\"");
     return;
   }
-  
-  // Affiche la fenêtre native d'installation
   deferredPrompt.prompt();
-  
-  // Attend la réponse de l'utilisateur
   const { outcome } = await deferredPrompt.userChoice;
-  console.log(`Choix utilisateur : ${outcome === 'accepted' ? 'Accepté' : 'Refusé'}`);
-  
-  // Réinitialise pour la prochaine fois
+  console.log(`Choix utilisateur : ${outcome}`);
   deferredPrompt = null;
-  
-  // Cache le bouton après installation
   installButton.style.display = 'none';
 });
 
-// === ÉTAPE 4 : QUAND L'APP EST DÉJÀ INSTALLÉE ===
 window.addEventListener('appinstalled', () => {
   console.log('🎉 PWA installée avec succès !');
   installButton.style.display = 'none';
 });
 
-// === ÉTAPE 5 : VÉRIFICATION AU CHARGEMENT ===
-// Vérifie si l'app est déjà installée au chargement
 if (window.matchMedia('(display-mode: standalone)').matches) {
-  console.log('📱 App déjà installée (mode standalone)');
+  console.log('📱 App déjà installée');
   installButton.style.display = 'none';
 }
-
-// ========== GESTION SAUVEGARDES ==========
-
-// 1. Exporter la sauvegarde
-document.getElementById('export-backup-btn')?.addEventListener('click', function() {
-  const backupData = {
-    version: '1.0',
-    timestamp: new Date().toISOString(),
-    progression: JSON.parse(localStorage.getItem('defis_envol') || '[]'),
-    jourActuel: localStorage.getItem('jour_actuel'),
-    dernierChangement: localStorage.getItem('dernier_changement_jour'),
-    heureNotification: localStorage.getItem('heure_notification')
-  };
-  
-  const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  
-  a.href = url;
-  a.download = `sauvegarde-envol-${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
-  alert('✅ Sauvegarde exportée ! Conservez ce fichier précieusement.');
-});
-
-// 2. Importer la sauvegarde
-document.getElementById('import-backup-btn')?.addEventListener('click', function() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      try {
-        const backupData = JSON.parse(event.target.result);
-        
-        // Validation basique
-        if (!backupData.progression || !backupData.jourActuel) {
-          throw new Error('Format de sauvegarde invalide');
-        }
-        
-        if (confirm(`Importer la sauvegarde du ${new Date(backupData.timestamp).toLocaleDateString('fr-FR')} ? Votre progression actuelle sera écrasée.`)) {
-          localStorage.setItem('defis_envol', JSON.stringify(backupData.progression));
-          localStorage.setItem('jour_actuel', backupData.jourActuel);
-          if (backupData.dernierChangement) {
-            localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
-          }
-          if (backupData.heureNotification) {
-            localStorage.setItem('heure_notification', backupData.heureNotification);
-          }
-          
-          alert('✅ Progression importée avec succès !');
-          window.location.reload();
-        }
-      } catch (error) {
-        console.error('Erreur import:', error);
-        alert('❌ Fichier de sauvegarde invalide ou corrompu.');
-      }
-    };
-    reader.readAsText(file);
-  };
-  
-  input.click();
-});
-
-// Soucis avec les notifications :
-
-// ========== GESTION NOTIFICATIONS ANDROID ==========
-
-// 1. Bouton "Autoriser les notifications"
-document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
-  const btn = this;
-  const originalText = btn.textContent;
-  
-  btn.textContent = 'Vérification...';
-  btn.disabled = true;
-  
-  try {
-    // Méthode OneSignal (préférée)
-    if (typeof OneSignal !== 'undefined') {
-      const permission = await OneSignal.getNotificationPermission();
-      
-      if (permission === 'default') {
-        // Affiche la bannière de demande
-        OneSignal.showSlidedownPrompt();
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }, 3000);
-        return;
-      }
-      
-      if (permission === 'granted') {
-        alert('✅ Notifications déjà autorisées !');
-      } else {
-        alert('Vous avez bloqué les notifications. Pour les réactiver :\n\n1. Ouvrez les paramètres Chrome\n2. Allez dans "Paramètres du site"\n3. Trouvez "ENVOL" et autorisez les notifications');
-      }
-    } 
-    // Fallback API standard
-    else if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      
-      if (permission === 'granted') {
-        alert('✅ Notifications autorisées avec succès !');
-      } else if (permission === 'denied') {
-        alert('Vous avez bloqué les notifications. Consultez les paramètres de votre navigateur.');
-      }
-    } else {
-      alert('Votre navigateur ne supporte pas les notifications ou OneSignal n\'est pas chargé.');
-    }
-  } catch (error) {
-    console.error('Erreur permission notifications:', error);
-    alert('Une erreur est survenue lors de la demande de permission.');
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
-});
-
-// 2. Bouton "Envoyer une notif' test"
-document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
-  const btn = this;
-  const originalText = btn.textContent;
-  
-  btn.textContent = 'Préparation...';
-  btn.disabled = true;
-  
-  try {
-    // Vérifier OneSignal d'abord
-    if (typeof OneSignal !== 'undefined') {
-      const permission = await OneSignal.getNotificationPermission();
-      
-      if (permission === 'granted') {
-        // Envoyer une notification in-app (toast)
-        const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-        const defi = getDefiByDay(jourActuel);
-        
-        OneSignal.sendSelfNotification(
-          `🎯 Test ENVOL - Jour ${jourActuel}`,
-          `${defi.titre}\nSi tu vois ceci, les notifications fonctionnent !`,
-          { url: window.location.href }
-        );
-        
-        alert('✅ Notification de test envoyée !\n\nElle devrait apparaître en haut de l\'écran.');
-      } else if (permission === 'default') {
-        alert('Veuillez d\'abord autoriser les notifications en utilisant le bouton "Autoriser les notifications".');
-      } else {
-        alert('Notifications bloquées. Autorisez-les d\'abord dans les paramètres de votre navigateur.');
-      }
-    } 
-    // Fallback API standard (moins fiable)
-    else if ('Notification' in window && Notification.permission === 'granted') {
-      const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-      const defi = getDefiByDay(jourActuel);
-      
-      new Notification(`🎯 Test ENVOL - Jour ${jourActuel}`, {
-        body: `${defi.titre}\nNotification test`,
-        icon: '/sekhamet-envol/assets/icons/ENVOL-192.png'
-      });
-      
-      alert('✅ Notification système envoyée !');
-    } else {
-      alert('Impossible d\'envoyer une notification.\n\n1. Vérifiez que OneSignal est chargé\n2. Autorisez les notifications si demandé');
-    }
-  } catch (error) {
-    console.error('Erreur notification test:', error);
-    alert('Erreur lors de l\'envoi de la notification :\n' + error.message);
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
-});
-
-// 3. Détection Android pour afficher/masquer cette section
-function detecterAndroidEtNotifications() {
-  // 1. Cibler UNIQUEMENT la section notifications Android
-  const androidNotificationSection = document.getElementById('allow-notifications-btn')?.closest('.trouble-item');
-  
-  if (androidNotificationSection) {
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-    console.log('📱 Détection:', { isAndroid, isiOS, section: androidNotificationSection });
-    
-    // Masquer UNIQUEMENT si iOS
-    if (isiOS) {
-      console.log('📱 Section notifications masquée (iOS)');
-      androidNotificationSection.style.display = 'none';
-    } else {
-      // Sur Android, toujours afficher
-      androidNotificationSection.style.display = 'block';
-      console.log('📱 Section notifications affichée (Android)');
-    }
-  }
-  
-  // 2. TOUTES les autres sections "trouble-item" doivent RESTER VISIBLES
-  document.querySelectorAll('.trouble-item').forEach(section => {
-    // Ne pas toucher à la section notifications si on l'a déjà gérée
-    if (section !== androidNotificationSection) {
-      section.style.display = 'block';
-      section.style.visibility = 'visible';
-      section.style.opacity = '1';
-    }
-  });
-  
-  console.log('🔍 Sections trouble-item trouvées:', document.querySelectorAll('.trouble-item').length);
-}
-
-// GARDEZ cet appel au chargement
-document.addEventListener('DOMContentLoaded', detecterAndroidEtNotifications);
-
-
-// 4. Supprimer la progression
-document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
-  if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés et vous recommencerez au Jour 1.\n\nCette action est irréversible !')) {
-    return;
-  }
-  
-  if (!confirm('DERNIÈRE CHANCE :\nAppuyez sur "Annuler" pour garder votre progression.\n"OK" pour tout supprimer.')) {
-    return;
-  }
-  
-  // Réinitialisation
-  DefisEnvol.forEach(defi => {
-    defi.termine = false;
-    defi.dateValidation = null;
-  });
-  
-  localStorage.setItem('defis_envol', JSON.stringify(DefisEnvol));
-  localStorage.setItem('jour_actuel', '1');
-  localStorage.removeItem('dernier_changement_jour');
-  localStorage.setItem('heure_notification', '08:00');
-  localStorage.removeItem('install_prompt_shown'); // Pour revoir le splash screen
-  
-  alert('🗑️ Progression supprimée. Vous recommencez au Jour 1.');
-  window.location.reload();
-});
+// ========== FIN DU FICHIER ==========
