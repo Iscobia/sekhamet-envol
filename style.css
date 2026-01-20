@@ -272,6 +272,12 @@ body {
   gap: 15px;
   justify-content: center;
   flex-wrap: wrap; /* Sur mobile, passe en dessous */
+  flex-direction: column;
+  text-align: center;
+}
+  
+.footer-logo {
+  margin-bottom: 10px;
 }
 
 
@@ -279,7 +285,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   background: linear-gradient(160deg, #0b252f 0%, #0e303d 100%);
   color: white;
   text-decoration: none;
@@ -313,18 +319,8 @@ body {
   }
 }
 
-  /*========== HEADER ET FOOTER RESPONSIVE ==========*/
   
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .footer-logo {
-    margin-bottom: 10px;
-  }
-  
-/*========== HEADER ET FOOTER RESPONSIVE ==========*/
+/*========== CALENDAR RESPONSIVE ==========*/
   
   .calendar-grid {
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
