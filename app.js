@@ -213,15 +213,18 @@ setTimeout(checkForUpdates, 5000);
     dayElement.className = 'calendar-day';
     dayElement.textContent = jour;
     
-    // LOGIQUE CORRIGÉE - ORDRE CRITIQUE !
+    // ORDRE CRITIQUE - ne pas changer
     if (defi.termine) {
       dayElement.classList.add('completed'); // ✅ Terminé
-    } else if (jour === jourActuel) {
-      dayElement.classList.add('current');   // ⏳ En cours (même si pas encore terminé)
-    } else if (jour < jourActuel) {
-      dayElement.classList.add('missed');    // ❌ Passé et non terminé
-    } else {
-      dayElement.classList.add('upcoming');  // 🕔 Futur
+    } 
+    else if (jour === jourActuel) {
+      dayElement.classList.add('current'); // ⏳ Jour actuel = toujours en cours (même si pas encore terminé)
+    }
+    else if (jour < jourActuel) {
+      dayElement.classList.add('missed'); //  ❌ = Passé et non fait
+    }
+    else {
+      dayElement.classList.add('upcoming');
     }
     
     dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
