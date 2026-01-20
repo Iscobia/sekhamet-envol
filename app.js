@@ -121,15 +121,23 @@ document.addEventListener('DOMContentLoaded', function() {
   let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
   
   // ========== LOGIQUE ANTI-SPEED RUNNING ==========
-  function peutPasserAuJourSuivant() {
-    const aujourdhui = new Date().toLocaleDateString('fr-FR');
-    const dernierChangement = localStorage.getItem('dernier_changement_jour');
-    if (!dernierChangement || dernierChangement !== aujourdhui) {
-      localStorage.setItem('dernier_changement_jour', aujourdhui);
-      return true;
-    }
-    return false;
+function peutPasserAuJourSuivant() {
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  const dernierChangement = localStorage.getItem('dernier_changement_jour');
+  const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+  
+  // ⭐ Protection spéciale pour le jour 1 ⭐
+  if (jourActuel === 1 && !dernierChangement) {
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
+    return false; // Ne pas avancer du jour 1 au jour 2
   }
+  
+  if (!dernierChangement || dernierChangement !== aujourdhui) {
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
+    return true;
+  }
+  return false;
+}
   
   function verifierEtAvancerJour() {
     if (peutPasserAuJourSuivant() && jourActuel < 77) {
@@ -400,7 +408,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     localStorage.setItem('defis_envol', JSON.stringify(DefisEnvol));
     localStorage.setItem('jour_actuel', '1');
-    localStorage.removeItem('dernier_changement_jour');
+    
+  // ⭐⭐⭐ CORRECTION ICI (bug du jour 1 manqué après reset) ⭐⭐⭐
+  // NE PAS supprimer dernier_changement_jour, mais le mettre à AUJOURD'HUI
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  localStorage.setItem('dernier_changement_jour', aujourdhui);
+  // ⭐⭐⭐
+
+    
     localStorage.setItem('heure_notification', '08:00');
     localStorage.removeItem('install_prompt_shown');
     alert('🗑️ Progression supprimée.');
@@ -408,38 +423,65 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // ========== INITIALISATION ==========
-  verifierEtAvancerJour();
-  verifierJoursManques();
-  showInstallOverlay();
-  setTimeout(checkForUpdates, 5000);
-  console.log('✅ ENVOL initialisé');
+// Récupérer le jour actuel AVANT tout traitement
+let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
 
-  // ========== VÉRIFICATION DES JOURS MARQUÉS COMME VALIDÉS, EN COURS OU MANQUÉS ==========
-
-  // Fonction pour marquer automatiquement les jours manqués
+// 1. D'abord vérifier et marquer les jours manqués
 function verifierJoursManques() {
   const aujourdhui = new Date().toLocaleDateString('fr-FR');
   const dernierVerif = localStorage.getItem('derniere_verif_manques');
   
-  // Ne vérifier qu'une fois par jour
   if (dernierVerif === aujourdhui) return;
-  
   localStorage.setItem('derniere_verif_manques', aujourdhui);
   
-  // Parcourir tous les jours passés
+  // Ne pas vérifier si c'est le tout premier jour après réinitialisation
+  const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+  const defiJour1 = getDefiByDay(1);
+  
+  // Si on est au jour 1 et que le défi jour 1 n'est pas terminé, ne rien faire
+  if (jourActuel === 1 && !defiJour1.termine) {
+    return;
+  }
+  
+  // Sinon, vérifier normalement
   for (let jour = 1; jour < jourActuel; jour++) {
     const defi = getDefiByDay(jour);
-    // Si jour passé ET non terminé → marqué comme manqué
     if (!defi.termine) {
-      defi.termine = false; // Déjà false, mais explicite
-      // Note: On ne change pas l'état, juste la logique d'affichage le gère
+      defi.termine = false; // Déjà false, mais au cas où
     }
   }
   
-  if (typeof saveProgression === 'function') {
-    saveProgression();
+  if (typeof saveProgression === 'function') saveProgression();
+};
+
+// 2. Ensuite vérifier si on peut avancer au jour suivant
+// Mais SEULEMENT si l'utilisateur a terminé le jour actuel
+function peutAvancerAuJourSuivant() {
+  const defiActuel = getDefiByDay(jourActuel);
+  if (!defiActuel) return false;
+  
+  // Si le jour actuel est terminé, on peut vérifier si on passe au suivant
+  if (defiActuel.termine) {
+    return peutPasserAuJourSuivant() && jourActuel < 77;
   }
+  return false;
 }
+
+function verifierEtAvancerJour() {
+  if (peutAvancerAuJourSuivant()) {
+    jourActuel++;
+    localStorage.setItem('jour_actuel', jourActuel.toString());
+  }
+  afficherDefiDuJour(jourActuel);
+}
+
+// 3. Maintenant on peut appeler verifierEtAvancerJour
+verifierEtAvancerJour();
+
+// 4. Continuer avec le reste...
+showInstallOverlay();
+setTimeout(checkForUpdates, 5000);
+console.log('✅ ENVOL initialisé');
 
   
 }); // FIN DU DOMContentLoaded
