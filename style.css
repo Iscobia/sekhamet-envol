@@ -347,8 +347,8 @@ body {
   display: none; /* Caché par défaut */
   width: calc(100% - 40px);
   max-width: 400px;
-  margin: 20px auto;
-  background: linear-gradient(160deg, #0b252f 0%, #0e303d 100%);
+  margin: 20px auto 50px auto; /* marge de 20px en haut, 50px en bas et automatique sur les côtés pour centrage*/
+  background: linear-gradient(135deg, #f29a0b 0%, #ed5d0e 100%);
   color: white;
   border: none;
   padding: 16px 24px;
@@ -460,7 +460,7 @@ body {
   padding: 12px;
 
   margin: 8px 0 30px 0px;
-  background: linear-gradient(160deg, #0b252f 0%, #0e303d 100%);
+  background: linear-gradient(160deg, #0e303d 0%, #014055 100%);
   border: none;
   -moz-border-radius: 20px 2px 20px 2px / 20px 2px 20px 2px;
   -webkit-border-radius: 20px 2px 20px 2px / 20px 2px 20px 2px;
