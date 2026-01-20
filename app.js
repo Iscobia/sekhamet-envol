@@ -423,8 +423,7 @@ function peutPasserAuJourSuivant() {
   });
   
   // ========== INITIALISATION ==========
-// Récupérer le jour actuel AVANT tout traitement
-let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+// jourActuel est déjà déclaré plus haut, on l'utilise directement
 
 // 1. D'abord vérifier et marquer les jours manqués
 function verifierJoursManques() {
