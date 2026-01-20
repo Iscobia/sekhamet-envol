@@ -5,8 +5,8 @@
   "start_url": "/sekhamet-envol/",
   "scope": "/sekhamet-envol/",
   "display": "standalone",
-  "background_color": "#667eea",
-  "theme_color": "#5d5fef",
+  "background_color": "#0b252f",
+  "theme_color": "#0b252f",
   "orientation": "portrait",
   "icons": [
     {
