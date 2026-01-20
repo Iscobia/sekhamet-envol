@@ -34,8 +34,15 @@
     <div class="app-container">
         <!-- En-tête -->
         <header class="app-header">
-            <h1>Envol - Jour <span id="current-day">1</span></h1>
-            <div class="day-progress">Jour <span id="day-current">1</span>/77</div>
+          <div class="header-content">
+            <img src="/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png" 
+                 alt="ENVOL" 
+                 class="header-logo">
+            <div class="header-text">
+              <h1>ENVOL - Jour <span id="current-day">1</span></h1>
+              <div class="day-progress">Jour <span id="day-current">1</span>/77</div>
+            </div>
+          </div>
         </header>
         
         <!-- Défi du jour -->
@@ -74,51 +81,55 @@
         
         <!-- Lien vers Systeme.io -->
         <footer class="app-footer">
-            <img src="assets/icons/ENVOL-192.png" alt="ENVOL - Image">.
-            <a href="https://coaching.sekhamet.com/school/course/envol/" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               class="systeme-btn">
-                📚 Accéder à ENVOL sur Systeme.io
-            </a>
-<!-- Section dépannage -->
-<section class="troubleshooting">
-  <h3>🛠️ Problème technique ?</h3>
-  
-<div class="trouble-item">
-  <p class="backup-p"><strong>L'app a un comportement bizarre et tu veux la rafraîchir ?</strong></p> 
-    <button id="clear-cache-btn" class="warning-btn">
-  🗑️ Vider le cache maintenant
-    </button>
-  <p class="backup-p"><strong>Tu veux changer de téléphone, sécuriser ta progression ou tu as eu un souci technique ?</strong></p>
-  <div class="backup-buttons">
-    <button id="export-backup-btn" class="backup-btn">
-      📤 Exporter ma sauvegarde
-    </button>
-    <button id="import-backup-btn" class="backup-btn">
-      📥 Importer ma progression
-    </button>
-  </div>
-      <p class="backup-p"><strong>Tu es sur Android et tu as un soucis avec les notifications ?</strong></p>
-  <div class="backup-buttons">
-    <button id="allow-notifications-btn" class="backup-btn">
-      🔔 Autoriser les notifications
-    </button>
-    <button id="test-notification-android-btn" class="backup-btn">
-      🧐 Envoyer une notif' test
-    </button>
-  </div>
-  <p class="small-note">Ces boutons fonctionnent principalement sur Chrome Android.</p>
-</div>
-
-<div class="trouble-item warning">
-  <p><strong>Tu veux recommencer ton défi de zéro ?</strong></p>
-  <button id="reset-progress-btn" class="danger-btn">
-    ⚠️ Je supprime ma progression
-  </button>
-  <p class="small-note">Attention : cette action est irréversible !</p>
-</div>
-</section>
+             <div class="footer-content">
+                <img src="/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png" 
+                     alt="ENVOL" 
+                     class="footer-logo">
+                <a href="https://coaching.sekhamet.com/school/course/envol/" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="systeme-btn">
+                  📚 Accéder à ENVOL sur Systeme.io
+                </a>
+              </div>
+            <!-- Section dépannage -->
+            <section class="troubleshooting">
+              <h3>🛠️ Problème technique ?</h3>
+              
+            <div class="trouble-item">
+              <p class="backup-p"><strong>L'app a un comportement bizarre et tu veux la rafraîchir ?</strong></p> 
+                <button id="clear-cache-btn" class="warning-btn">
+              🗑️ Vider le cache maintenant
+                </button>
+              <p class="backup-p"><strong>Tu veux changer de téléphone, sécuriser ta progression ou tu as eu un souci technique ?</strong></p>
+              <div class="backup-buttons">
+                <button id="export-backup-btn" class="backup-btn">
+                  📤 Exporter ma sauvegarde
+                </button>
+                <button id="import-backup-btn" class="backup-btn">
+                  📥 Importer ma progression
+                </button>
+              </div>
+                  <p class="backup-p"><strong>Tu es sur Android et tu as un soucis avec les notifications ?</strong></p>
+              <div class="backup-buttons">
+                <button id="allow-notifications-btn" class="backup-btn">
+                  🔔 Autoriser les notifications
+                </button>
+                <button id="test-notification-android-btn" class="backup-btn">
+                  🧐 Envoyer une notif' test
+                </button>
+              </div>
+              <p class="small-note">Ces boutons fonctionnent principalement sur Chrome Android.</p>
+            </div>
+            
+            <div class="trouble-item warning">
+              <p><strong>Tu veux recommencer ton défi de zéro ?</strong></p>
+              <button id="reset-progress-btn" class="danger-btn">
+                ⚠️ Je supprime ma progression
+              </button>
+              <p class="small-note">Attention : cette action est irréversible !</p>
+            </div>
+            </section>
         </footer>
     </div>
     
