@@ -412,60 +412,98 @@ if (markDoneButton) {
   // Afficher le défi du jour actuel
   verifierEtAvancerJour();
   
-  // Afficher l'overlay d'installation
-  showInstallOverlay();
-  
-  // Demander la permission pour les notifications
-  if ('Notification' in window && Notification.permission === 'default') {
-    setTimeout(() => {
-      Notification.requestPermission();
-    }, 2000);
-  }
-});
+  // Afficher l'overlay d'// ========== GESTION PWA - BOUTON D'INSTALLATION ==========
 
-// ========== GESTION PWA ==========
-let deferredPrompt;
-const installButton = document.createElement('button');
+let deferredPrompt; // Variable pour stocker l'événement d'installation
+const installButton = document.createElement('button'); // Crée le bouton en mémoire
 
-// Écouter l'événement beforeinstallprompt
+// === ÉTAPE 1 : CONFIGURATION DU BOUTON (fait une seule fois au début) ===
+installButton.id = 'install-pwa-btn';
+installButton.className = 'install-btn';
+installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
+
+// Style de base (important pour la mise en page)
+installButton.style.cssText = `
+  display: none; /* Caché au début */
+  width: calc(100% - 40px);
+  max-width: 400px;
+  margin: 20px auto; /* Centre le bouton */
+  background: linear-gradient(135deg, #0b252f 0%, #0e303d 100%);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(11, 37, 47, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+`;
+
+// === ÉTAPE 2 : QUAND LE NAVIGATEUR PROPOSE L'INSTALLATION ===
 window.addEventListener('beforeinstallprompt', (event) => {
   console.log('👍 beforeinstallprompt déclenché');
+  
+  // Empêche l'affichage automatique
   event.preventDefault();
+  
+  // Sauvegarde l'événement pour plus tard
   deferredPrompt = event;
   
-  // Créer/s'afficher le bouton d'installation
-  installButton.id = 'install-pwa-btn';
-  installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
-  installButton.className = 'install-btn';
+  // Affiche le bouton personnalisé
   installButton.style.display = 'block';
   
-  // Ajouter le bouton avant le footer
+  // Place le bouton au bon endroit dans la page
   const footer = document.querySelector('.app-footer');
   if (footer) {
-    footer.parentNode.insertBefore(installButton, footer);
+    // Trouve le contenu du footer (votre image + bouton Systeme.io)
+    const footerContent = footer.querySelector('.footer-content');
+    
+    if (footerContent) {
+      // Place le bouton d'installation AVANT le contenu du footer
+      footer.insertBefore(installButton, footerContent);
+    } else {
+      // Fallback : place au début du footer
+      footer.prepend(installButton);
+    }
   }
 });
 
-// Gérer le clic sur le bouton d'installation
+// === ÉTAPE 3 : QUAND ON CLIQUE SUR LE BOUTON D'INSTALLATION ===
 installButton.addEventListener('click', async () => {
+  // Si l'événement d'installation n'est pas disponible (navigateur incompatible)
   if (!deferredPrompt) {
-    alert("Pour installer l'application :\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : partager → \"Sur l'écran d'accueil\"");
+    alert("Pour installer l'application :\n\n1. Sur Android : menu → \"Ajouter à l'écran d'accueil\"\n2. Sur iOS : utilisez le bouton Partager (📤) de Safari → \"Sur l'Écran d'Accueil\"");
     return;
   }
   
+  // Affiche la fenêtre native d'installation
   deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  console.log(`User response: ${outcome}`);
   
+  // Attend la réponse de l'utilisateur
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log(`Choix utilisateur : ${outcome === 'accepted' ? 'Accepté' : 'Refusé'}`);
+  
+  // Réinitialise pour la prochaine fois
   deferredPrompt = null;
+  
+  // Cache le bouton après installation
   installButton.style.display = 'none';
 });
 
-// Vérifier si l'app est déjà installée
+// === ÉTAPE 4 : QUAND L'APP EST DÉJÀ INSTALLÉE ===
 window.addEventListener('appinstalled', () => {
-  console.log('PWA installée avec succès !');
+  console.log('🎉 PWA installée avec succès !');
   installButton.style.display = 'none';
 });
+
+// === ÉTAPE 5 : VÉRIFICATION AU CHARGEMENT ===
+// Vérifie si l'app est déjà installée au chargement
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  console.log('📱 App déjà installée (mode standalone)');
+  installButton.style.display = 'none';
+}
 
 // ========== GESTION SAUVEGARDES ==========
 
