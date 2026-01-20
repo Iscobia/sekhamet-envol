@@ -70,7 +70,109 @@ document.addEventListener('DOMContentLoaded', function() {
   const notificationTimeSelect = document.getElementById('notification-time');
   const testNotificationButton = document.getElementById('test-notification-btn');
 
-  // ========== SECTION DÉPANNAGE ==========
+// ========== FONCTION ONESIGNAL CORRIGÉE ==========
+async function checkNotificationPermission() {
+  try {
+    if (typeof OneSignal === 'undefined') return 'unsupported';
+    
+    // NOUVELLE API OneSignal (v16)
+    // Option 1 : La plus simple
+    try {
+      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+      return isSubscribed ? 'granted' : 'default';
+    } catch (e) {
+      // Fallback à l'ancienne méthode
+      if (OneSignal.User && OneSignal.User.PushSubscription) {
+        const subscription = OneSignal.User.PushSubscription;
+        return subscription.optIn ? 'granted' : 'denied';
+      }
+      throw e;
+    }
+    
+  } catch (error) {
+    console.warn('Erreur vérification permission:', error);
+    // Fallback à l'API standard du navigateur
+    if ('Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  }
+}
+
+// ========== BOUTONS NOTIFICATIONS ==========
+// Placez ce code APRÈS que le DOM soit chargé
+document.addEventListener('DOMContentLoaded', function() {
+  // ... votre code existant ...
+  
+  // BOUTON "Autoriser les notifications"
+  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    const originalText = btn.textContent;
+    
+    btn.textContent = 'Vérification...';
+    btn.disabled = true;
+    
+    try {
+      const permission = await checkNotificationPermission();
+      
+      if (permission === 'default') {
+        OneSignal.showSlidedownPrompt();
+      } else if (permission === 'denied') {
+        alert('Vous avez bloqué les notifications. Pour les réactiver :\n\n1. Ouvrez les paramètres Chrome\n2. Allez dans "Paramètres du site"\n3. Trouvez "ENVOL" et autorisez les notifications');
+      } else if (permission === 'granted') {
+        alert('✅ Notifications déjà autorisées !');
+      } else {
+        alert('Votre navigateur ne supporte pas les notifications push.');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Une erreur est survenue lors de la demande de permission.');
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  });
+  
+  // BOUTON "Envoyer une notif' test"
+  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    const originalText = btn.textContent;
+    
+    btn.textContent = 'Préparation...';
+    btn.disabled = true;
+    
+    try {
+      const permission = await checkNotificationPermission();
+      
+      if (permission === 'granted') {
+        const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+        const defi = getDefiByDay(jourActuel);
+        
+        // Méthode la plus fiable pour OneSignal v16
+        OneSignal.sendSelfNotification({
+          title: `🎯 Test ENVOL - Jour ${jourActuel}`,
+          message: `${defi.titre}\nSi tu vois ceci, les notifications fonctionnent !`,
+          url: window.location.href
+        });
+        
+        alert('✅ Notification de test envoyée !');
+      } else if (permission === 'default') {
+        alert('Veuillez d\'abord autoriser les notifications.');
+      } else {
+        alert('Notifications bloquées. Autorisez-les d\'abord.');
+      }
+    } catch (error) {
+      console.error('Erreur notification test:', error);
+      alert('Erreur: ' + (error.message || 'Impossible d\'envoyer la notification'));
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  });
+});
+  
+  
+// ========== SECTION DÉPANNAGE ==========
 
 // 1. Deuxième bouton de test (identique au premier)
 document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
@@ -279,7 +381,8 @@ if (markDoneButton) {
       }
 
       // 2. Vérifier et demander la permission si nécessaire
-      const permission = await OneSignal.getNotificationPermission();
+      const subscription = await OneSignal.User.PushSubscription;
+      const permission = subscription.optIn ? 'granted' : (subscription.optOut ? 'denied' : 'default');
       
       if (permission === 'default') {
         // Affiche la bannière de demande de permission
