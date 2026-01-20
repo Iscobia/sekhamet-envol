@@ -126,6 +126,14 @@ body {
   background: #d1fae5;
   color: #065f46;
   cursor: default;
+  border: none;
+  -moz-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
+  -webkit-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
+  -webkit-border-top-left-radius: 30px 30px;
+  -webkit-border-top-right-radius: 5px 5px;
+  -webkit-border-bottom-right-radius: 30px 30px;
+  -webkit-border-bottom-left-radius: 5px 5px;
+  border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
 }
 
 .validate-btn:disabled {
@@ -255,15 +263,16 @@ body {
   color: white;
   text-decoration: none;
   padding: 15px 30px;
+  margin : 5px;
   
   border: none;
-  -moz-border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
-  -webkit-border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
+  -moz-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
+  -webkit-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
   -webkit-border-top-left-radius: 30px 30px;
   -webkit-border-top-right-radius: 5px 5px;
   -webkit-border-bottom-right-radius: 30px 30px;
   -webkit-border-bottom-left-radius: 5px 5px;
-  border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
+  border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
   
   font-weight: bold;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -372,6 +381,7 @@ body {
   color: white;
   border: none;
   padding: 12px 24px;
+  margin: 8px 0 30px 0px;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
@@ -408,15 +418,16 @@ body {
   border: none;
   padding: 12px;
 
+  margin: 8px 0 30px 0px;
   background: linear-gradient(135deg, #0b252f 0%, #0e303d 100%);
   border: none;
-  -moz-border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
-  -webkit-border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
+  -moz-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
+  -webkit-border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
   -webkit-border-top-left-radius: 30px 30px;
   -webkit-border-top-right-radius: 5px 5px;
   -webkit-border-bottom-right-radius: 30px 30px;
   -webkit-border-bottom-left-radius: 5px 5px;
-  border-radius: 30px 5px 30px 5px / 30px 5px 30px 5px;
+  border-radius: 20px 2px 20px 2px / 20px 5px 20px 2px;
   
   font-weight: bold;
   cursor: pointer;
@@ -426,6 +437,9 @@ body {
 .backup-btn:hover {
   transform: translateY(-2px);
 }
+
+/* Paragraphes de problèmes techniques : cache, backup, réinitialisation... */
+backup-p {margin: 30px 0 2px 0px;}
 
 /* Section avertissement */
 .trouble-item.warning {
