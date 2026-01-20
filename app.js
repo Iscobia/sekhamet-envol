@@ -168,30 +168,39 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function genererCalendrier() {
-    if (!calendarGrid) return;
-    calendarGrid.innerHTML = '';
+  if (!calendarGrid) return;
+  calendarGrid.innerHTML = '';
+  
+  for (let jour = 1; jour <= 77; jour++) {
+    const defi = getDefiByDay(jour);
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.textContent = jour;
     
-    for (let jour = 1; jour <= 77; jour++) {
-      const defi = getDefiByDay(jour);
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = jour;
-      
-      if (defi.termine) {
-        dayElement.classList.add('completed');
-      } else if (jour === jourActuel) {
-        dayElement.classList.add('current');
-      } else if (jour < jourActuel) {
-        dayElement.classList.add('missed');
-      } else {
-        dayElement.classList.add('upcoming');
-      }
-      
-      dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
-      calendarGrid.appendChild(dayElement);
+    // ===== LOGIQUE CORRIGÉE =====
+    // 1. D'abord vérifier si le défi est TERMINÉ
+    if (defi.termine) {
+      dayElement.classList.add('completed'); // ✅ Accompli
     }
-    centrerCalendrierSurJour(jourActuel);
+    // 2. Sinon, vérifier si c'est le JOUR ACTUEL
+    else if (jour === jourActuel) {
+      dayElement.classList.add('current');   // ⏳ En cours
+    }
+    // 3. Sinon, vérifier si c'est un JOUR PASSÉ NON TERMINÉ
+    else if (jour < jourActuel && !defi.termine) {
+      dayElement.classList.add('missed');    // ❌ Manqué
+    }
+    // 4. Sinon, c'est un JOUR FUTUR
+    else {
+      dayElement.classList.add('upcoming');  // 🕔 À venir
+    }
+    // ============================
+    
+    dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
+    calendarGrid.appendChild(dayElement);
   }
+  centrerCalendrierSurJour(jourActuel);
+}
   
   // ========== ÉVÉNEMENTS ==========
   if (markDoneButton) {
@@ -400,9 +409,39 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // ========== INITIALISATION ==========
   verifierEtAvancerJour();
+  verifierJoursManques();
   showInstallOverlay();
   setTimeout(checkForUpdates, 5000);
   console.log('✅ ENVOL initialisé');
+
+  // ========== VÉRIFICATION DES JOURS MARQUÉS COMME VALIDÉS, EN COURS OU MANQUÉS ==========
+
+  // Fonction pour marquer automatiquement les jours manqués
+function verifierJoursManques() {
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  const dernierVerif = localStorage.getItem('derniere_verif_manques');
+  
+  // Ne vérifier qu'une fois par jour
+  if (dernierVerif === aujourdhui) return;
+  
+  localStorage.setItem('derniere_verif_manques', aujourdhui);
+  
+  // Parcourir tous les jours passés
+  for (let jour = 1; jour < jourActuel; jour++) {
+    const defi = getDefiByDay(jour);
+    // Si jour passé ET non terminé → marqué comme manqué
+    if (!defi.termine) {
+      defi.termine = false; // Déjà false, mais explicite
+      // Note: On ne change pas l'état, juste la logique d'affichage le gère
+    }
+  }
+  
+  if (typeof saveProgression === 'function') {
+    saveProgression();
+  }
+}
+
+  
 }); // FIN DU DOMContentLoaded
 
 // ========== GESTION PWA ==========
