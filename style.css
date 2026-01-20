@@ -71,23 +71,11 @@ body {
   border-bottom: 2px solid #f0f0f0;
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  max-width: 100%;
-}
-
 .header-logo {
   width: 80px;
   height: 80px;
   flex-shrink: 0;
   object-fit: contain;
-}
-
-.header-text {
-  flex: 1;
-  min-width: 0; /* Important pour le texte long */
 }
 
 .app-header h1 {
@@ -286,19 +274,13 @@ body {
 }
 
 .footer-content {
-  display: flex;
+ /*  display: flex; */
   align-items: center;
   gap: 15px;
   justify-content: center;
   flex-wrap: wrap; /* Sur mobile, passe en dessous */
 }
 
-.footer-logo {
-  width: 50px;
-  height: 50px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
 
 .systeme-btn {
   display: inline-flex;
