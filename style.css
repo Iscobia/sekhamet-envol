@@ -264,20 +264,29 @@ body {
   text-align: center;
   padding-top: 20px;
   border-top: 2px solid #f0f0f0;
+  /* Nécessaire pour contenir le bouton d'installation */
+  position: relative;
 }
 
 .footer-content {
- /*  display: flex; */
-  align-items: center;
+  display: flex;
+  align-items: center;     /* Alignement VERTICAL */
   gap: 15px;
-  justify-content: center;
+  justify-content: center; /* Alignement HORIZONTAL */
   flex-wrap: wrap; /* Sur mobile, passe en dessous */
   flex-direction: column;
   text-align: center;
+  /* Force l'alignement précis */
+  min-height: 100px; /* Garantit une hauteur minimale */
 }
   
 .footer-logo {
-  margin-bottom: 10px;
+  /* Force l'alignement vertical */
+  align-self: center; /* Surcharge l'alignement du parent si besoin */
+  margin: 0; /* Supprime toute marge parasite */
+  /* Ajustez la taille selon vos besoins */
+  height: 80px;
+  width: auto;
 }
 
 
