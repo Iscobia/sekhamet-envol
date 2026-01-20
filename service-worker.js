@@ -1,7 +1,7 @@
 // service-worker.js - VERSION ROBUSTE & COMPLÈTE
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'envol-pwa-v2.0';
+const CACHE_NAME = 'envol-pwa-v' + Date.now(); // Unique à chaque chargement
 const ASSETS_TO_CACHE = [
   '/sekhamet-envol/',
   '/sekhamet-envol/index.html',
