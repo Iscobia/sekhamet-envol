@@ -71,13 +71,6 @@ body {
   border-bottom: 2px solid #f0f0f0;
 }
 
-.header-logo {
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-
 .app-header h1 {
   color: #0b252f;
   font-size: 2.2rem;
@@ -321,11 +314,6 @@ body {
 }
 
   /*========== HEADER ET FOOTER RESPONSIVE ==========*/
-  .header-logo {
-    width: 60px;
-    height: 60px;
-  }
-  
   
   .footer-content {
     flex-direction: column;
