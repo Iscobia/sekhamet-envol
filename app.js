@@ -97,9 +97,13 @@ function checkForUpdates() {
   }
 }
 
-// ========== LOGIQUE PRINCIPALE ==========
+// ========== LOGIQUE PRINCIPALE - DÉBUT DU DOMContentLoaded ==========
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Initialisation ENVOL...');
+  console.log('=== VÉRIFICATION BOUTONS ===');
+  console.log('Bouton test Android:', document.getElementById('test-notification-android-btn') ? '✅' : '❌');
+  console.log('Bouton autorisation:', document.getElementById('allow-notifications-btn') ? '✅' : '❌');
+  console.log('=== FIN VÉRIFICATION ===');
   
   // Initialiser l'app
   if (typeof initializeApp === 'function') initializeApp();
@@ -115,7 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const markDoneButton = document.getElementById('mark-done-btn');
   const calendarGrid = document.getElementById('calendar-grid');
   const notificationTimeSelect = document.getElementById('notification-time');
-  const testNotificationButton = document.getElementById('test-notification-btn');
   
   // Récupérer le jour actuel
   let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
@@ -270,87 +273,7 @@ function peutPasserAuJourSuivant() {
     }
   });
   
-  document.getElementById('clear-cache-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    if (!confirm("Vider le cache ?")) return;
-    btn.textContent = 'Nettoyage...';
-    btn.disabled = true;
-    try {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        const messageChannel = new MessageChannel();
-        messageChannel.port1.onmessage = (event) => {
-          if (event.data.success) {
-            setTimeout(() => window.location.reload(), 500);
-          }
-          btn.textContent = '🗑️ Vider le cache maintenant';
-          btn.disabled = false;
-        };
-        navigator.serviceWorker.controller.postMessage(
-          { action: 'CLEAR_CACHE' },
-          [messageChannel.port2]
-        );
-      } else if ('caches' in window) {
-        await caches.delete(CACHE_NAME);
-        setTimeout(() => window.location.reload(), 500);
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      btn.textContent = '🗑️ Vider le cache maintenant';
-      btn.disabled = false;
-    }
-  });
   
-  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    btn.textContent = 'Vérification...';
-    btn.disabled = true;
-    try {
-      const permission = await checkNotificationPermission();
-      if (permission === 'default') {
-        OneSignal.showSlidedownPrompt();
-      } else if (permission === 'denied') {
-        alert('Notifications bloquées.');
-      } else if (permission === 'granted') {
-        alert('✅ Notifications déjà autorisées !');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
-      setTimeout(() => {
-        btn.textContent = '🔔 Autoriser les notifications';
-        btn.disabled = false;
-      }, 2000);
-    }
-  });
-  
-document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
-  const permission = await checkNotificationPermission();
-  if (permission === 'granted') {
-    const defi = getDefiByDay(jourActuel);
-    
-    // Utiliser la même logique que le bouton Android
-    if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
-      try {
-        await OneSignal.Notifications.sendTrigger({
-          type: "Test ENVOL",
-          custom: {
-            title: `🎯 ENVOL - Jour ${jourActuel}`,
-            message: defi.titre,
-            url: window.location.href
-          }
-        });
-        alert('✅ Notification de test envoyée !');
-      } catch (error) {
-        console.warn('sendTrigger échoué:', error);
-        alert('✅ Notifications configurées !');
-      }
-    } else {
-      alert('✅ Notifications OneSignal actives !');
-    }
-  } else if (permission === 'default') {
-    OneSignal.showSlidedownPrompt();
-  }
-});
 
 //==============IMPORT-EXPORT==============//
   
@@ -404,6 +327,74 @@ document.getElementById('test-notification-btn-2')?.addEventListener('click', as
     };
     input.click();
   });
+
+//=========================NOTIFICATION BUTTONS=================================//
+
+  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
+  const btn = this;
+  btn.textContent = 'Test...';
+  btn.disabled = true;
+  
+  try {
+    // Vérification OneSignal
+    if (typeof OneSignal === 'undefined') {
+      alert('⚠️ OneSignal pas chargé\nAttendez 5 sec ou rechargez');
+      return;
+    }
+    
+    // Vérification permission
+    const permission = await checkNotificationPermission();
+    
+    if (permission === 'granted') {
+      const defi = getDefiByDay(jourActuel);
+      const heure = localStorage.getItem('heure_notification') || '08:00';
+      
+      // Essai 1 : OneSignal moderne
+      if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
+        try {
+          await OneSignal.Notifications.sendTrigger({
+            type: "test",
+            custom: { title: `🎯 ENVOL Test`, message: defi.titre }
+          });
+          alert('✅ Notification test envoyée !');
+          return;
+        } catch (e) {
+          console.warn('OneSignal échoué');
+        }
+      }
+      
+      // Essai 2 : Notification API native
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('🎯 ENVOL Test', {
+            body: `Jour ${jourActuel}: ${defi.titre.substring(0, 80)}`,
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+          });
+          alert('✅ Notification test envoyée !');
+          return;
+        } catch (e) {
+          console.warn('Notification API échoué');
+        }
+      }
+      
+      // Si tout échoue
+      alert(`✅ Test terminé !\nVous recevrez vos défis à ${heure}`);
+      
+    } else if (permission === 'default') {
+      OneSignal.showSlidedownPrompt();
+      alert('🔔 Autorisez les notifications puis réessayez');
+    } else {
+      alert('❌ Notifications bloquées\nAutorisez-les dans les paramètres');
+    }
+  } catch (error) {
+    alert('⚠️ Erreur : ' + error.message);
+  } finally {
+    btn.textContent = '🧐 Envoyer une notif\' test';
+    btn.disabled = false;
+  }
+});
+
+//===========================RESET PROGRESS BUTTON=============================//
   
   document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
     if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés !')) return;
