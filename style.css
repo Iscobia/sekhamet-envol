@@ -274,7 +274,6 @@ body {
   gap: 15px;
   justify-content: center; /* Alignement HORIZONTAL */
   flex-wrap: wrap; /* Sur mobile, passe en dessous */
-  flex-direction: column;
   text-align: center;
   /* Force l'alignement précis */
   min-height: 100px; /* Garantit une hauteur minimale */
@@ -285,7 +284,7 @@ body {
   align-self: center; /* Surcharge l'alignement du parent si besoin */
   margin: 0; /* Supprime toute marge parasite */
   /* Ajustez la taille selon vos besoins */
-  height: 80px;
+  height: auto;
   width: auto;
 }
 
