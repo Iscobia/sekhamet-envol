@@ -325,6 +325,7 @@ body {
   .app-container {
     padding: 15px;
   }
+  .separator {margin:20px,auto, 20px,auto;opacity:0.5;width:80%;}
 }
 
   
