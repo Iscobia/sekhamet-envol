@@ -1,4 +1,4 @@
-// app.js - Logique principale de l'application - VERSION STRUCTURÉE (totalement remaniée le 20/01/2026)
+// app.js - Logique principale de l'application
 
 const CACHE_NAME = 'envol-pwa-v2.0';
 
@@ -97,12 +97,14 @@ function checkForUpdates() {
   }
 }
 
-// ========== LOGIQUE PRINCIPALE - DÉBUT DU DOMContentLoaded ==========
+// ========== LOGIQUE PRINCIPALE ==========
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Initialisation ENVOL...');
+  
+  // Vérification des boutons
   console.log('=== VÉRIFICATION BOUTONS ===');
-  console.log('Bouton test Android:', document.getElementById('test-notification-android-btn') ? '✅' : '❌');
-  console.log('Bouton autorisation:', document.getElementById('allow-notifications-btn') ? '✅' : '❌');
+  console.log('test-notification-android-btn:', document.getElementById('test-notification-android-btn') ? '✅' : '❌');
+  console.log('allow-notifications-btn:', document.getElementById('allow-notifications-btn') ? '✅' : '❌');
   console.log('=== FIN VÉRIFICATION ===');
   
   // Initialiser l'app
@@ -124,23 +126,22 @@ document.addEventListener('DOMContentLoaded', function() {
   let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
   
   // ========== LOGIQUE ANTI-SPEED RUNNING ==========
-function peutPasserAuJourSuivant() {
-  const aujourdhui = new Date().toLocaleDateString('fr-FR');
-  const dernierChangement = localStorage.getItem('dernier_changement_jour');
-  const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-  
-  // ⭐ Protection spéciale pour le jour 1 ⭐
-  if (jourActuel === 1 && !dernierChangement) {
-    localStorage.setItem('dernier_changement_jour', aujourdhui);
-    return false; // Ne pas avancer du jour 1 au jour 2
+  function peutPasserAuJourSuivant() {
+    const aujourdhui = new Date().toLocaleDateString('fr-FR');
+    const dernierChangement = localStorage.getItem('dernier_changement_jour');
+    
+    // Protection spéciale pour le jour 1
+    if (jourActuel === 1 && !dernierChangement) {
+      localStorage.setItem('dernier_changement_jour', aujourdhui);
+      return false;
+    }
+    
+    if (!dernierChangement || dernierChangement !== aujourdhui) {
+      localStorage.setItem('dernier_changement_jour', aujourdhui);
+      return true;
+    }
+    return false;
   }
-  
-  if (!dernierChangement || dernierChangement !== aujourdhui) {
-    localStorage.setItem('dernier_changement_jour', aujourdhui);
-    return true;
-  }
-  return false;
-}
   
   function verifierEtAvancerJour() {
     if (peutPasserAuJourSuivant() && jourActuel < 77) {
@@ -179,41 +180,32 @@ function peutPasserAuJourSuivant() {
   }
   
   function genererCalendrier() {
-  if (!calendarGrid) return;
-  calendarGrid.innerHTML = '';
-  
-  for (let jour = 1; jour <= 77; jour++) {
-    const defi = getDefiByDay(jour);
-    const dayElement = document.createElement('div');
-    dayElement.className = 'calendar-day';
-    dayElement.textContent = jour;
+    if (!calendarGrid) return;
+    calendarGrid.innerHTML = '';
     
-    // ===== LOGIQUE CORRIGÉE =====
-    // 1. D'abord vérifier si le défi est TERMINÉ
-    if (defi.termine) {
-      dayElement.classList.add('completed'); // ✅ Accompli
+    for (let jour = 1; jour <= 77; jour++) {
+      const defi = getDefiByDay(jour);
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      dayElement.textContent = jour;
+      
+      if (defi.termine) {
+        dayElement.classList.add('completed');
+      } else if (jour === jourActuel) {
+        dayElement.classList.add('current');
+      } else if (jour < jourActuel && !defi.termine) {
+        dayElement.classList.add('missed');
+      } else {
+        dayElement.classList.add('upcoming');
+      }
+      
+      dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
+      calendarGrid.appendChild(dayElement);
     }
-    // 2. Sinon, vérifier si c'est le JOUR ACTUEL
-    else if (jour === jourActuel) {
-      dayElement.classList.add('current');   // ⏳ En cours
-    }
-    // 3. Sinon, vérifier si c'est un JOUR PASSÉ NON TERMINÉ
-    else if (jour < jourActuel && !defi.termine) {
-      dayElement.classList.add('missed');    // ❌ Manqué
-    }
-    // 4. Sinon, c'est un JOUR FUTUR
-    else {
-      dayElement.classList.add('upcoming');  // 🕔 À venir
-    }
-    // ============================
-    
-    dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
-    calendarGrid.appendChild(dayElement);
+    centrerCalendrierSurJour(jourActuel);
   }
-  centrerCalendrierSurJour(jourActuel);
-}
   
-  // ========== ÉVÉNEMENTS ==========
+  // ========== ÉVÉNEMENTS PRINCIPAUX ==========
   if (markDoneButton) {
     markDoneButton.addEventListener('click', function() {
       const defi = getDefiByDay(jourActuel);
@@ -234,49 +226,140 @@ function peutPasserAuJourSuivant() {
     });
   }
   
-  if (testNotificationButton) {
-    testNotificationButton.addEventListener('click', async function() {
-      if (typeof OneSignal === 'undefined') {
-        alert("OneSignal n'est pas encore chargé.");
-        return;
+  // ========== BOUTONS DÉPANNAGE ==========
+  
+  // 1. VIDER LE CACHE
+  document.getElementById('clear-cache-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    if (!confirm("Vider le cache ?")) return;
+    btn.textContent = 'Nettoyage...';
+    btn.disabled = true;
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          if (event.data.success) {
+            setTimeout(() => window.location.reload(), 500);
+          }
+          btn.textContent = '🗑️ Vider le cache maintenant';
+          btn.disabled = false;
+        };
+        navigator.serviceWorker.controller.postMessage(
+          { action: 'CLEAR_CACHE' },
+          [messageChannel.port2]
+        );
+      } else if ('caches' in window) {
+        await caches.delete(CACHE_NAME);
+        setTimeout(() => window.location.reload(), 500);
       }
+    } catch (error) {
+      console.error('Erreur:', error);
+      btn.textContent = '🗑️ Vider le cache maintenant';
+      btn.disabled = false;
+    }
+  });
+  
+  // 2. AUTORISER NOTIFICATIONS
+  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.textContent = 'Vérification...';
+    btn.disabled = true;
+    try {
       const permission = await checkNotificationPermission();
       if (permission === 'default') {
         OneSignal.showSlidedownPrompt();
       } else if (permission === 'denied') {
-        alert("Notifications bloquées.");
+        alert('Notifications bloquées.');
       } else if (permission === 'granted') {
-        const defi = getDefiByDay(jourActuel);
-        OneSignal.sendSelfNotification(
-          `🎯 ENVOL - Jour ${jourActuel}`,
-          `${defi.titre}`,
-          { url: window.location.href }
-        );
-        alert('✅ Notification de test envoyée !');
+        alert('✅ Notifications déjà autorisées !');
       }
-    });
-  }
-  
-  // ========== BOUTONS DÉPANNAGE ==========
-  document.getElementById('test-notification-btn-2')?.addEventListener('click', async function() {
-    const permission = await checkNotificationPermission();
-    if (permission === 'granted') {
-      const defi = getDefiByDay(jourActuel);
-      OneSignal.sendSelfNotification(
-        `🎯 ENVOL - Jour ${jourActuel}`,
-        `${defi.titre}`,
-        { url: window.location.href }
-      );
-      alert('✅ Notification de test envoyée !');
-    } else if (permission === 'default') {
-      OneSignal.showSlidedownPrompt();
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      setTimeout(() => {
+        btn.textContent = '🔔 Autoriser les notifications';
+        btn.disabled = false;
+      }, 2000);
     }
   });
   
+  // 3. TEST NOTIFICATION (SEUL BOUTON DE TEST)
+  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    btn.textContent = 'Test...';
+    btn.disabled = true;
+    
+    try {
+      // Vérification OneSignal
+      if (typeof OneSignal === 'undefined') {
+        alert('⚠️ OneSignal pas chargé\nAttendez 5 sec ou rechargez');
+        return;
+      }
+      
+      // Vérification permission
+      const permission = await checkNotificationPermission();
+      
+      if (permission === 'granted') {
+        const defi = getDefiByDay(jourActuel);
+        const heure = localStorage.getItem('heure_notification') || '08:00';
+        
+        // Essai 1 : OneSignal moderne
+        if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
+          try {
+            await OneSignal.Notifications.sendTrigger({
+              type: "test",
+              custom: { 
+                title: `🎯 ENVOL Test - Jour ${jourActuel}`, 
+                message: defi.titre.substring(0, 100) 
+              }
+            });
+            alert('✅ Notification test envoyée !');
+            return;
+          } catch (e) {
+            console.warn('OneSignal échoué:', e.message);
+          }
+        }
+        
+        // Essai 2 : Notification API native
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            const notification = new Notification(`🎯 ENVOL Test - Jour ${jourActuel}`, {
+              body: defi.titre.substring(0, 100),
+              icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+            });
+            
+            notification.onclick = function() {
+              window.focus();
+              this.close();
+            };
+            
+            setTimeout(() => notification.close(), 4000);
+            alert('✅ Notification test envoyée !');
+            return;
+          } catch (e) {
+            console.warn('Notification API échoué:', e.message);
+          }
+        }
+        
+        // Si tout échoue
+        alert(`✅ Test terminé !\n\nVous recevrez vos défis à ${heure}`);
+        
+      } else if (permission === 'default') {
+        OneSignal.showSlidedownPrompt();
+        alert('🔔 Autorisez les notifications puis réessayez');
+      } else {
+        alert('❌ Notifications bloquées\nAutorisez-les dans les paramètres');
+      }
+    } catch (error) {
+      console.error('Erreur test notification:', error);
+      alert('⚠️ Erreur : ' + error.message);
+    } finally {
+      btn.textContent = '🧐 Envoyer une notif\' test';
+      btn.disabled = false;
+    }
+  });
   
-
-//==============IMPORT-EXPORT==============//
-  
+  // 4. EXPORTER SAUVEGARDE
   document.getElementById('export-backup-btn')?.addEventListener('click', function() {
     const backupData = {
       version: '1.0',
@@ -298,6 +381,7 @@ function peutPasserAuJourSuivant() {
     alert('✅ Sauvegarde exportée !');
   });
   
+  // 5. IMPORTER SAUVEGARDE
   document.getElementById('import-backup-btn')?.addEventListener('click', function() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -327,75 +411,8 @@ function peutPasserAuJourSuivant() {
     };
     input.click();
   });
-
-//=========================NOTIFICATION BUTTONS=================================//
-
-  document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
-  const btn = this;
-  btn.textContent = 'Test...';
-  btn.disabled = true;
   
-  try {
-    // Vérification OneSignal
-    if (typeof OneSignal === 'undefined') {
-      alert('⚠️ OneSignal pas chargé\nAttendez 5 sec ou rechargez');
-      return;
-    }
-    
-    // Vérification permission
-    const permission = await checkNotificationPermission();
-    
-    if (permission === 'granted') {
-      const defi = getDefiByDay(jourActuel);
-      const heure = localStorage.getItem('heure_notification') || '08:00';
-      
-      // Essai 1 : OneSignal moderne
-      if (OneSignal.Notifications && typeof OneSignal.Notifications.sendTrigger === 'function') {
-        try {
-          await OneSignal.Notifications.sendTrigger({
-            type: "test",
-            custom: { title: `🎯 ENVOL Test`, message: defi.titre }
-          });
-          alert('✅ Notification test envoyée !');
-          return;
-        } catch (e) {
-          console.warn('OneSignal échoué');
-        }
-      }
-      
-      // Essai 2 : Notification API native
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification('🎯 ENVOL Test', {
-            body: `Jour ${jourActuel}: ${defi.titre.substring(0, 80)}`,
-            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-          });
-          alert('✅ Notification test envoyée !');
-          return;
-        } catch (e) {
-          console.warn('Notification API échoué');
-        }
-      }
-      
-      // Si tout échoue
-      alert(`✅ Test terminé !\nVous recevrez vos défis à ${heure}`);
-      
-    } else if (permission === 'default') {
-      OneSignal.showSlidedownPrompt();
-      alert('🔔 Autorisez les notifications puis réessayez');
-    } else {
-      alert('❌ Notifications bloquées\nAutorisez-les dans les paramètres');
-    }
-  } catch (error) {
-    alert('⚠️ Erreur : ' + error.message);
-  } finally {
-    btn.textContent = '🧐 Envoyer une notif\' test';
-    btn.disabled = false;
-  }
-});
-
-//===========================RESET PROGRESS BUTTON=============================//
-  
+  // 6. SUPPRIMER PROGRESSION
   document.getElementById('reset-progress-btn')?.addEventListener('click', function() {
     if (!confirm('ÊTES-VOUS ABSOLUMENT SÛR ?\n\nTous vos défis validés seront effacés !')) return;
     if (!confirm('DERNIÈRE CHANCE : "Annuler" pour garder, "OK" pour supprimer.')) return;
@@ -406,12 +423,9 @@ function peutPasserAuJourSuivant() {
     localStorage.setItem('defis_envol', JSON.stringify(DefisEnvol));
     localStorage.setItem('jour_actuel', '1');
     
-  // ⭐⭐⭐ CORRECTION ICI (bug du jour 1 manqué après reset) ⭐⭐⭐
-  // NE PAS supprimer dernier_changement_jour, mais le mettre à AUJOURD'HUI
-  const aujourdhui = new Date().toLocaleDateString('fr-FR');
-  localStorage.setItem('dernier_changement_jour', aujourdhui);
-  // ⭐⭐⭐
-
+    // Correction bug jour 1 manqué après reset
+    const aujourdhui = new Date().toLocaleDateString('fr-FR');
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
     
     localStorage.setItem('heure_notification', '08:00');
     localStorage.removeItem('install_prompt_shown');
@@ -420,67 +434,40 @@ function peutPasserAuJourSuivant() {
   });
   
   // ========== INITIALISATION ==========
-// jourActuel est déjà déclaré plus haut, on l'utilise directement
-
-// 1. D'abord vérifier et marquer les jours manqués
-function verifierJoursManques() {
-  const aujourdhui = new Date().toLocaleDateString('fr-FR');
-  const dernierVerif = localStorage.getItem('derniere_verif_manques');
-  
-  if (dernierVerif === aujourdhui) return;
-  localStorage.setItem('derniere_verif_manques', aujourdhui);
-  
-  // Ne pas vérifier si c'est le tout premier jour après réinitialisation
-  const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-  const defiJour1 = getDefiByDay(1);
-  
-  // Si on est au jour 1 et que le défi jour 1 n'est pas terminé, ne rien faire
-  if (jourActuel === 1 && !defiJour1.termine) {
-    return;
-  }
-  
-  // Sinon, vérifier normalement
-  for (let jour = 1; jour < jourActuel; jour++) {
-    const defi = getDefiByDay(jour);
-    if (!defi.termine) {
-      defi.termine = false; // Déjà false, mais au cas où
+  // Vérifier les jours manqués
+  function verifierJoursManques() {
+    const aujourdhui = new Date().toLocaleDateString('fr-FR');
+    const dernierVerif = localStorage.getItem('derniere_verif_manques');
+    
+    if (dernierVerif === aujourdhui) return;
+    localStorage.setItem('derniere_verif_manques', aujourdhui);
+    
+    const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+    const defiJour1 = getDefiByDay(1);
+    
+    if (jourActuel === 1 && !defiJour1.termine) {
+      return;
     }
+    
+    for (let jour = 1; jour < jourActuel; jour++) {
+      const defi = getDefiByDay(jour);
+      if (!defi.termine) {
+        defi.termine = false;
+      }
+    }
+    
+    if (typeof saveProgression === 'function') saveProgression();
   }
   
-  if (typeof saveProgression === 'function') saveProgression();
-};
-
-// 2. Ensuite vérifier si on peut avancer au jour suivant
-// Mais SEULEMENT si l'utilisateur a terminé le jour actuel
-function peutAvancerAuJourSuivant() {
-  const defiActuel = getDefiByDay(jourActuel);
-  if (!defiActuel) return false;
+  // Initialiser l'application
+  verifierJoursManques();
+  verifierEtAvancerJour();
   
-  // Si le jour actuel est terminé, on peut vérifier si on passe au suivant
-  if (defiActuel.termine) {
-    return peutPasserAuJourSuivant() && jourActuel < 77;
-  }
-  return false;
-}
-
-function verifierEtAvancerJour() {
-  if (peutAvancerAuJourSuivant()) {
-    jourActuel++;
-    localStorage.setItem('jour_actuel', jourActuel.toString());
-  }
-  afficherDefiDuJour(jourActuel);
-}
-
-// 3. Maintenant on peut appeler verifierEtAvancerJour
-verifierEtAvancerJour();
-
-// 4. Continuer avec le reste...
-showInstallOverlay();
-setTimeout(checkForUpdates, 5000);
-console.log('✅ ENVOL initialisé');
-
-  
-}); // FIN DU DOMContentLoaded
+  // Interface utilisateur
+  showInstallOverlay();
+  setTimeout(checkForUpdates, 5000);
+  console.log('✅ ENVOL initialisé');
+});
 
 // ========== GESTION PWA ==========
 let deferredPrompt;
@@ -543,4 +530,3 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   console.log('📱 App déjà installée');
   installButton.style.display = 'none';
 }
-// ========== FIN DU FICHIER ==========
