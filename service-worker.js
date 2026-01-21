@@ -8,7 +8,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 const CACHE_NAME = 'envol-cache-v1';
 const urlsToCache = [
   '/sekhamet-envol/',
-  '/sekhamet-envol/index.html'
+  '/sekhamet-envol/index.html',
   '/sekhamet-envol/style.css',
   '/sekhamet-envol/data/defis.js',
 ];
