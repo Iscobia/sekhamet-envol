@@ -316,14 +316,24 @@
     
     // ==================== FONCTIONS AUXILIAIRES ====================
     
-    function requestNotificationPermission() {
-        if (window.OneSignal) {
-            window.OneSignal.Slidedown.promptPush();
-        } else {
+function requestNotificationPermission() {
+    if (window.OneSignal && window.OneSignal.Slidedown) {
+        window.OneSignal.Slidedown.promptPush();
+    } else {
+        // Montrer le message UNE SEULE FOIS
+        if (!window._envolPermissionRequested) {
+            window._envolPermissionRequested = true;
             showEnvolMessage('OneSignal se charge, veuillez patienter...', 'info');
-            setTimeout(requestNotificationPermission, 1000);
+            
+            // Essayer une seule fois après 2 secondes
+            setTimeout(() => {
+                if (window.OneSignal && window.OneSignal.Slidedown) {
+                    window.OneSignal.Slidedown.promptPush();
+                }
+            }, 2000);
         }
     }
+}
     
     function scheduleDailyNotification(time) {
         // Cette fonction sera complétée plus tard avec un backend
