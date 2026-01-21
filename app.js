@@ -250,6 +250,48 @@ function checkForUpdates() {
 // ========== LOGIQUE PRINCIPALE ==========
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Initialisation ENVOL...');
+
+//=============================================================
+//============ BANNIÈRE OFFLINE-ONLINE ========================
+    
+  function showNetworkBanner(message, type) {
+    // Supprimer ancienne bannière
+    const oldBanner = document.getElementById('network-banner');
+    if (oldBanner) oldBanner.remove();
+    
+    // Créer nouvelle bannière
+    const banner = document.createElement('div');
+    banner.id = 'network-banner';
+    banner.className = `network-banner ${type}`;
+    banner.textContent = message;
+    
+    document.body.prepend(banner);
+    
+    // Si c'est "online", supprimer après 1 seconde
+    if (type === 'online') {
+      setTimeout(() => {
+        banner.remove();
+      }, 1000);
+    }
+  }
+  
+  // État initial
+  if (!navigator.onLine) {
+    showNetworkBanner('⚠️ Hors ligne - Mode local activé', 'offline');
+  }
+  
+  // Écouter les changements
+  window.addEventListener('online', () => {
+    showNetworkBanner('✅ Réseau rétabli !', 'online');
+  });
+  
+  window.addEventListener('offline', () => {
+    showNetworkBanner('⚠️ Hors ligne - Mode local activé', 'offline');
+  });
+    
+//============ FIN DE LA BANNIÈRE OFFLINE-ONLINE ==============
+//=============================================================
+    
   
   // Vérification des boutons
   console.log('=== VÉRIFICATION BOUTONS ===');
