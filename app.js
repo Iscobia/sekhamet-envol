@@ -138,6 +138,9 @@ function showInstallOverlay() {
         <div id="install-instructions">
           <p>👇🏻 clique sur le bouton jaune👇🏻</p>
           <p>"📱 Installer ENVOL sur l'écran d'accueil"</p>
+          <p>ou</p>
+          <p><strong>Android :</strong> Menu → "Ajouter à l'écran d'accueil"</p>
+          <p><strong>iOS :</strong> Partager → "Sur l'écran d'accueil"</p>
         </div>
         <button id="close-overlay" style="margin-top:20px; padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:8px;">
           Compris, merci !
