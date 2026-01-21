@@ -695,22 +695,21 @@ const installButton = document.createElement('button');
 installButton.id = 'install-pwa-btn';
 installButton.className = 'install-btn';
 installButton.textContent = '📱 Installer ENVOL sur l\'écran d\'accueil';
-installButton.style.cssText = `
-  display: none;
-  width: calc(100% - 40px);
-  max-width: 400px;
-  margin: 20px auto;
-  background: linear-gradient(135deg, #0b252f 0%, #0e303d 100%);
-  color: white;
-  border: none;
-  padding: 16px 24px;
-  border-radius: 12px;
-  font-weight: bold;
-  font-size: 1.1rem;
-  cursor: pointer;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(11, 37, 47, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
+//installButton.style.cssText = `
+  //display: none;
+  //width: calc(100% - 40px);
+//  max-width: 400px;
+//  margin: 20px auto;
+ // color: white;
+ // border: none;
+ // padding: 16px 24px;
+ // border-radius: 12px;
+  //font-weight: bold;
+ // font-size: 1.1rem;
+  //cursor: pointer;
+  //text-align: center;
+ // box-shadow: 0 4px 15px rgba(11, 37, 47, 0.3);
+ // transition: transform 0.2s, box-shadow 0.2s;
 `;
 
 window.addEventListener('beforeinstallprompt', (event) => {
