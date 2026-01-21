@@ -8,7 +8,7 @@
     <!-- Configuration PWA -->
     <link rel="manifest" href="/sekhamet-envol/manifest.json">
     
-    <!-- Icônes -->
+    <!-- Icônes pour différents appareils -->
     <link rel="icon" href="/sekhamet-envol/assets/icons/ENVOL-192.png">
     <link rel="apple-touch-icon" href="/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png">
     
@@ -17,9 +17,67 @@
     
     <title>Envol - Défi Quotidien</title>
 
-    <!-- Scripts (dans l'ordre) -->
-    <script src="/sekhamet-envol/data/defis.js" defer></script>
-    <script src="/sekhamet-envol/app-simple.js" defer></script>
+    <!------------ Script de OneSignal ------------>
+    <!-- OneSignal SDK v16 -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    
+    <!-- Initialisation OneSignal SIMPLIFIÉE -->
+    <script>
+      console.log('📱 [OneSignal] Script d\'initialisation chargé...');
+      
+      // Méthode recommandée par OneSignal v16
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      
+      OneSignalDeferred.push(async function(OneSignal) {
+        console.log('📱 [OneSignal] SDK chargé, début init...');
+        
+        try {
+          // INITIALISATION MINIMALE
+          await OneSignal.init({
+            appId: "3ed3f3a4-01f5-407e-a9c5-129c11d6f53b",
+            
+            // IMPORTANT: Désactiver la demande automatique
+            allowLocalhostAsSecureOrigin: true,
+            promptOptions: {
+              // Ne pas montrer automatiquement
+              slidedown: {
+                enabled: false
+              }
+            }
+          });
+          
+          console.log('✅ [OneSignal] Initialisation réussie');
+          
+          // Vérifier l'état des notifications
+          const isSubscribed = await OneSignal.User.PushSubscription.optIn;
+          console.log('📱 [OneSignal] Abonnement actif:', isSubscribed);
+          
+          // Exposer OneSignal globalement pour vos autres scripts
+          window.OneSignalGlobal = OneSignal;
+          
+        } catch (error) {
+          console.error('❌ [OneSignal] Erreur initialisation:', error);
+          console.log('⚠️ [OneSignal] Fallback vers notifications natives');
+        }
+      });
+      
+      // Fallback si le SDK ne charge pas après 5 secondes
+      setTimeout(function() {
+        if (typeof OneSignal === 'undefined') {
+          console.warn('⚠️ [OneSignal] Timeout - SDK non chargé après 5s');
+          console.log('💡 Causes possibles:');
+          console.log('1. Bloqueur de publicités');
+          console.log('2. Firefox avec protection renforcée');
+          console.log('3. Problème réseau');
+        }
+      }, 5000);
+    </script>
+
+    <!---- Script pour les notifications paramétrées dans envol-notifications.js ---->
+    <script src="/sekhamet-envol/envol-notifications.js" defer></script>
+    
+    <!---- Script app.js une fois que OneSignal est chargé ---->
+    <script src="/sekhamet-envol/app.js" defer></script>
 </head>
     
 <body>
