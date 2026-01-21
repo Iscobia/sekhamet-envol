@@ -95,21 +95,25 @@ function setupNotificationUI(oneSignal) {
       
       try {
         // Vérifier l'état actuel
-        const isSubscribed = await oneSignal.User.PushSubscription.optIn();
-        
-        if (!isSubscribed) {
+        const notificationPermission = Notification.permission;
+
+        if (notificationPermission !== "granted") {
           console.log('🔔 [Envol-Notifications] Demande d\'autorisation...');
           
           // Afficher la popup d'autorisation
           await oneSignal.Slidedown.promptPush();
           
           // Vérifier après 2 secondes
-          setTimeout(async () => {
-            const newStatus = await oneSignal.User.PushSubscription.optIn();
-            if (newStatus) {
+          setTimeout(() => {
+            if (Notification.permission === "granted") {
               alert('✅ Notifications activées ! Vous recevrez vos défis quotidiennement.');
             }
           }, 2000);
+        
+        }
+          
+        else {
+      alert('✅ Vous êtes déjà abonné aux notifications !');
           
         } else {
           alert('✅ Vous êtes déjà abonné aux notifications !');
@@ -132,8 +136,8 @@ function setupNotificationUI(oneSignal) {
       
       try {
         // Vérifier la permission
-        const isSubscribed = await oneSignal.User.PushSubscription.optIn();
-        
+        const isSubscribed = Notification.permission === "granted";
+
         if (!isSubscribed) {
           alert('❌ Veuillez d\'abord autoriser les notifications');
           return;
