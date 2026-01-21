@@ -4,24 +4,77 @@ const CACHE_NAME = 'envol-pwa-v2.0';
 
 // ========== FONCTIONS GÉRANT ONESIGNAL ==========
 
-// Fonction sécurisée pour accéder à OneSignal
+// Fonction sécurisée pour accéder à OneSignal - AMÉLIORÉE
 function safeOneSignal() {
-    if (typeof OneSignal !== 'undefined') {
+    if (typeof OneSignal !== 'undefined' && OneSignal) {
         return OneSignal;
     }
-    console.warn('OneSignal pas encore chargé');
+    console.warn('[OneSignal] Pas encore chargé');
     return null;
 }
 
-// Vérification différée de OneSignal
+// Fonction pour attendre OneSignal SANS ERREUR
+function waitForOneSignal(maxSeconds = 5) {
+    return new Promise((resolve) => {
+        // Si déjà disponible
+        if (typeof OneSignal !== 'undefined' && OneSignal) {
+            console.log('[OneSignal] Déjà chargé');
+            resolve(OneSignal);
+            return;
+        }
+        
+        console.log('[OneSignal] Attente du chargement...');
+        
+        // Vérifier toutes les 100ms
+        let attempts = 0;
+        const maxAttempts = maxSeconds * 10; // 10 vérifications par seconde
+        
+        const interval = setInterval(() => {
+            attempts++;
+            
+            if (typeof OneSignal !== 'undefined' && OneSignal) {
+                clearInterval(interval);
+                console.log(`[OneSignal] Chargé après ${attempts/10}s`);
+                resolve(OneSignal);
+                return;
+            }
+            
+            // Timeout après maxSeconds
+            if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                console.warn(`[OneSignal] Non chargé après ${maxSeconds}s`);
+                resolve(null); // Retourne null au lieu de planter
+            }
+        }, 100);
+    });
+}
+
+// Vérification différée de OneSignal - SÉCURISÉE
 function debugOneSignal() {
-    setTimeout(() => {
-        console.log('=== DEBUG OneSignal (différé) ===');
-        if (typeof OneSignal !== 'undefined') {
-            console.log('OneSignal object:', OneSignal);
-            console.log('Config:', OneSignal.config);
-        } else {
-            console.log('OneSignal NON CHARGÉ - Protection navigateur active?');
+    setTimeout(async () => {
+        console.log('=== DEBUG OneSignal (sécurisé) ===');
+        try {
+            const signal = await waitForOneSignal(3); // Attendre 3 secondes max
+            
+            if (signal) {
+                console.log('✅ OneSignal disponible');
+                console.log('App ID:', signal.config?.appId || 'Non défini');
+                
+                // Vérifier l'abonnement SANS ERREUR
+                if (signal.User && signal.User.PushSubscription) {
+                    try {
+                        const isSubscribed = await signal.User.PushSubscription.optIn;
+                        console.log('Notifications activées:', isSubscribed);
+                    } catch (e) {
+                        console.log('Impossible de vérifier l\'abonnement:', e.message);
+                    }
+                }
+            } else {
+                console.log('❌ OneSignal non disponible');
+                console.log('(bloqué par le navigateur ou non chargé)');
+            }
+        } catch (error) {
+            console.warn('Erreur debug OneSignal:', error);
         }
         console.log('=== FIN DEBUG ===');
     }, 3000); // Attendre 3 secondes
@@ -29,6 +82,7 @@ function debugOneSignal() {
 
 // Démarrer le debug après chargement
 document.addEventListener('DOMContentLoaded', debugOneSignal);
+
 
 
 
@@ -324,40 +378,76 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // 2. AUTORISER NOTIFICATIONS
-  document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
+ // 2. AUTORISER NOTIFICATIONS - SÉCURISÉ
+ document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
     const btn = this;
     btn.textContent = 'Vérification...';
     btn.disabled = true;
     try {
-      const permission = await checkNotificationPermission();
-      if (permission === 'default') {
-        OneSignal.showSlidedownPrompt();
-      } else if (permission === 'denied') {
-        alert('Notifications bloquées.');
-      } else if (permission === 'granted') {
-        alert('✅ Notifications déjà autorisées !');
-      }
+        // Attendre OneSignal d'abord
+        const signal = await waitForOneSignal(3);
+        
+        if (!signal) {
+            alert('⚠️ OneSignal pas disponible. Rechargez la page ou vérifiez les bloqueurs.');
+            return;
+        }
+        
+        const permission = await checkNotificationPermission();
+        if (permission === 'default') {
+            // Méthode sécurisée pour demander la permission
+            if (typeof signal.showSlidedownPrompt === 'function') {
+                signal.showSlidedownPrompt();
+            } else if (signal.Slidedown && typeof signal.Slidedown.promptPush === 'function') {
+                signal.Slidedown.promptPush();
+            } else {
+                // Fallback: Notification API native
+                if ('Notification' in window) {
+                    await Notification.requestPermission();
+                    alert('✅ Permission demandée !');
+                }
+            }
+        } else if (permission === 'denied') {
+            alert('❌ Notifications bloquées.\nAutorisez-les dans les paramètres du navigateur.');
+        } else if (permission === 'granted') {
+            alert('✅ Notifications déjà autorisées !');
+        }
     } catch (error) {
-      console.error('Erreur:', error);
+        console.error('Erreur:', error);
+        alert('⚠️ Erreur: ' + error.message);
     } finally {
-      setTimeout(() => {
-        btn.textContent = '🔔 Autoriser les notifications';
-        btn.disabled = false;
-      }, 2000);
+        setTimeout(() => {
+            btn.textContent = '🔔 Autoriser les notifications';
+            btn.disabled = false;
+        }, 2000);
     }
-  });
+});
   
-  // 3. TEST NOTIFICATION (SEUL BOUTON DE TEST)
+// 3. TEST NOTIFICATION (SEUL BOUTON DE TEST) - SÉCURISÉ
 document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
   const btn = this;
   btn.textContent = 'Test...';
   btn.disabled = true;
   
   try {
-    // Vérification OneSignal
-    if (typeof OneSignal === 'undefined') {
-      alert('⚠️ OneSignal pas chargé\nAttendez 5 sec ou rechargez');
+    // Vérification OneSignal - AMÉLIORÉE
+    const signal = await waitForOneSignal(3);
+    
+    if (!signal) {
+      alert('⚠️ OneSignal pas disponible\n\nCauses possibles :\n1. Firefox avec protection activée\n2. Bloqueur de publicités\n3. Connexion lente\n\nEssayez avec Chrome ou désactivez la protection.');
+      
+      // Fallback: essayer les notifications natives
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (confirm('OneSignal bloqué. Tester avec les notifications natives ?')) {
+          const defi = getDefiByDay(jourActuel);
+          const notification = new Notification(`🎯 ENVOL Test`, {
+            body: `Jour ${jourActuel}: ${defi.titre.substring(0, 80)}`,
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+          });
+          notification.onclick = () => { window.focus(); notification.close(); };
+          setTimeout(() => notification.close(), 4000);
+          alert('✅ Notification native envoyée !');
+        }
+      }
       return;
     }
     
@@ -424,20 +514,27 @@ document.getElementById('test-notification-android-btn')?.addEventListener('clic
       console.log('App ID:', OneSignal.config?.appId);
       console.log('SDK Version:', OneSignal.VERSION);
       
-      // Vérifier l'abonnement
-      if (typeof OneSignal.User.PushSubscription === 'object') {
-        const subscription = OneSignal.User.PushSubscription;
-        console.log('Push Subscription:', subscription.id ? '✅ ACTIF' : '❌ INACTIF');
-        console.log('Opted In:', subscription.optIn);
-        
-        if (subscription.optIn) {
-          alert(`✅ Notifications activées !\n\nVous recevrez le prochain défi à ${heure}\n(ID: ${subscription.id?.substring(0, 8)}...)`);
-        } else {
-          alert('⚠️ Abonnement inactif\nAutorisez les notifications dans les paramètres');
-        }
-      } else {
-        alert(`✅ Configuration OK !\n\nLes notifications arriveront à ${heure}`);
-      }
+      // Vérifier l'abonnement - SÉCURISÉ
+if (signal.User && typeof signal.User.PushSubscription === 'object') {
+  const subscription = signal.User.PushSubscription;
+  console.log('Push Subscription:', subscription.id ? '✅ ACTIF' : '❌ INACTIF');
+  
+  try {
+    const isOptedIn = await subscription.optIn;
+    console.log('Opted In:', isOptedIn);
+    
+    if (isOptedIn) {
+      alert(`✅ Notifications activées !\n\nVous recevrez le prochain défi à ${heure}\n(ID: ${subscription.id?.substring(0, 8)}...)`);
+    } else {
+      alert('⚠️ Abonnement inactif\nAutorisez les notifications dans les paramètres');
+    }
+  } catch (e) {
+    console.warn('Erreur vérification optIn:', e);
+    alert(`✅ Configuration OK !\n\nLes notifications arriveront à ${heure}\n(Statut d'abonnement indéterminé)`);
+  }
+} else {
+  alert(`✅ Configuration OK !\n\nLes notifications arriveront à ${heure}`);
+}
       
     } else if (permission === 'default') {
       OneSignal.showSlidedownPrompt();
