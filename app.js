@@ -700,6 +700,7 @@ installButton.style.cssText = `
   width: calc(100% - 40px);
   max-width: 400px;
   margin: 20px auto;
+  background: linear-gradient(160deg, #f29a0b 0%, #ed5d0e 100%);
   color: white;
   border: none;
   padding: 16px 24px;
