@@ -95,7 +95,7 @@ function setupNotificationUI(oneSignal) {
       
       try {
         // Vérifier l'état actuel
-        const isSubscribed = await oneSignal.User.PushSubscription.optIn;
+        const isSubscribed = await oneSignal.User.PushSubscription.optIn();
         
         if (!isSubscribed) {
           console.log('🔔 [Envol-Notifications] Demande d\'autorisation...');
@@ -105,7 +105,7 @@ function setupNotificationUI(oneSignal) {
           
           // Vérifier après 2 secondes
           setTimeout(async () => {
-            const newStatus = await oneSignal.User.PushSubscription.optIn;
+            const newStatus = await oneSignal.User.PushSubscription.optIn();
             if (newStatus) {
               alert('✅ Notifications activées ! Vous recevrez vos défis quotidiennement.');
             }
@@ -132,7 +132,7 @@ function setupNotificationUI(oneSignal) {
       
       try {
         // Vérifier la permission
-        const isSubscribed = await oneSignal.User.PushSubscription.optIn;
+        const isSubscribed = await oneSignal.User.PushSubscription.optIn();
         
         if (!isSubscribed) {
           alert('❌ Veuillez d\'abord autoriser les notifications');
