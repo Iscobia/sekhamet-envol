@@ -511,3 +511,29 @@ backup-p {margin: 30px 0 2px 0px;}
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
 }
+
+/* --------------------------- */
+/*------ Bannière réseau ------*/
+/* --------------------------- */
+
+.network-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 20px;
+  text-align: center;
+  font-weight: bold;
+  z-index: 9999;
+  transition: all 0.3s ease;
+}
+
+.network-banner.offline {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+}
+
+.network-banner.online {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
