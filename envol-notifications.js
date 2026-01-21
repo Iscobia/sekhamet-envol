@@ -169,6 +169,11 @@ function setupNotificationUI(oneSignal) {
 
 function setupFallbackNotifications() {
   console.log('🔔 [Envol-Notifications] Utilisation fallback (notifications natives)');
+
+    // Détecter Firefox
+  if (/Firefox/i.test(navigator.userAgent)) {
+    console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
+  }
   
   // Code de fallback simple
   const testBtn = document.getElementById('test-notification-android-btn');
