@@ -2,15 +2,37 @@
 
 const CACHE_NAME = 'envol-pwa-v2.0';
 
-// debug pour voir si OneSignal est bien chargé :
-console.log('=== DEBUG OneSignal ===');
-console.log('OneSignal object:', OneSignal);
-console.log('Config:', OneSignal.config);
-console.log('User:', OneSignal.User);
-console.log('PushSubscription:', OneSignal.User?.PushSubscription);
-console.log('=== FIN DEBUG ===');
+// ========== FONCTIONS GÉRANT ONESIGNAL ==========
 
-// ========== FONCTIONS GLOBALES ==========
+// Fonction sécurisée pour accéder à OneSignal
+function safeOneSignal() {
+    if (typeof OneSignal !== 'undefined') {
+        return OneSignal;
+    }
+    console.warn('OneSignal pas encore chargé');
+    return null;
+}
+
+// Vérification différée de OneSignal
+function debugOneSignal() {
+    setTimeout(() => {
+        console.log('=== DEBUG OneSignal (différé) ===');
+        if (typeof OneSignal !== 'undefined') {
+            console.log('OneSignal object:', OneSignal);
+            console.log('Config:', OneSignal.config);
+        } else {
+            console.log('OneSignal NON CHARGÉ - Protection navigateur active?');
+        }
+        console.log('=== FIN DEBUG ===');
+    }, 3000); // Attendre 3 secondes
+}
+
+// Démarrer le debug après chargement
+document.addEventListener('DOMContentLoaded', debugOneSignal);
+
+
+
+// ========== FONCTIONS GLOBALES =====================================
 function centrerCalendrierSurJour(jour) {
   const index = jour - 1;
   const grid = document.getElementById('calendar-grid');
@@ -56,20 +78,55 @@ function showInstallOverlay() {
 
 async function checkNotificationPermission() {
   try {
-    if (typeof OneSignal === 'undefined') return 'unsupported';
-    try {
-      const isSubscribed = await OneSignal.isPushNotificationsEnabled();
-      return isSubscribed ? 'granted' : 'default';
-    } catch (e) {
-      if (OneSignal.User && OneSignal.User.PushSubscription) {
-        const subscription = OneSignal.User.PushSubscription;
-        return subscription.optIn ? 'granted' : 'denied';
+    // Attendre que OneSignal soit disponible
+    await new Promise(resolve => {
+      if (typeof OneSignal !== 'undefined') {
+        resolve();
+        return;
       }
-      throw e;
+      
+      // Vérifier toutes les 100ms pendant 5 secondes
+      let attempts = 0;
+      const check = setInterval(() => {
+        attempts++;
+        if (typeof OneSignal !== 'undefined') {
+          clearInterval(check);
+          resolve();
+        }
+        if (attempts > 50) { // 5 secondes
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+    });
+    
+    // Si OneSignal est disponible, l'utiliser
+    if (typeof OneSignal !== 'undefined') {
+      try {
+        // Ancienne méthode
+        if (typeof OneSignal.isPushNotificationsEnabled === 'function') {
+          const isSubscribed = await OneSignal.isPushNotificationsEnabled();
+          return isSubscribed ? 'granted' : 'default';
+        }
+        // Nouvelle méthode
+        if (OneSignal.User && OneSignal.User.PushSubscription) {
+          const subscription = OneSignal.User.PushSubscription;
+          return subscription.optIn ? 'granted' : 'denied';
+        }
+      } catch (e) {
+        console.warn('Erreur OneSignal API:', e);
+      }
     }
+    
+    // Fallback: Notification API native
+    if ('Notification' in window) {
+      return Notification.permission;
+    }
+    
+    return 'unsupported';
+    
   } catch (error) {
     console.warn('Erreur vérification permission:', error);
-    if ('Notification' in window) return Notification.permission;
     return 'unsupported';
   }
 }
