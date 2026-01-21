@@ -2,6 +2,14 @@
 
 const CACHE_NAME = 'envol-pwa-v2.0';
 
+// debug pour voir si OneSignal est bien chargé :
+console.log('=== DEBUG OneSignal ===');
+console.log('OneSignal object:', OneSignal);
+console.log('Config:', OneSignal.config);
+console.log('User:', OneSignal.User);
+console.log('PushSubscription:', OneSignal.User?.PushSubscription);
+console.log('=== FIN DEBUG ===');
+
 // ========== FONCTIONS GLOBALES ==========
 function centrerCalendrierSurJour(jour) {
   const index = jour - 1;
