@@ -319,6 +319,8 @@ body {
   box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
 }
 
+.separator {margin:20px,auto, 20px,auto;opacity:0.5;width:40%;}
+
 /* ========== RESPONSIVE ========== */
 
 @media (max-width: 600px) {
