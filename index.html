@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+<!-- REMPLACEZ le bloc OneSignal dans le <head> par ceci : -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,37 +8,20 @@
     <!-- Configuration PWA -->
     <link rel="manifest" href="/sekhamet-envol/manifest.json">
     
-    <!-- Icônes pour différents appareils -->
+    <!-- Icônes -->
     <link rel="icon" href="/sekhamet-envol/assets/icons/ENVOL-192.png">
     <link rel="apple-touch-icon" href="/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png">
     
     <!-- Styles -->
     <link rel="stylesheet" href="/sekhamet-envol/style.css">
     
-    <!-- OneSignal (nous l'ajouterons plus tard) -->
-    <!-- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script> -->
-    
     <title>Envol - Défi Quotidien</title>
 
-
-    <!------------ Script de OneSignal ------------>
-    
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "3ed3f3a4-01f5-407e-a9c5-129c11d6f53b",
-    });
-  });
-</script>
-
-    <!---- Script pour les notifications paramétrées dans envol-notifications.js ---->
-     <script src="/sekhamet-envol/envol-notifications.js" defer></script>
-    <!---- Script app.js une fois que OneSignal est chargé ---->
-    <script src="/sekhamet-envol/app.js" defer></script>
+    <!-- Scripts (dans l'ordre) -->
+    <script src="/sekhamet-envol/data/defis.js" defer></script>
+    <script src="/sekhamet-envol/app-simple.js" defer></script>
 </head>
+    
 <body>
     <div class="app-container">
         <!-- En-tête -->
