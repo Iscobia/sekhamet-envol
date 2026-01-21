@@ -49,39 +49,67 @@ function waitForOneSignal(maxSeconds = 5) {
     });
 }
 
-// Vérification différée de OneSignal - SÉCURISÉE
+
+
+// ========== DEBUG SIMPLIFIÉ ONESIGNAL ==========
 function debugOneSignal() {
-    setTimeout(async () => {
-        console.log('=== DEBUG OneSignal (sécurisé) ===');
-        try {
-            const signal = await waitForOneSignal(3); // Attendre 3 secondes max
-            
-            if (signal) {
-                console.log('✅ OneSignal disponible');
-                console.log('App ID:', signal.config?.appId || 'Non défini');
-                
-                // Vérifier l'abonnement SANS ERREUR
-                if (signal.User && signal.User.PushSubscription) {
-                    try {
-                        const isSubscribed = await signal.User.PushSubscription.optIn;
-                        console.log('Notifications activées:', isSubscribed);
-                    } catch (e) {
-                        console.log('Impossible de vérifier l\'abonnement:', e.message);
-                    }
-                }
-            } else {
-                console.log('❌ OneSignal non disponible');
-                console.log('(bloqué par le navigateur ou non chargé)');
+  console.log('🔍 [DEBUG] Vérification OneSignal...');
+  
+  setTimeout(async () => {
+    console.log('=== DEBUG ONESIGNAL ===');
+    
+    try {
+      // Vérifier si OneSignal est chargé
+      if (typeof OneSignal !== 'undefined') {
+        console.log('✅ OneSignal chargé');
+        console.log('Version SDK:', OneSignal.VERSION || 'Inconnue');
+        
+        // Vérifier l'initialisation
+        if (OneSignal.config && OneSignal.config.appId) {
+          console.log('✅ App ID configuré:', OneSignal.config.appId);
+          
+          // Vérifier l'abonnement
+          try {
+            if (OneSignal.User && OneSignal.User.PushSubscription) {
+              const isSubscribed = await OneSignal.User.PushSubscription.optIn;
+              console.log('🔔 Abonnement actif:', isSubscribed);
+              
+              if (isSubscribed) {
+                console.log('🎉 Prêt pour les notifications push !');
+              }
             }
-        } catch (error) {
-            console.warn('Erreur debug OneSignal:', error);
+          } catch (e) {
+            console.log('⚠️ Impossible de vérifier abonnement:', e.message);
+          }
+        } else {
+          console.log('⚠️ OneSignal pas encore initialisé');
         }
-        console.log('=== FIN DEBUG ===');
-    }, 3000); // Attendre 3 secondes
+      } else {
+        console.log('❌ OneSignal non détecté');
+        console.log('Causes possibles:');
+        console.log('1. Bloqueur de scripts (uBlock, AdBlock)');
+        console.log('2. Firefox avec protection renforcée');
+        console.log('3. Connexion lente au CDN');
+        
+        // Suggestion
+        if (/Firefox/i.test(navigator.userAgent)) {
+          console.log('💡 Firefox: Désactivez "Protection renforcée" temporairement');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erreur debug:', error);
+    }
+    
+    console.log('=== FIN DEBUG ===');
+  }, 4000); // Attendre 4 secondes
 }
 
-// Démarrer le debug après chargement
-document.addEventListener('DOMContentLoaded', debugOneSignal);
+// Démarrer le debug
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 ENVOL initialisation...');
+  debugOneSignal();
+});
+
 
 
 
