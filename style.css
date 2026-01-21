@@ -344,14 +344,14 @@ body {
   }
 }
 
-/* Ajout du style du bouton d'installation sur l'écran d'accueil*/
+/* STYLE EN DOUBLON DANS APP.JS : du bouton d'installation sur l'écran d'accueil*/
 
-.install-btn {
-  display: none; /* Caché par défaut */
+.install-btn { 
+/*  display: none;
   width: calc(100% - 40px);
   max-width: 400px;
   margin: 20px auto 50px auto; /* marge de 20px en haut, 50px en bas et automatique sur les côtés pour centrage*/
-  background: linear-gradient(160deg, #f29a0b 0%, #ed5d0e 100%)!important;
+/*  background: linear-gradient(160deg, #f29a0b 0%, #ed5d0e 100%);
   color: white;
   border: none;
   padding: 16px 24px;
@@ -361,8 +361,8 @@ body {
   cursor: pointer;
   text-align: center;
   box-shadow: 0 4px 15px rgba(11, 37, 47, 0.03);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
+  transition: transform 0.2s, box-shadow 0.2s;*/ 
+} 
 
 .install-btn:hover {
   transform: translateY(-2px);
