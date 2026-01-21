@@ -71,7 +71,7 @@ function debugOneSignal() {
           // Vérifier l'abonnement
           try {
             if (OneSignal.User && OneSignal.User.PushSubscription) {
-              const isSubscribed = await OneSignal.User.PushSubscription.optIn;
+              const isSubscribed = await OneSignal.User.PushSubscription.optIn();
               console.log('🔔 Abonnement actif:', isSubscribed);
               
               if (isSubscribed) {
@@ -548,7 +548,7 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
   console.log('Push Subscription:', subscription.id ? '✅ ACTIF' : '❌ INACTIF');
   
   try {
-    const isOptedIn = await subscription.optIn;
+    const isOptedIn = await subscription.optIn();
     console.log('Opted In:', isOptedIn);
     
     if (isOptedIn) {
