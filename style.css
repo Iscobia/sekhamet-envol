@@ -351,7 +351,7 @@ body {
   width: calc(100% - 40px);
   max-width: 400px;
   margin: 20px auto 50px auto; /* marge de 20px en haut, 50px en bas et automatique sur les côtés pour centrage*/
-  background: linear-gradient(160deg, #f29a0b 0%, #ed5d0e 100%);
+  background: linear-gradient(160deg, #f29a0b 0%, #ed5d0e 100%)!important;
   color: white;
   border: none;
   padding: 16px 24px;
