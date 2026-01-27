@@ -92,6 +92,9 @@ function debugOneSignal() {
         console.log('3. Connexion lente au CDN');
         
         // Suggestion
+
+        const userAgent = navigator.userAgent;
+          
         if (/Firefox/i.test(navigator.userAgent)) {
           console.log('💡 Firefox: Désactivez "Protection renforcée" temporairement');
         }
@@ -803,8 +806,7 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
     
 
  // 🍎🦊 DÉTECTION NAVIGATEUR POUR MESSAGES INFORMATIFS
-  
-  const userAgent = navigator.userAgent;
+
   const platform = navigator.platform;
   
   // Détection iOS (tous navigateurs iOS)
