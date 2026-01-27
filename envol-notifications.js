@@ -82,10 +82,138 @@ async function setupDailyNotifications(oneSignal) {
   console.log('✅ [Envol-Notifications] Tags configurés');
 }
 
+
+//=============================================//
+//============= BOUTONS TECHNIQUES ============//
+//=============================================//
+
 function setupNotificationUI(oneSignal) {
   console.log('🔔 [Envol-Notifications] Configuration UI...');
   
-  // Bouton "Autoriser les notifications"
+  // ========== DÉTECTION NAVIGATEUR ==========
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  
+  console.log('🔔 [Envol-Notifications] User Agent:', userAgent.substring(0, 80) + '...');
+  console.log('🔔 [Envol-Notifications] Platform:', platform);
+  
+  const isIOS = /iPhone|iPad|iPod/i.test(platform) || 
+                /iPhone|iPad|iPod/i.test(userAgent);
+  const isFirefox = /Firefox/i.test(userAgent);
+  const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
+  
+  console.log('🔔 [Envol-Notifications] Détection:', { isIOS, isFirefox, isChrome });
+  
+  // ========== MESSAGES INFORMATIFS ==========
+  if (isIOS) {
+    console.log('🍎 iOS détecté - Notifications push non supportées');
+    
+    // Message visuel pour iOS
+    const iosWarning = document.createElement('div');
+    iosWarning.className = 'ios-info-message';
+    iosWarning.innerHTML = `
+      <p><strong>📱 Pour les utilisateurs iPhone/iPad :</strong></p>
+      <p>iOS ne permet pas les notifications push pour les applications web.</p>
+      <p><em>Astuce : Gardez ENVOL ouverte ou programmez un rappel quotidien ! 😃</em></p>
+    `;
+    
+    const troubleshooting = document.querySelector('.troubleshooting');
+    if (troubleshooting) {
+      troubleshooting.insertBefore(iosWarning, troubleshooting.firstChild);
+    }
+  }
+  
+  if (isFirefox && !isIOS) {
+    console.log('🦊 Firefox détecté - Notifications possibles avec limitations');
+    
+    // Message pour Firefox
+    const firefoxWarning = document.createElement('div');
+    firefoxWarning.className = 'firefox-info-message';
+    firefoxWarning.innerHTML = `
+      <p><strong>🦊 Firefox détecté :</strong></p>
+      <p>Les notifications peuvent être bloquées par la "Protection renforcée".</p>
+      <p><em>Si besoin, désactivez-la temporairement dans les paramètres.</em></p>
+    `;
+    
+    const troubleshooting = document.querySelector('.troubleshooting');
+    if (troubleshooting && !isIOS) {
+      troubleshooting.insertBefore(firefoxWarning, troubleshooting.firstChild);
+    }
+  }
+  
+  // ========== BOUTON ON/OFF INTELLIGENT ==========
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  if (toggleBtn) {
+    console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
+    
+    function updateToggleButton() {
+      const isActive = Notification.permission === "granted";
+      const statusSpan = document.getElementById('notifications-status');
+      
+      if (isActive) {
+        toggleBtn.className = 'backup-btn active';
+        toggleBtn.innerHTML = '🔔 <span id="notifications-status">Notifications activées</span>';
+      } else {
+        toggleBtn.className = 'backup-btn inactive';
+        toggleBtn.innerHTML = '🔕 <span id="notifications-status">Activer les notifications</span>';
+      }
+    }
+    
+    updateToggleButton();
+    
+    toggleBtn.addEventListener('click', async function() {
+      console.log('🔔 [Envol-Notifications] Clic toggle');
+      
+      if (Notification.permission === "granted") {
+        // DÉSACTIVER
+        if (confirm('Voulez-vous désactiver les notifications quotidiennes ?\n\nVous pourrez les réactiver à tout moment.')) {
+          try {
+            if (isIOS) {
+              alert('📱 Sur iOS :\n1. Allez dans Paramètres → Safari\n2. Trouvez "ENVOL"\n3. Sélectionnez "Ne pas autoriser"');
+            } else {
+              if (oneSignal?.User?.PushSubscription?.optOut) {
+                await oneSignal.User.PushSubscription.optOut();
+              }
+              alert('✅ Notifications désactivées !\n\nPour supprimer complètement :\nCliquez sur 🔒 à gauche de l\'URL → Notifications → Bloquer');
+            }
+          } catch (error) {
+            console.error('Erreur désabonnement:', error);
+            alert('⚠️ Erreur technique. Désactivez dans les paramètres du navigateur.');
+          }
+        }
+      } else {
+        // ACTIVER
+        if (isIOS) {
+          alert('📱 Sur iOS, les notifications push ne sont pas disponibles.\n\nConseil : Gardez ENVOL ouverte ou créez un rappel calendrier !');
+          return;
+        }
+        
+        if (isFirefox) {
+          alert('🦊 Firefox détecté :\n\n1. La "Protection renforcée" peut bloquer OneSignal\n2. Si aucune popup n\'apparaît, désactivez-la temporairement');
+        }
+        
+        try {
+          await oneSignal.Slidedown.promptPush();
+          
+          setTimeout(() => {
+            if (Notification.permission === "granted") {
+              alert('✅ Notifications activées !\n\nVous recevrez un rappel quotidien pour votre défi.');
+            } else if (Notification.permission === "denied") {
+              alert('❌ Notifications refusées.\n\nAutorisez-les dans les paramètres du navigateur.');
+            }
+          }, 2000);
+          
+        } catch (error) {
+          console.error('Erreur activation:', error);
+          alert('⚠️ Impossible d\'afficher la popup.\n\nEssayez de recharger la page ou utilisez Chrome.');
+        }
+      }
+      
+      setTimeout(updateToggleButton, 1000);
+    });
+  }
+  
+  // ========== BOUTON "AUTORISER NOTIFICATIONS" ==========
   const allowBtn = document.getElementById('allow-notifications-btn');
   if (allowBtn) {
     console.log('✅ [Envol-Notifications] Bouton allow trouvé');
@@ -93,40 +221,42 @@ function setupNotificationUI(oneSignal) {
     allowBtn.addEventListener('click', async function() {
       console.log('🔔 [Envol-Notifications] Clic sur autoriser notifications');
       
+      if (isIOS) {
+        alert('📱 Sur iOS, utilisez plutôt le bouton "Gérer les notifications" ci-dessus.\n\nLes notifications push ne sont pas supportées.');
+        return;
+      }
+      
+      if (isFirefox) {
+        alert('🦊 Firefox détecté :\nLa "Protection renforcée" peut bloquer OneSignal.');
+      }
+      
       try {
-        // Vérifier l'état actuel
-        const notificationPermission = Notification.permission;
-
-        if (notificationPermission !== "granted") {
-          console.log('🔔 [Envol-Notifications] Demande d\'autorisation...');
-          
-          // Afficher la popup d'autorisation
+        const currentPermission = Notification.permission;
+        console.log('Permission actuelle:', currentPermission);
+        
+        if (currentPermission === "default") {
           await oneSignal.Slidedown.promptPush();
           
-          // Vérifier après 2 secondes
           setTimeout(() => {
             if (Notification.permission === "granted") {
-              alert('✅ Notifications activées ! Vous recevrez vos défis quotidiennement.');
+              alert('✅ Notifications activées !');
             }
           }, 2000);
-        
-        }
           
-        else {
-      alert('✅ Vous êtes déjà abonné aux notifications !');
-          
-        } else {
+        } else if (currentPermission === "granted") {
           alert('✅ Vous êtes déjà abonné aux notifications !');
+        } else {
+          alert('❌ Notifications bloquées.\nAutorisez-les dans les paramètres du navigateur.');
         }
         
       } catch (error) {
-        console.error('❌ [Envol-Notifications] Erreur autorisation:', error);
-        alert('⚠️ Erreur: ' + error.message);
+        console.error('❌ Erreur:', error);
+        alert('⚠️ Erreur technique : ' + error.message);
       }
     });
   }
   
-  // Bouton "Test notification"
+  // ========== BOUTON "TEST NOTIFICATION" ==========
   const testBtn = document.getElementById('test-notification-android-btn');
   if (testBtn) {
     console.log('✅ [Envol-Notifications] Bouton test trouvé');
@@ -134,42 +264,66 @@ function setupNotificationUI(oneSignal) {
     testBtn.addEventListener('click', async function() {
       console.log('🔔 [Envol-Notifications] Clic sur test notification');
       
-      try {
-        // Vérifier la permission
-        const isSubscribed = Notification.permission === "granted";
-
-        if (!isSubscribed) {
-          alert('❌ Veuillez d\'abord autoriser les notifications');
-          return;
-        }
+      if (Notification.permission !== "granted") {
+        alert('❌ Veuillez d\'abord autoriser les notifications');
+        return;
+      }
+      
+      if (isIOS) {
+        alert('📱 Sur iOS, les notifications push ne sont pas disponibles.\n\nMais vous pouvez tester les notifications locales !');
         
-        // Envoyer une notification de test
-        const jourActuel = localStorage.getItem('jour_actuel') || 1;
-        const defis = JSON.parse(localStorage.getItem('defis_envol') || '[]');
-        const defiDuJour = defis[jourActuel - 1] || { titre: 'Test' };
-        
-        // Méthode 1: Utiliser les triggers (recommandé)
-        if (oneSignal.Notifications && typeof oneSignal.Notifications.addTrigger === 'function') {
-          await oneSignal.Notifications.addTrigger({
-            'test_notification': true,
-            'jour': jourActuel,
-            'timestamp': new Date().getTime()
+        if ('Notification' in window) {
+          const jourActuel = localStorage.getItem('jour_actuel') || 1;
+          const notif = new Notification(`🎯 ENVOL iOS - Jour ${jourActuel}`, {
+            body: 'Notification locale de test',
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
           });
           
-          alert('✅ Notification test envoyée ! Elle devrait apparaître dans quelques secondes.');
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
           
+          alert('✅ Notification locale envoyée !');
+        }
+        return;
+      }
+      
+      try {
+        const jourActuel = localStorage.getItem('jour_actuel') || 1;
+        
+        if (oneSignal.Notifications?.addTrigger) {
+          await oneSignal.Notifications.addTrigger({
+            'test': Date.now(),
+            'jour': jourActuel
+          });
+          alert('✅ Notification test envoyée !\nElle devrait apparaître dans quelques secondes.');
         } else {
-          // Méthode alternative
-          alert('✅ Test déclenché ! Vérifiez votre centre de notifications.');
+          // Fallback
+          const notif = new Notification('🎯 ENVOL Test', {
+            body: `Jour ${jourActuel} - Test de notification`,
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+          });
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
+          alert('✅ Notification locale envoyée !');
         }
         
       } catch (error) {
-        console.error('❌ [Envol-Notifications] Erreur test:', error);
-        alert('⚠️ Erreur: ' + error.message);
+        console.error('❌ Erreur test:', error);
+        alert('⚠️ Erreur d\'envoi : ' + error.message);
       }
     });
   }
 }
+
+//=============================================//
+//=========== FIN BOUTONS TECHNIQUES ==========//
+//=============================================//
+
+
 
 function setupFallbackNotifications() {
   console.log('🔔 [Envol-Notifications] Utilisation fallback (notifications natives)');
