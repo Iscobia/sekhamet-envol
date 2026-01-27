@@ -110,7 +110,7 @@ function setupNotificationUI(oneSignal) {
     
     // Message visuel pour iOS
     const iosWarning = document.createElement('div');
-    iosWarning.className = 'ios-info-message';
+    iosWarning.className = 'browser-warning';
     iosWarning.innerHTML = `
       <p><strong>📱 Pour les utilisateurs iPhone/iPad :</strong></p>
       <p>iOS ne permet pas les notifications push pour les applications web.</p>
@@ -128,7 +128,7 @@ function setupNotificationUI(oneSignal) {
     
     // Message pour Firefox
     const firefoxWarning = document.createElement('div');
-    firefoxWarning.className = 'firefox-info-message';
+    firefoxWarning.className = 'browser-warning.firefox';
     firefoxWarning.innerHTML = `
       <p><strong>🦊 Firefox détecté :</strong></p>
       <p>Les notifications peuvent être bloquées par la "Protection renforcée".</p>
