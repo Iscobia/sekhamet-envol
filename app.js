@@ -71,7 +71,7 @@ function debugOneSignal() {
           // Vérifier l'abonnement
           try {
             if (OneSignal.User && OneSignal.User.PushSubscription) {
-              const isSubscribed = await OneSignal.User.PushSubscription.optIn();
+              const isSubscribed = Notification.permission === "granted";
               console.log('🔔 Abonnement actif:', isSubscribed);
               
               if (isSubscribed) {
