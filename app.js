@@ -816,7 +816,6 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
   // Détection navigateur spécifique
  // const userAgent = navigator.userAgent;  // déjà fait à la ligne 95
     
-const platform = navigator.platform;
 const isFirefox = /Firefox/i.test(userAgent);
 const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
   
