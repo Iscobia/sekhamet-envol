@@ -2,6 +2,7 @@
 
 const CACHE_NAME = 'envol-pwa-v2.0';
 const userAgent = navigator.userAgent;
+const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
 
 // ========== FONCTIONS GÉRANT ONESIGNAL ==========
 
