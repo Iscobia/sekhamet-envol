@@ -1,6 +1,7 @@
 // app.js - Logique principale de l'application
 
 const CACHE_NAME = 'envol-pwa-v2.0';
+const userAgent = navigator.userAgent;
 
 // ========== FONCTIONS GÉRANT ONESIGNAL ==========
 
@@ -93,7 +94,7 @@ function debugOneSignal() {
         
         // Suggestion
 
-        const userAgent = navigator.userAgent;
+        
           
         if (/Firefox/i.test(navigator.userAgent)) {
           console.log('💡 Firefox: Désactivez "Protection renforcée" temporairement');
