@@ -146,18 +146,22 @@ function setupNotificationUI(oneSignal) {
   if (toggleBtn) {
     console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
     
-    function updateToggleButton() {
-      const isActive = Notification.permission === "granted";
-      const statusSpan = document.getElementById('notifications-status');
-      
-      if (isActive) {
-        toggleBtn.className = 'backup-btn active';
-        toggleBtn.innerHTML = '🔔 <span id="notifications-status">Notifications activées</span>';
-      } else {
-        toggleBtn.className = 'backup-btn inactive';
-        toggleBtn.innerHTML = '🔕 <span id="notifications-status">Activer les notifications</span>';
-      }
-    }
+function updateToggleButton() {
+  const isActive = Notification.permission === "granted";
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  
+  if (!toggleBtn) return;
+  
+  if (isActive) {
+    // MODE ON (vert) : "Notifications activées : Désactiver les notifications ? 🔕"
+    toggleBtn.className = 'backup-btn toggle-on';
+    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+  } else {
+    // MODE OFF (rouge) : "Notifications désactivées : Activer les notifications ? 🔔"
+    toggleBtn.className = 'backup-btn toggle-off';
+    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+  }
+}
     
     updateToggleButton();
     
