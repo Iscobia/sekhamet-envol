@@ -721,6 +721,8 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
     btn.disabled = false;
   }
 });
+
+    
   
   // 4. EXPORTER SAUVEGARDE
   document.getElementById('export-backup-btn')?.addEventListener('click', function() {
@@ -795,6 +797,61 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
     alert('🗑️ Progression supprimée.');
     window.location.reload();
   });
+
+
+
+    
+
+ // 🍎🦊 DÉTECTION NAVIGATEUR POUR MESSAGES INFORMATIFS
+  
+  const userAgent = navigator.userAgent;
+  const platform = navigator.platform;
+  
+  // Détection iOS (tous navigateurs iOS)
+  const isIOS = /iPhone|iPad|iPod/i.test(platform) || 
+                /iPhone|iPad|iPod/i.test(userAgent);
+  
+  // Détection navigateur spécifique
+  const isFirefox = /Firefox/i.test(userAgent);
+  const isSafari = /Safari/i.test(userAgent) && !/Chrome|Edge|Edg|Firefox|Opera|OPR/i.test(userAgent);
+  
+  console.log('🌐 Détection navigateur:', {
+    isIOS: isIOS,
+    isFirefox: isFirefox,
+    isSafari: isSafari,
+    platform: platform
+  });
+  
+  // Gestion iOS - Message informatif
+  if (isIOS) {
+    console.log('🍎 iOS détecté - Affichage message informatif');
+    
+    // Créer un message visible pour l'utilisateur
+    const iosMessage = document.createElement('div');
+    iosMessage.className = 'ios-warning';
+    iosMessage.innerHTML = `
+      <p><strong>📱 Information pour les utilisateurs iOS :</strong></p>
+      <p>Les notifications push ne sont pas supportées par iOS.</p>
+      <p><em>Conseil : Gardez l'application ouverte ou créez un rappel dans votre calendrier ! 😃</em></p>
+    `;
+    
+    // Insérer dans la section dépannage
+    const troubleshootingSection = document.querySelector('.troubleshooting');
+    if (troubleshootingSection) {
+      troubleshootingSection.insertBefore(iosMessage, troubleshootingSection.firstChild);
+    }
+  }
+  
+  // Gestion Firefox - Message d'information
+  if (isFirefox && !isIOS) {
+    console.log('🦊 Firefox détecté - Notifications avec limitations');
+  }
+
+
+
+
+    
+    
   
   // ========== INITIALISATION ==========
   // Vérifier les jours manqués
