@@ -226,7 +226,6 @@ body {
 button.madeup {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
 }
-
 /*----------------------------------------------*/
 
 
@@ -241,6 +240,34 @@ button.madeup {
   color: #0b252f;
   margin-bottom: 15px;
 }
+
+/* Message : navigateur non compatible avec les notifications */
+.browser-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.warning-banner {
+  text-align: center;
+}
+
+.warning-banner strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 1rem;
+}
+
+.warning-banner em {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/*FIN du Message : navigateur non compatible avec les notifications*/
 
 .time-selector {
   display: flex;
