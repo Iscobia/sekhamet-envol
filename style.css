@@ -33,11 +33,38 @@ body {
   letter-spacing: 0.5px; /* Optionnel pour meilleure lisibilité */
 }
 
+
+/*================================ BOUTONS TECHNIQUES ================================*/
+
 /* Boutons et texte technique gardent une police sans-serif */
 .validate-btn, .secondary-btn, .warning-btn, .backup-btn, .danger-btn,
 .time-selector select, .small-note {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
+
+/* Bouton ON/OFF amélioré */
+.backup-btn.toggle-on {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: 2px solid #10b981;
+}
+
+.backup-btn.toggle-off {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: 2px solid #dc2626;
+}
+
+.backup-btn.toggle-on:hover {
+  background: linear-gradient(135deg, #0da271 0%, #047852 100%);
+}
+
+.backup-btn.toggle-off:hover {
+  background: linear-gradient(135deg, #c52222 0%, #9c1b1b 100%);
+}
+
+
+/*================ FIN DE LA DÉCLARATION DES BOUTONS TECH  ================================*/
 
 * {
   margin: 0;
