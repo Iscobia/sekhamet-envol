@@ -814,7 +814,7 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
                 /iPhone|iPad|iPod/i.test(userAgent);
   
   // Détection navigateur spécifique
-  const userAgent = navigator.userAgent;
+ // const userAgent = navigator.userAgent;  // déjà fait à la ligne 95
     
 const platform = navigator.platform;
 const isFirefox = /Firefox/i.test(userAgent);
