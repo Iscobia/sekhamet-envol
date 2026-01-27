@@ -104,12 +104,6 @@ function debugOneSignal() {
   }, 4000); // Attendre 4 secondes
 }
 
-// Démarrer le debug
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 ENVOL initialisation...');
-  debugOneSignal();
-});
-
 
 
 
@@ -250,6 +244,7 @@ function checkForUpdates() {
 // ========== LOGIQUE PRINCIPALE ==========
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Initialisation ENVOL...');
+      debugOneSignal();
 
 //=============================================================
 //============ BANNIÈRE OFFLINE-ONLINE ========================
@@ -314,109 +309,212 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendarGrid = document.getElementById('calendar-grid');
   const notificationTimeSelect = document.getElementById('notification-time');
   
-  // Récupérer le jour actuel
-  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+// ========== GESTION DES JOURS (AVEC JOURS MANQUÉS) ==========
+
+// Récupérer le jour actuel
+let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+
+// Nouvelle propriété : défis "rattrapés" (ratés mais validés après)
+function initMadeupDefis() {
+  if (!localStorage.getItem('defis_madeup')) {
+    localStorage.setItem('defis_madeup', JSON.stringify([]));
+  }
+}
+
+// Vérifier et gérer les jours manqués depuis la dernière connexion
+function verifierJoursManques() {
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  const dernierAcces = localStorage.getItem('dernier_acces');
   
-  // ========== LOGIQUE ANTI-SPEED RUNNING ==========
-  function peutPasserAuJourSuivant() {
-    const aujourdhui = new Date().toLocaleDateString('fr-FR');
-    const dernierChangement = localStorage.getItem('dernier_changement_jour');
-    
-    // Protection spéciale pour le jour 1
-    if (jourActuel === 1 && !dernierChangement) {
-      localStorage.setItem('dernier_changement_jour', aujourdhui);
-      return false;
+  // Premier accès
+  if (!dernierAcces) {
+    localStorage.setItem('dernier_acces', aujourdhui);
+    return jourActuel;
+  }
+  
+  // Calculer différence en jours
+  const date1 = new Date(dernierAcces.split('/').reverse().join('-'));
+  const date2 = new Date(aujourdhui.split('/').reverse().join('-'));
+  const diffJours = Math.floor((date2 - date1) / (1000 * 60 * 60 * 24));
+  
+  console.log('📅 Dernier accès:', dernierAcces, 'Différence:', diffJours, 'jours');
+  
+  if (diffJours > 0) {
+    // Marquer les jours passés comme manqués (sauf si déjà fait ou rattrapé)
+    for (let i = 0; i < diffJours && jourActuel + i <= 77; i++) {
+      const jourAMarquer = jourActuel + i;
+      const defi = getDefiByDay(jourAMarquer);
+      
+      // Vérifier si déjà rattrapé
+      const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+      const estDejaRattrape = madeupDefis.includes(jourAMarquer);
+      
+      if (defi && !defi.termine && !estDejaRattrape) {
+        console.log(`❌ Jour ${jourAMarquer} marqué comme manqué`);
+        // On ne change pas defi.termine ici, on utilise juste la classe CSS
+      }
     }
     
-    if (!dernierChangement || dernierChangement !== aujourdhui) {
-      localStorage.setItem('dernier_changement_jour', aujourdhui);
-      return true;
-    }
+    // Mettre à jour le dernier accès
+    localStorage.setItem('dernier_acces', aujourdhui);
+  }
+  
+  return jourActuel;
+}
+
+// Fonction originale anti-speed running (conservée)
+function peutPasserAuJourSuivant() {
+  const aujourdhui = new Date().toLocaleDateString('fr-FR');
+  const dernierChangement = localStorage.getItem('dernier_changement_jour');
+  
+  // Protection spéciale pour le jour 1
+  if (jourActuel === 1 && !dernierChangement) {
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
     return false;
   }
   
-  function verifierEtAvancerJour() {
-    if (peutPasserAuJourSuivant() && jourActuel < 77) {
-      jourActuel++;
-      localStorage.setItem('jour_actuel', jourActuel.toString());
-    }
-    afficherDefiDuJour(jourActuel);
+  if (!dernierChangement || dernierChangement !== aujourdhui) {
+    localStorage.setItem('dernier_changement_jour', aujourdhui);
+    return true;
+  }
+  return false;
+}
+
+function verifierEtAvancerJour() {
+  // D'abord vérifier les jours manqués
+  jourActuel = verifierJoursManques();
+  
+  // Ensuite vérifier si on peut avancer aujourd'hui
+  if (peutPasserAuJourSuivant() && jourActuel < 77) {
+    jourActuel++;
+    localStorage.setItem('jour_actuel', jourActuel.toString());
+    console.log('📈 Avancé au jour:', jourActuel);
   }
   
-  // ========== FONCTIONS D'AFFICHAGE ==========
-  function afficherDefiDuJour(jour) {
+  afficherDefiDuJour(jourActuel);
+}
+
+// ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
+
+function afficherDefiDuJour(jour) {
+  const defi = getDefiByDay(jour);
+  if (!defi) return;
+  
+  if (currentDayElement) currentDayElement.textContent = jour;
+  if (dayCurrentElement) dayCurrentElement.textContent = jour;
+  if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
+  if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
+  
+  if (markDoneButton) {
+    // Vérifier si c'est un défi manqué mais rattrapable
+    const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+    const estDejaRattrape = madeupDefis.includes(jour);
+    
+    if (defi.termine) {
+      markDoneButton.textContent = '✅ Déjà accompli';
+      markDoneButton.disabled = true;
+      markDoneButton.classList.add('completed');
+    } else if (estDejaRattrape) {
+      markDoneButton.textContent = '✨ Déjà rattrapé';
+      markDoneButton.disabled = true;
+      markDoneButton.classList.add('madeup');
+    } else {
+      markDoneButton.textContent = '✅ Marquer comme accompli';
+      markDoneButton.disabled = false;
+      markDoneButton.classList.remove('completed', 'madeup');
+    }
+  }
+  
+  if (typeof genererCalendrier === 'function') {
+    genererCalendrier();
+    centrerCalendrierSurJour(jour);
+  }
+}
+
+function genererCalendrier() {
+  if (!calendarGrid) return;
+  calendarGrid.innerHTML = '';
+  
+  // Initialiser les défis rattrapés
+  initMadeupDefis();
+  const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+  
+  for (let jour = 1; jour <= 77; jour++) {
     const defi = getDefiByDay(jour);
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.textContent = jour;
+    
+    const estDejaRattrape = madeupDefis.includes(jour);
+    
+    if (defi.termine) {
+      dayElement.classList.add('completed'); // Vert
+    } else if (estDejaRattrape) {
+      dayElement.classList.add('madeup'); // Jaune (rattrapé)
+    } else if (jour === jourActuel) {
+      dayElement.classList.add('current'); // Bleu
+    } else if (jour < jourActuel && !defi.termine && !estDejaRattrape) {
+      dayElement.classList.add('missed'); // Rouge (raté)
+    } else {
+      dayElement.classList.add('upcoming'); // Gris
+    }
+    
+    dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
+    calendarGrid.appendChild(dayElement);
+  }
+  centrerCalendrierSurJour(jourActuel);
+}
+
+// ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ==========
+
+if (markDoneButton) {
+  markDoneButton.addEventListener('click', function() {
+    const defi = getDefiByDay(jourActuel);
     if (!defi) return;
     
-    if (currentDayElement) currentDayElement.textContent = jour;
-    if (dayCurrentElement) dayCurrentElement.textContent = jour;
-    if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
-    if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
+    // Vérifier si c'est un défi passé (raté)
+    const aujourdhui = new Date().toLocaleDateString('fr-FR');
+    const dernierAcces = localStorage.getItem('dernier_acces');
+    let estUnRattrapage = false;
     
-    if (markDoneButton) {
-      if (defi.termine) {
-        markDoneButton.textContent = '✅ Déjà accompli';
-        markDoneButton.disabled = true;
-        markDoneButton.classList.add('completed');
-      } else {
-        markDoneButton.textContent = '✅ Marquer comme accompli';
-        markDoneButton.disabled = false;
-        markDoneButton.classList.remove('completed');
+    if (dernierAcces) {
+      const dateDernierAcces = new Date(dernierAcces.split('/').reverse().join('-'));
+      const dateActuelle = new Date(aujourdhui.split('/').reverse().join('-'));
+      const diffJours = Math.floor((dateActuelle - dateDernierAcces) / (1000 * 60 * 60 * 24));
+      
+      // Si le défi est d'un jour antérieur
+      if (jourActuel < parseInt(localStorage.getItem('jour_actuel')) || diffJours > 0) {
+        estUnRattrapage = true;
       }
     }
     
-    if (typeof genererCalendrier === 'function') {
-      genererCalendrier();
-      centrerCalendrierSurJour(jour);
-    }
-  }
-  
-  function genererCalendrier() {
-    if (!calendarGrid) return;
-    calendarGrid.innerHTML = '';
-    
-    for (let jour = 1; jour <= 77; jour++) {
-      const defi = getDefiByDay(jour);
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = jour;
-      
-      if (defi.termine) {
-        dayElement.classList.add('completed');
-      } else if (jour === jourActuel) {
-        dayElement.classList.add('current');
-      } else if (jour < jourActuel && !defi.termine) {
-        dayElement.classList.add('missed');
-      } else {
-        dayElement.classList.add('upcoming');
+    if (estUnRattrapage) {
+      // Marquer comme rattrapé
+      const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+      if (!madeupDefis.includes(jourActuel)) {
+        madeupDefis.push(jourActuel);
+        localStorage.setItem('defis_madeup', JSON.stringify(madeupDefis));
+        alert("✨ Défi rattrapé avec succès !");
       }
-      
-      dayElement.addEventListener('click', () => afficherDefiDuJour(jour));
-      calendarGrid.appendChild(dayElement);
-    }
-    centrerCalendrierSurJour(jourActuel);
-  }
-  
-  // ========== ÉVÉNEMENTS PRINCIPAUX ==========
-  if (markDoneButton) {
-    markDoneButton.addEventListener('click', function() {
-      const defi = getDefiByDay(jourActuel);
-      if (!defi) return;
+    } else {
+      // Validation normale
       defi.termine = true;
       defi.dateValidation = new Date().toISOString();
-      if (typeof saveProgression === 'function') saveProgression();
-      afficherDefiDuJour(jourActuel);
-      alert("Défi validé ! À demain pour le prochain.");
-    });
-  }
-  
-  if (notificationTimeSelect) {
-    const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
-    notificationTimeSelect.value = heureSauvegardee;
-    notificationTimeSelect.addEventListener('change', function() {
-      localStorage.setItem('heure_notification', this.value);
-    });
-  }
+      alert("✅ Défi validé ! À demain pour le prochain.");
+    }
+    
+    if (typeof saveProgression === 'function') saveProgression();
+    afficherDefiDuJour(jourActuel);
+  });
+}
+
+if (notificationTimeSelect) {
+  const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
+  notificationTimeSelect.value = heureSauvegardee;
+  notificationTimeSelect.addEventListener('change', function() {
+    localStorage.setItem('heure_notification', this.value);
+  });
+}
   
   // ========== BOUTONS DÉPANNAGE ==========
   
