@@ -463,3 +463,137 @@ function setupFallbackNotifications() {
     });
   }
 }
+
+
+
+// =====================================================================
+// ==============🔔 NOTIFICATIONS NATIVES QUOTIDIENNES 🔔===============
+// =====================================================================
+
+
+async function programmerNotificationQuotidienne() {
+  console.log('🔔 Programmation notification quotidienne...');
+  
+  // 1. Vérifier la permission
+  if (Notification.permission !== 'granted') {
+    console.log('❌ Permission non accordée');
+    return;
+  }
+  
+  // 2. Récupérer l'heure configurée
+  const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+  const [heures, minutes] = heureNotification.split(':').map(Number);
+  
+  // 3. Calculer l'heure de déclenchement
+  const maintenant = new Date();
+  const heureDeclenchement = new Date();
+  heureDeclenchement.setHours(heures, minutes, 0, 0);
+  
+  // Si l'heure est déjà passée aujourd'hui, programmer pour demain
+  if (heureDeclenchement < maintenant) {
+    heureDeclenchement.setDate(heureDeclenchement.getDate() + 1);
+  }
+  
+  const delaiMs = heureDeclenchement.getTime() - maintenant.getTime();
+  
+  console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs/1000/60)} minutes)`);
+  
+  // 4. Programmer la notification
+  setTimeout(async () => {
+    await envoyerNotificationDuJour();
+    
+    // Reprogrammer pour le lendemain
+    programmerNotificationQuotidienne();
+  }, delaiMs);
+}
+
+async function envoyerNotificationDuJour() {
+  try {
+    // 1. Récupérer le jour actuel
+    const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+    
+    // 2. Récupérer le défi du jour
+    const defi = getDefiByDay(jourActuel);
+    
+    if (!defi) {
+      console.error('❌ Défi non trouvé pour le jour', jourActuel);
+      return;
+    }
+    
+    // 3. Créer la notification
+    const options = {
+      body: defi.description.substring(0, 120) + (defi.description.length > 120 ? '...' : ''),
+      icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+      badge: '/sekhamet-envol/assets/icons/ENVOL-192.png',
+      tag: `envol-jour-${jourActuel}`, // Évite les doublons
+      requireInteraction: true, // Reste visible
+      actions: [
+        {
+          action: 'mark-done',
+          title: '✅ Marquer comme accompli'
+        },
+        {
+          action: 'view',
+          title: '👁️ Voir le défi'
+        }
+      ]
+    };
+    
+    // 4. Envoyer la notification
+    const notification = new Notification(`Jour ${jourActuel} - ${defi.titre}`, options);
+    
+    console.log('✅ Notification envoyée:', {
+      jour: jourActuel,
+      titre: defi.titre,
+      heure: new Date().toLocaleTimeString('fr-FR')
+    });
+    
+    // 5. Gérer les clics
+    notification.onclick = function(event) {
+      event.preventDefault();
+      window.focus();
+      notification.close();
+      
+      // Ouvrir l'application
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          action: 'OPEN_APP',
+          jour: jourActuel
+        });
+      }
+    };
+    
+    // Gérer les actions (boutons)
+    notification.onaction = function(event) {
+      event.preventDefault();
+      
+      if (event.action === 'mark-done') {
+        // Marquer le défi comme accompli
+        defi.termine = true;
+        defi.dateValidation = new Date().toISOString();
+        
+        if (typeof saveProgression === 'function') {
+          saveProgression();
+        }
+        
+        // Afficher confirmation
+        new Notification('✅ Défi accompli !', {
+          body: `Le défi du jour ${jourActuel} a été marqué comme terminé.`,
+          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+        });
+      } else if (event.action === 'view') {
+        // Ouvrir l'app sur le défi du jour
+        window.focus();
+      }
+      
+      notification.close();
+    };
+    
+    // Auto-fermeture après 30 secondes
+    setTimeout(() => notification.close(), 30000);
+    
+  } catch (error) {
+    console.error('❌ Erreur envoi notification:', error);
+  }
+}
+
