@@ -1,6 +1,12 @@
 // service-worker.js - VERSION ULTRA SIMPLE ET STABLE
 console.log('[Service Worker] Chargement version simplifiée');
 
+try {
+  importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+} catch (error) {
+  console.log('[SW] OneSignal non chargé (Firefox protection)');
+}
+
 // IMPORTANT: OneSignal doit être importé AVANT tout autre code
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
