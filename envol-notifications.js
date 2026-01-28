@@ -115,6 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function setupNotificationUI(oneSignal) {
   console.log('🔔 [Envol-Notifications] Configuration UI...');
+
+  // ========== MISE À JOUR INITIALE DU BOUTON ==========
+  updateToggleButton();
   
   // ========== DÉTECTION NAVIGATEUR ==========
   const userAgent = navigator.userAgent;
@@ -186,26 +189,55 @@ function setupNotificationUI(oneSignal) {
     
     
       function updateToggleButton() {
-      const isActive = Notification.permission === "granted";
-      const toggleBtn = document.getElementById('notifications-toggle-btn');
-      
-      if (!toggleBtn) return;
-      
-      if (isActive) {
-        // MODE ON (vert) : "Notifications activées : Désactiver les notifications ? 🔕"
-        toggleBtn.className = 'backup-btn toggle-on';
-        toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-        programmerNotificationQuotidienne(); // Démarrer les notifications
-      } else {
-        // MODE OFF (rouge) : "Notifications désactivées : Activer les notifications ? 🔔"
-        toggleBtn.className = 'backup-btn toggle-off';
-        toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-      }
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  if (!toggleBtn) return;
+  
+  // INITIALISER À false
+  let isActive = false;
+  
+  // VÉRIFICATION 1 : OneSignal (si disponible)
+  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+    try {
+      // OneSignal v16 : optIn est une propriété
+      isActive = OneSignal.User.PushSubscription.optIn === true;
+      console.log('🔔 État OneSignal:', isActive ? 'ACTIF' : 'INACTIF');
+    } catch (e) {
+      console.warn('⚠️ Erreur vérification OneSignal:', e);
+      // Fallback à Notification API
+      isActive = Notification.permission === "granted";
     }
+  } 
+  // VÉRIFICATION 2 : Notification API native
+  else {
+    isActive = Notification.permission === "granted";
+    console.log('🔔 État Notification API:', isActive ? 'ACTIF' : 'INACTIF');
+  }
+  
+  // MISE À JOUR DU BOUTON
+  if (isActive) {
+    toggleBtn.className = 'backup-btn toggle-on';
+    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+    
+    // Démarrer les notifications (sans blocage)
+    setTimeout(() => {
+      programmerNotificationQuotidienne();
+    }, 1000); // Petit délai pour éviter les conflits
+  } else {
+    toggleBtn.className = 'backup-btn toggle-off';
+    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+  }
+  
+  console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
+}
+
 
     
     
     updateToggleButton();
+
+
+    //================================================================
+    //======= ÉCOUTE D'UNE INTERACTION AVEC LE BOUTON TOGGLE =========
     
     toggleBtn.addEventListener('click', async function() {
     console.log('🔔 [Envol-Notifications] Clic toggle');
@@ -473,11 +505,28 @@ function setupFallbackNotifications() {
 // ==============🔔 NOTIFICATIONS NATIVES QUOTIDIENNES 🔔===============
 // =====================================================================
 
+let notificationsProgrammees = false;
 
 async function programmerNotificationQuotidienne() {
-  console.log('🔔 Programmation notification quotidienne...');
+  console.log('🔔 [Programmation] Début...');
   
-  // 1. Vérifier la permission
+  // Vérifier si déjà programmée
+  if (notificationsProgrammees) {
+    console.log('🔔 [Programmation] Déjà en cours');
+    return;
+  }
+  
+  // VÉRIFIER LA PERMISSION AVANT de mettre à true
+  if (Notification.permission !== 'granted') {
+    console.log('❌ [Programmation] Permission non accordée');
+    return;
+  }
+  
+  // MAINTENANT on peut marquer comme programmée
+  notificationsProgrammees = true;
+  
+  
+  // 1. Vérifier la permission 
   if (Notification.permission !== 'granted') {
     console.log('❌ Permission non accordée');
     return;
