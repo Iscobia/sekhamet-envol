@@ -600,183 +600,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
 
-
-    
-     // 2. AUTORISER NOTIFICATIONS - SÉCURISÉ
-     document.getElementById('allow-notifications-btn')?.addEventListener('click', async function() {
-        const btn = this;
-        btn.textContent = 'Vérification...';
-        btn.disabled = true;
-        try {
-            // Attendre OneSignal d'abord
-            const signal = await waitForOneSignal(3);
-            
-            if (!signal) {
-                alert('⚠️ OneSignal pas disponible. Rechargez la page ou vérifiez les bloqueurs.');
-                return;
-            }
-            
-            const permission = await checkNotificationPermission();
-            if (permission === 'default') {
-                // Méthode sécurisée pour demander la permission
-                if (typeof signal.showSlidedownPrompt === 'function') {
-                    signal.showSlidedownPrompt();
-                } else if (signal.Slidedown && typeof signal.Slidedown.promptPush === 'function') {
-                    signal.Slidedown.promptPush();
-                } else {
-                    // Fallback: Notification API native
-                    if ('Notification' in window) {
-                        await Notification.requestPermission();
-                        alert('✅ Permission demandée !');
-                    }
-                }
-            } else if (permission === 'denied') {
-                alert('❌ Notifications bloquées.\nAutorisez-les dans les paramètres du navigateur.');
-            } else if (permission === 'granted') {
-                alert('✅ Notifications déjà autorisées !');
-            }
-        } catch (error) {
-            console.error('Erreur:', error);
-            alert('⚠️ Erreur: ' + error.message);
-        } finally {
-            setTimeout(() => {
-                btn.textContent = '🔔 Autoriser les notifications';
-                btn.disabled = false;
-            }, 2000);
-        }
-    });
-
-    
-  
-    // 3. TEST NOTIFICATION (SEUL BOUTON DE TEST) - SÉCURISÉ
-    document.getElementById('test-notification-android-btn')?.addEventListener('click', async function() {
-      const btn = this;
-      btn.textContent = 'Test...';
-      btn.disabled = true;
-      
-      try {
-        // Vérification OneSignal - AMÉLIORÉE
-        const signal = await waitForOneSignal(3);
-        
-        if (!signal) {
-          alert('⚠️ OneSignal pas disponible\n\nCauses possibles :\n1. Firefox avec protection activée\n2. Bloqueur de publicités\n3. Connexion lente\n\nEssayez avec Chrome ou désactivez la protection.');
-          
-          // Fallback: essayer les notifications natives
-          if ('Notification' in window && Notification.permission === 'granted') {
-            if (confirm('OneSignal bloqué. Tester avec les notifications natives ?')) {
-              const defi = getDefiByDay(jourActuel);
-              const notification = new Notification(`🎯 ENVOL Test`, {
-                body: `Jour ${jourActuel}: ${defi.titre.substring(0, 80)}`,
-                icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-              });
-              notification.onclick = () => { window.focus(); notification.close(); };
-              setTimeout(() => notification.close(), 4000);
-              alert('✅ Notification native envoyée !');
-            }
-          }
-          return;
-        }
-        
-        // Vérification permission
-        const permission = await checkNotificationPermission();
-        
-        if (permission === 'granted') {
-          const defi = getDefiByDay(jourActuel);
-          const heure = localStorage.getItem('heure_notification') || '08:00';
-          
-          // ⭐⭐ MÉTHODE CORRECTE POUR OneSignal v16 ⭐⭐
-          // 1. D'abord vérifier les méthodes disponibles
-          console.log('OneSignal methods:', Object.keys(OneSignal).filter(k => !k.startsWith('_')));
-          
-          // Méthode A : La plus courante - OneSignal.Notifications
-          if (OneSignal.Notifications) {
-            console.log('Notifications methods:', Object.keys(OneSignal.Notifications));
-            
-            // Essayer plusieurs méthodes possibles
-            try {
-              // Essai 1: addTrigger (pour tests)
-              if (typeof OneSignal.Notifications.addTrigger === 'function') {
-                await OneSignal.Notifications.addTrigger({
-                  'test-notification': true
-                });
-                alert('✅ Notification test envoyée (addTrigger) !');
-                return;
-              }
-              
-              // Essai 2: sendTag (alternative)
-              if (typeof OneSignal.User.addTag === 'function') {
-                await OneSignal.User.addTag('test_notification', new Date().getTime());
-                alert('✅ Test signal envoyé (addTag) !');
-                return;
-              }
-            } catch (e) {
-              console.warn('Méthode OneSignal échouée:', e.message);
-            }
-          }
-          
-          // Méthode B : API Notification native (fallback)
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-              const notification = new Notification(`🎯 ENVOL Test`, {
-                body: `Jour ${jourActuel}: ${defi.titre.substring(0, 80)}`,
-                icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-              });
-              
-              notification.onclick = function() {
-                window.focus();
-                this.close();
-              };
-              
-              setTimeout(() => notification.close(), 4000);
-              alert('✅ Notification test locale envoyée !');
-              return;
-            } catch (e) {
-              console.warn('Notification API échoué:', e.message);
-            }
-          }
-          
-          // ⭐⭐ POUR LES NOTIFICATIONS QUOTIDIENNES : Vérifiez la configuration OneSignal ⭐⭐
-          console.log('=== CONFIGURATION OneSignal ===');
-          console.log('App ID:', OneSignal.config?.appId);
-          console.log('SDK Version:', OneSignal.VERSION);
-          
-          // Vérifier l'abonnement - SÉCURISÉ
-    if (signal.User && typeof signal.User.PushSubscription === 'object') {
-      const subscription = signal.User.PushSubscription;
-      console.log('Push Subscription:', subscription.id ? '✅ ACTIF' : '❌ INACTIF');
-      
-      try {
-        const isOptedIn = await subscription.optIn();
-        console.log('Opted In:', isOptedIn);
-        
-        if (isOptedIn) {
-          alert(`✅ Notifications activées !\n\nTu recevras ton prochain défi à ${heure}\n(ID: ${subscription.id?.substring(0, 8)}...)`);
-        } else {
-          alert('⚠️ Ton abonnement est inactif\nAutorise d\'abord les notifications dans tes paramètres et clique sur le bouton le bouton vert "Activer les notifications" 😊\n\nEnsuite tu pourras tester !');
-        }
-      } catch (e) {
-        console.warn('Erreur vérification optIn:', e);
-        alert(`✅ Configuration OK !\n\nTes notifications arriveront à ${heure}\n(Statut d'abonnement indéterminé)`);
-      }
-    } else {
-      alert(`✅ Configuration OK !\n\nTes notifications arriveront à ${heure}`);
-    }
-          
-        } else if (permission === 'default') {
-          OneSignal.showSlidedownPrompt();
-          alert('🔔 Autorisez les notifications puis réessayez');
-        } else {
-          alert('❌ Notifications bloquées\nAutorise-les dans les paramètres');
-        }
-      } catch (error) {
-        console.error('Erreur test notification:', error);
-        alert('⚠️ Erreur : ' + error.message);
-      } finally {
-        btn.textContent = '🧐 Envoyer une notif\' test';
-        btn.disabled = false;
-      }
-    });
-
     
   
       // 4. EXPORTER SAUVEGARDE
@@ -860,58 +683,6 @@ document.addEventListener('DOMContentLoaded', function() {
       // ========== INITIALISATION FINALE ==========
       verifierEtAvancerJour();
 
-    
-
-     // 🍎🦊 DÉTECTION NAVIGATEUR POUR MESSAGES INFORMATIFS
-    
-      const platform = navigator.platform;
-      
-      // Détection iOS (tous navigateurs iOS)
-      const isIOS = /iPhone|iPad|iPod/i.test(platform) || 
-                    /iPhone|iPad|iPod/i.test(userAgent);
-      
-      // Détection navigateur spécifique
-     // const userAgent = navigator.userAgent;  // déjà fait à la ligne 95
-        
-    const isFirefox = /Firefox/i.test(userAgent);
-    const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
-      
-      console.log('🌐 Détection navigateur:', {
-        isIOS: isIOS,
-        isFirefox: isFirefox,
-        isSafari: isSafari,
-        platform: platform
-      });
-    
-        
-      
-      // Gestion iOS - Message informatif
-      if (isIOS) {
-        console.log('🍎 iOS détecté - Affichage message informatif');
-        
-        // Créer un message visible pour l'utilisateur
-        const iosMessage = document.createElement('div');
-        iosMessage.className = 'ios-warning';
-        iosMessage.innerHTML = `
-          <p><strong>📱 Information pour les utilisateurs iOS :</strong></p>
-          <p>Les notifications push ne sont pas supportées par iOS.</p>
-          <p><em>Conseil : Gardez l'application ouverte ou créez un rappel dans votre calendrier ! 😃</em></p>
-        `;
-        
-        // Insérer dans la section dépannage
-        const troubleshootingSection = document.querySelector('.troubleshooting');
-        if (troubleshootingSection) {
-          troubleshootingSection.insertBefore(iosMessage, troubleshootingSection.firstChild);
-        }
-      }
-    
-        
-      // Gestion Firefox - Message d'information
-      if (isFirefox && !isIOS) {
-        console.log('🦊 Firefox détecté - Notifications avec limitations');
-      }
-
-
 
 
 
@@ -982,6 +753,24 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('📱 App déjà installée');
       installButton.style.display = 'none';
     }
+
+    
+    //=============== CHARGEMENT DU MODULE DE NOTIFICATION ===============
+    //====================================================================
+
+    // Charger le module notifications UNIQUEMENT si OneSignal est disponible
+setTimeout(() => {
+  if (typeof OneSignal !== 'undefined' || typeof window.OneSignalGlobal !== 'undefined') {
+    console.log('🔔 Chargement module notifications...');
+    const script = document.createElement('script');
+    script.src = '/sekhamet-envol/envol-notifications.js';
+    script.onload = () => console.log('✅ Module notifications chargé');
+    document.head.appendChild(script);
+  } else {
+    console.warn('⚠️ OneSignal non disponible - notifications désactivées');
+  }
+}, 3000);
+    
 
 });
 
