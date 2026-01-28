@@ -2,13 +2,13 @@
 console.log('[Service Worker] Chargement version simplifiée');
 
 try {
+  // IMPORTANT: OneSignal doit être importé AVANT tout autre code
   importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+  console.log('[SW] OneSignal SDK chargé');
 } catch (error) {
   console.log('[SW] OneSignal non chargé (Firefox protection)');
 }
 
-// IMPORTANT: OneSignal doit être importé AVANT tout autre code
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // Cache basique
 const CACHE_NAME = 'envol-cache-v1';
