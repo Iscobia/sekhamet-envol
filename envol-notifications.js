@@ -337,9 +337,21 @@ function updateToggleButton() {
           alert('Oups ! On dirait que la permission a été révoquée...\n\nRéautorise les notifications dans les paramètres de ton navigateur, s\'il te plaît 🌸');
         } else if (error.message.includes('user isn\'t subscribed')) {
           alert('On dirait que tu n\'es pas encore abonné à OneSignal...\n\nClique sur "Activer les notifications" pour t\'abonner d\'abord 💙');
-        } else {
-          alert('Oh non ! Une petite erreur s\'est produite...\n\n' + error.message + '\n\nRecharge la page et réessaie, s\'il te plaît 🌸');
-        }
+        } else  if (error.message.includes('Illegal constructor')) {
+            message += 'Ton navigateur a besoin d\'une mise à jour ou d\'un rechargement.\n\n';
+            message += 'Essaie de :\n';
+            message += '1. Recharger la page\n';
+            message += '2. Vérifier que tu es en ligne\n';
+            message += '3. Réessayer dans quelques instants\n\n';
+            message += 'Si le problème persiste, envoie une capture d\'écran à contact@sekhamet.com 💙';
+          } else if (error.message.includes('user isn\'t subscribed')) {
+            message += 'Active d\'abord les notifications avec le bouton vert ci-dessus 😊';
+          } else {
+            message += error.message + '\n\nRecharge la page et réessaie 🌸';
+          }
+  
+  alert(message);
+}
       }
     });
   }
