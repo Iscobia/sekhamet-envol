@@ -291,7 +291,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
 //============ FIN DE LA BANNIÈRE OFFLINE-ONLINE ==============
 //=============================================================
-    
+//==================== DÉBUT DOM CONTENT ======================
+
   
   // Vérification des boutons
   console.log('=== VÉRIFICATION BOUTONS ===');
@@ -397,7 +398,20 @@ function verifierEtAvancerJour() {
   console.log('🔍 VERIFICATION AVANCEMENT JOUR');
   console.log('Jour actuel avant:', jourActuel);
   console.log('Peut avancer?', peutPasserAuJourSuivant());
-  
+
+//====================================================================  
+// CHECK CRITIQUE au cas où jourActuel n'est pas défini :
+  if (!jourActuel || isNaN(jourActuel)) {
+    console.error('❌ ERREUR: jourActuel invalide:', jourActuel);
+    jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+    console.log('📝 Correction: jourActuel =', jourActuel);
+  }
+
+  console.log('🔍 VERIFICATION AVANCEMENT JOUR');
+  console.log('Jour actuel avant:', jourActuel);
+  console.log('Peut avancer?', peutPasserAuJourSuivant());
+//====================================================================    
+    
   // Ensuite vérifier si on peut avancer aujourd'hui
   if (peutPasserAuJourSuivant() && jourActuel < 77) {
     jourActuel++;
@@ -865,44 +879,7 @@ const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
 
 
 
-    
-    
-  
-  // ========== INITIALISATION ==========
-  // Vérifier les jours manqués
-  function verifierJoursManques() {
-    const aujourdhui = new Date().toLocaleDateString('fr-FR');
-    const dernierVerif = localStorage.getItem('derniere_verif_manques');
-    
-    if (dernierVerif === aujourdhui) return;
-    localStorage.setItem('derniere_verif_manques', aujourdhui);
-    
-    const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-    const defiJour1 = getDefiByDay(1);
-    
-    if (jourActuel === 1 && !defiJour1.termine) {
-      return;
-    }
-    
-    for (let jour = 1; jour < jourActuel; jour++) {
-      const defi = getDefiByDay(jour);
-      if (!defi.termine) {
-        defi.termine = false;
-      }
-    }
-    
-    if (typeof saveProgression === 'function') saveProgression();
-  }
-  
-  // Initialiser l'application
-  verifierJoursManques();
-  verifierEtAvancerJour();
-  
-  // Interface utilisateur
-  showInstallOverlay();
-  setTimeout(checkForUpdates, 5000);
-  console.log('✅ ENVOL initialisé');
-});
+
 
 // ========== GESTION PWA ==========
 let deferredPrompt;
