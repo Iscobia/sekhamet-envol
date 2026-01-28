@@ -373,7 +373,7 @@ function peutPasserAuJourSuivant() {
   const aujourdhui = new Date().toLocaleDateString('fr-FR');
   const dernierChangement = localStorage.getItem('dernier_changement_jour');
 
-    console.log('📅 Comparaison dates:', {
+  console.log('📅 Comparaison dates:', {
     aujourdhui: aujourdhui,
     dernierChangement: dernierChangement,
     sontEgaux: dernierChangement === aujourdhui
@@ -393,25 +393,23 @@ function peutPasserAuJourSuivant() {
 }
 
 function verifierEtAvancerJour() {
-  // D'abord vérifier les jours manqués
-  jourActuel = verifierJoursManques();
+  // D'abord vérifier les jours manqués (cela met à jour dernier_acces et derniere_verif_manques)
+  verifierJoursManques();
+  
+  // Récupérer le jour actuel depuis localStorage
+  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+  
   console.log('🔍 VERIFICATION AVANCEMENT JOUR');
   console.log('Jour actuel avant:', jourActuel);
   console.log('Peut avancer?', peutPasserAuJourSuivant());
 
-//====================================================================  
-// CHECK CRITIQUE au cas où jourActuel n'est pas défini :
+  // CHECK CRITIQUE au cas où jourActuel n'est pas défini :
   if (!jourActuel || isNaN(jourActuel)) {
     console.error('❌ ERREUR: jourActuel invalide:', jourActuel);
     jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
     console.log('📝 Correction: jourActuel =', jourActuel);
   }
 
-  console.log('🔍 VERIFICATION AVANCEMENT JOUR');
-  console.log('Jour actuel avant:', jourActuel);
-  console.log('Peut avancer?', peutPasserAuJourSuivant());
-//====================================================================    
-    
   // Ensuite vérifier si on peut avancer aujourd'hui
   if (peutPasserAuJourSuivant() && jourActuel < 77) {
     jourActuel++;
