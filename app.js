@@ -371,7 +371,13 @@ function verifierJoursManques() {
 function peutPasserAuJourSuivant() {
   const aujourdhui = new Date().toLocaleDateString('fr-FR');
   const dernierChangement = localStorage.getItem('dernier_changement_jour');
-  
+
+    console.log('📅 Comparaison dates:', {
+    aujourdhui: aujourdhui,
+    dernierChangement: dernierChangement,
+    sontEgaux: dernierChangement === aujourdhui
+  });
+    
   // Protection spéciale pour le jour 1
   if (jourActuel === 1 && !dernierChangement) {
     localStorage.setItem('dernier_changement_jour', aujourdhui);
@@ -703,23 +709,23 @@ if (signal.User && typeof signal.User.PushSubscription === 'object') {
     console.log('Opted In:', isOptedIn);
     
     if (isOptedIn) {
-      alert(`✅ Notifications activées !\n\nVous recevrez le prochain défi à ${heure}\n(ID: ${subscription.id?.substring(0, 8)}...)`);
+      alert(`✅ Notifications activées !\n\nTu recevras ton prochain défi à ${heure}\n(ID: ${subscription.id?.substring(0, 8)}...)`);
     } else {
-      alert('⚠️ Abonnement inactif\nAutorisez les notifications dans les paramètres');
+      alert('⚠️ Ton abonnement est inactif\nAutorise d\'abord les notifications dans tes paramètres et clique sur le bouton le bouton vert "Activer les notifications" 😊\n\nEnsuite tu pourras tester !');
     }
   } catch (e) {
     console.warn('Erreur vérification optIn:', e);
-    alert(`✅ Configuration OK !\n\nLes notifications arriveront à ${heure}\n(Statut d'abonnement indéterminé)`);
+    alert(`✅ Configuration OK !\n\nTes notifications arriveront à ${heure}\n(Statut d'abonnement indéterminé)`);
   }
 } else {
-  alert(`✅ Configuration OK !\n\nLes notifications arriveront à ${heure}`);
+  alert(`✅ Configuration OK !\n\nTes notifications arriveront à ${heure}`);
 }
       
     } else if (permission === 'default') {
       OneSignal.showSlidedownPrompt();
       alert('🔔 Autorisez les notifications puis réessayez');
     } else {
-      alert('❌ Notifications bloquées\nAutorisez-les dans les paramètres');
+      alert('❌ Notifications bloquées\nAutorise-les dans les paramètres');
     }
   } catch (error) {
     console.error('Erreur test notification:', error);
