@@ -61,8 +61,10 @@ document.addEventListener('DOMContentLoaded', function() {
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
           
-          // CONFIGURER VOS NOTIFICATIONS QUOTIDIENNES
+          // CONFIGURER LES NOTIFICATIONS QUOTIDIENNES One Signal
           await setupDailyNotifications(oneSignal);
+          // PROGRAMMER LES NOTIFICATIONS NATIVES
+          await programmerNotificationQuotidienne();
           
           // CONFIGURER L'INTERFACE UTILISATEUR
           setupNotificationUI(oneSignal);
@@ -193,6 +195,7 @@ function setupNotificationUI(oneSignal) {
         // MODE ON (vert) : "Notifications activées : Désactiver les notifications ? 🔕"
         toggleBtn.className = 'backup-btn toggle-on';
         toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+        programmerNotificationQuotidienne(); // Démarrer les notifications
       } else {
         // MODE OFF (rouge) : "Notifications désactivées : Activer les notifications ? 🔔"
         toggleBtn.className = 'backup-btn toggle-off';
