@@ -131,8 +131,8 @@ function setupNotificationUI(oneSignal) {
     firefoxWarning.className = 'browser-warning.firefox';
     firefoxWarning.innerHTML = `
       <p><strong>🦊 Firefox détecté :</strong></p>
-      <p>Les notifications peuvent être bloquées par la "Protection renforcée".</p>
-      <p><em>Si besoin, désactivez-la temporairement dans les paramètres.</em></p>
+      <p>Tes notifications peuvent être bloquées par la "Protection renforcée".</p>
+      <p><em>Si besoin, désactive-la temporairement dans les paramètres.</em></p>
     `;
     
     const troubleshooting = document.querySelector('.troubleshooting');
@@ -226,10 +226,10 @@ function updateToggleButton() {
     allowBtn.addEventListener('click', async function() {
       console.log('🔔 [Envol-Notifications] Clic sur autoriser notifications');
       
-      if (isIOS) {
-        alert('📱 Sur iOS, utilisez plutôt le bouton "Gérer les notifications" ci-dessus.\n\nLes notifications push ne sont pas supportées.');
-        return;
-      }
+if (isIOS) {
+  alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
+  return;
+}
       
       if (isFirefox) {
         alert('🦊 Firefox détecté :\nLa "Protection renforcée" peut bloquer OneSignal.');
@@ -249,9 +249,9 @@ function updateToggleButton() {
           }, 2000);
           
         } else if (currentPermission === "granted") {
-          alert('✅ Vous êtes déjà abonné aux notifications !');
+          alert('✅ Tu es déjà abonné.e aux notifications !');
         } else {
-          alert('❌ Notifications bloquées.\nAutorisez-les dans les paramètres du navigateur.');
+          alert('❌ Notifications bloquées.\nAutorise-les dans les paramètres de ton navigateur. 🙂');
         }
         
       } catch (error) {
@@ -332,30 +332,39 @@ function updateToggleButton() {
       } catch (error) {
         console.error('❌ Erreur test:', error);
         
-        // Messages d'erreur spécifiques
+        let message = 'Oh non ! Une petite erreur s\'est produite...\n\n';
+        let showMailOption = false;
+        
         if (error.message.includes('permission')) {
-          alert('Oups ! On dirait que la permission a été révoquée...\n\nRéautorise les notifications dans les paramètres de ton navigateur, s\'il te plaît 🌸');
+          message = 'Oups ! On dirait que la permission a été révoquée...\n\nRéautorise les notifications dans les paramètres de ton navigateur, s\'il te plaît 🌸';
+        } else if (error.message.includes('Illegal constructor')) {
+          message = 'Ton navigateur a besoin d\'une mise à jour ou d\'un rechargement.\n\n';
+          message += 'Essaie de :\n';
+          message += '1. Recharger la page\n';
+          message += '2. Vérifier que tu es en ligne\n';
+          message += '3. Réessayer dans quelques instants\n\n';
+          showMailOption = true;
         } else if (error.message.includes('user isn\'t subscribed')) {
-          alert('On dirait que tu n\'es pas encore abonné à OneSignal...\n\nClique sur "Activer les notifications" pour t\'abonner d\'abord 💙');
-        } else  if (error.message.includes('Illegal constructor')) {
-            message += 'Ton navigateur a besoin d\'une mise à jour ou d\'un rechargement.\n\n';
-            message += 'Essaie de :\n';
-            message += '1. Recharger la page\n';
-            message += '2. Vérifier que tu es en ligne\n';
-            message += '3. Réessayer dans quelques instants\n\n';
-            message += 'Si le problème persiste, envoie une capture d\'écran à contact@sekhamet.com 💙';
-          } else if (error.message.includes('user isn\'t subscribed')) {
-            message += 'Active d\'abord les notifications avec le bouton vert ci-dessus 😊';
-          } else {
-            message += error.message + '\n\nRecharge la page et réessaie 🌸';
+          message = 'Active d\'abord les notifications avec le bouton vert ci-dessus 😊';
+        } else {
+          message += error.message + '\n\nRecharge la page et réessaie 🌸';
+          showMailOption = true;
+        }
+        
+        // Si erreur persistante, proposer de contacter
+        if (showMailOption) {
+          message += '\n\nSi le problème persiste, nous contacter peut nous aider à le résoudre !';
+          
+          if (confirm(message + '\n\nSouhaites-tu ouvrir ton client mail pour nous écrire ?')) {
+            const sujet = '⚠️🔔🕊️ Problème notifications ENVOL';
+            const corps = `Bonjour,\n\nJ'ai un problème avec les notifications ENVOL.\n\nDétails : ${error.message}\n\nMerci !`;
+            window.location.href = `mailto:contact@sekhamet.com?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+            return;
           }
-  
-  alert(message);
-}
+        } else {
+          alert(message);
+        }
       }
-    });
-  }
-}
 
 //=============================================//
 //=========== FIN BOUTONS TECHNIQUES ==========//
@@ -389,7 +398,7 @@ function setupFallbackNotifications() {
         
         alert('✅ Notification native envoyée !');
       } else {
-        alert('❌ Veuillez autoriser les notifications dans les paramètres de votre navigateur.');
+        alert('❌ Les notifications ne sont pas autorisées dans les paramètres de ton navigateur :\nvérifies tes autorisations et réessaie. 🙂\nSi ça ne fonctionne toujours pas, envoie-moi une capture d\'écran à contact@sekhamet.com');
       }
     });
   }
