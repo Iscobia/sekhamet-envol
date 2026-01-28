@@ -388,6 +388,9 @@ function peutPasserAuJourSuivant() {
 function verifierEtAvancerJour() {
   // D'abord vérifier les jours manqués
   jourActuel = verifierJoursManques();
+  console.log('🔍 VERIFICATION AVANCEMENT JOUR');
+  console.log('Jour actuel avant:', jourActuel);
+  console.log('Peut avancer?', peutPasserAuJourSuivant());
   
   // Ensuite vérifier si on peut avancer aujourd'hui
   if (peutPasserAuJourSuivant() && jourActuel < 77) {
