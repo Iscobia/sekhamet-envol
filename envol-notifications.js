@@ -112,9 +112,9 @@ function setupNotificationUI(oneSignal) {
     const iosWarning = document.createElement('div');
     iosWarning.className = 'browser-warning';
     iosWarning.innerHTML = `
-      <p><strong>📱 Pour les utilisateurs iPhone/iPad :</strong></p>
-      <p>iOS ne permet pas les notifications push pour les applications web.</p>
-      <p><em>Astuce : Gardez ENVOL ouverte ou programmez un rappel quotidien ! 😃</em></p>
+      <p><strong>📱 Sur iOS</strong>, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).</p>
+      <p>Mais <strong>tu peux recevoir des notifications quand ENVOL est ouverte !</strong></p>
+      <p>Garde un onglet ouvert pour tes rappels quotidiens 😊</p>
     `;
     
     const troubleshooting = document.querySelector('.troubleshooting');
@@ -187,7 +187,7 @@ function updateToggleButton() {
   } else {
     // ACTIVER
     if (isIOS) {
-      alert('📱 Salut ! Sur iPhone/iPad, iOS ne permet pas les notifications push pour les applications web.\n\nMais garde ENVOL ouverte, ou crée un petit rappel dans ton calendrier !\n\nTu vas y arriver 💪');
+      alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
       return;
     }
     
@@ -226,10 +226,10 @@ function updateToggleButton() {
     allowBtn.addEventListener('click', async function() {
       console.log('🔔 [Envol-Notifications] Clic sur autoriser notifications');
       
-if (isIOS) {
-  alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
-  return;
-}
+  if (isIOS) {
+    alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
+    return;
+  }
       
       if (isFirefox) {
         alert('🦊 Firefox détecté :\nLa "Protection renforcée" peut bloquer OneSignal.');
@@ -275,7 +275,8 @@ if (isIOS) {
       }
       
       if (isIOS) {
-        alert('📱 Salut ! Sur iPhone/iPad, les notifications push ne sont pas disponibles (c\'est une limitation d\'iOS).\n\nMais tu peux quand même tester les notifications locales !\n\nEssaie, c\'est déjà un bon début 🌟');
+        alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
+        return;
         
         if ('Notification' in window) {
           const jourActuel = localStorage.getItem('jour_actuel') || 1;
