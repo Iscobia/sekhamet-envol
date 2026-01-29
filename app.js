@@ -445,9 +445,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // EXPOSER GLOBALEMENT pour débogage
     window.verifierEtAvancerJour = verifierEtAvancerJour;
     window.envoyerNotificationDuJour = envoyerNotificationDuJour;
-
+    window.getDefiByDay = getDefiByDay; // Utile pour tests
     
 
+    
     // ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
     
     function afficherDefiDuJour(jour) {
