@@ -410,6 +410,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       return false;
     }
+
+
+
     
     function verifierEtAvancerJour() {
        // 1. Mettre à jour jourActuel depuis localStorage
@@ -438,6 +441,12 @@ document.addEventListener('DOMContentLoaded', function() {
       
       afficherDefiDuJour(jourActuel);
     }
+
+    // EXPOSER GLOBALEMENT pour débogage
+    window.verifierEtAvancerJour = verifierEtAvancerJour;
+    window.envoyerNotificationDuJour = envoyerNotificationDuJour;
+
+    
 
     // ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
     
