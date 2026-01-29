@@ -436,7 +436,27 @@ async function setupNotificationUI(oneSignal) {
     }
   }
 });
+
+    
+
+// ========== FONCTION TEST NOTIFICATIONS ==========
+function testNotification() {
+  console.log('🔔 Test manuel de notification...');
   
+  if (typeof envoyerNotificationDuJour === 'function') {
+    envoyerNotificationDuJour();
+  } else if (typeof window.envoyerNotificationDuJour === 'function') {
+    window.envoyerNotificationDuJour();
+  } else {
+    console.error('❌ Fonction non disponible');
+    console.log('💡 Recharge la page pour charger envol-notifications.js');
+  }
+}
+
+// Exposer pour la console
+window.testNotification = testNotification;
+    
+    
 
 //===========================================================================//
 //======================= FIN BOUTONS TECHNIQUES ============================//
