@@ -113,11 +113,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // 4. Configuration INTERFACE UTILISATEUR (boutons, messages)
 
 
-function setupNotificationUI(oneSignal) {
+async function setupNotificationUI(oneSignal) {
   console.log('🔔 [Envol-Notifications] Configuration UI...');
 
   // ========== MISE À JOUR INITIALE DU BOUTON ==========
-  updateToggleButton();
+   await updateToggleButton();
   
   // ========== DÉTECTION NAVIGATEUR ==========
   const userAgent = navigator.userAgent;
@@ -188,47 +188,53 @@ function setupNotificationUI(oneSignal) {
     console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
     
     
-      function updateToggleButton() {
-  const toggleBtn = document.getElementById('notifications-toggle-btn');
-  if (!toggleBtn) return;
-  
-  // INITIALISER À false
-  let isActive = false;
-  
-  // VÉRIFICATION 1 : OneSignal (si disponible)
-  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
-    try {
-      // OneSignal v16 : optIn est une propriété
-      isActive = OneSignal.User.PushSubscription.optIn === true;
-      console.log('🔔 État OneSignal:', isActive ? 'ACTIF' : 'INACTIF');
-    } catch (e) {
-      console.warn('⚠️ Erreur vérification OneSignal:', e);
-      // Fallback à Notification API
-      isActive = Notification.permission === "granted";
-    }
-  } 
-  // VÉRIFICATION 2 : Notification API native
-  else {
-    isActive = Notification.permission === "granted";
-    console.log('🔔 État Notification API:', isActive ? 'ACTIF' : 'INACTIF');
-  }
-  
-  // MISE À JOUR DU BOUTON
-  if (isActive) {
-    toggleBtn.className = 'backup-btn toggle-on';
-    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+  async function updateToggleButton() {
+    const toggleBtn = document.getElementById('notifications-toggle-btn');
+    if (!toggleBtn) return;
     
-    // Démarrer les notifications (sans blocage)
-    setTimeout(() => {
-      programmerNotificationQuotidienne();
-    }, 1000); // Petit délai pour éviter les conflits
-  } else {
-    toggleBtn.className = 'backup-btn toggle-off';
-    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+    // INITIALISER À false
+    let isActive = false;
+    
+    // VÉRIFICATION 1 : OneSignal (si disponible)
+    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+      try {
+          const subscription = OneSignal.User.PushSubscription;
+          // optIn est une fonction qui retourne une Promise
+          isActive = await subscription.optIn(); // ← ATTENDRE le résultat
+      } catch (e) {
+          console.warn('⚠️ Erreur vérification OneSignal optIn:', e);
+          isActive = false;
+      }
+        
+        console.log('🔔 État OneSignal:', isActive ? 'ACTIF' : 'INACTIF');
+      } catch (e) {
+        console.warn('⚠️ Erreur vérification OneSignal:', e);
+        // Fallback à Notification API
+        isActive = Notification.permission === "granted";
+      }
+    } 
+    // VÉRIFICATION 2 : Notification API native
+    else {
+      isActive = Notification.permission === "granted";
+      console.log('🔔 État Notification API:', isActive ? 'ACTIF' : 'INACTIF');
+    }
+    
+    // MISE À JOUR DU BOUTON
+    if (isActive) {
+      toggleBtn.className = 'backup-btn toggle-on';
+      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+      
+      // Démarrer les notifications (sans blocage)
+      setTimeout(() => {
+        programmerNotificationQuotidienne();
+      }, 1000); // Petit délai pour éviter les conflits
+    } else {
+      toggleBtn.className = 'backup-btn toggle-off';
+      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+    }
+    
+    console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
   }
-  
-  console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
-}
 
 
     
@@ -572,27 +578,27 @@ async function envoyerNotificationDuJour() {
       return;
     }
     
-    // 3. Créer la notification
-    const options = {
-      body: defi.description.substring(0, 120) + (defi.description.length > 120 ? '...' : ''),
-      icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-      badge: '/sekhamet-envol/assets/icons/ENVOL-192.png',
-      tag: `envol-jour-${jourActuel}`, // Évite les doublons
-      requireInteraction: true, // Reste visible
-      actions: [
-        {
-          action: 'mark-done',
-          title: '✅ Marquer comme accompli'
-        },
-        {
-          action: 'view',
-          title: '👁️ Voir le défi'
-        }
-      ]
-    };
+    // 3. Créer la notification avec le SERVICE-WORKER (permet les actions)
+   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Envoyer via Service Worker
+      navigator.serviceWorker.controller.postMessage({
+        action: 'SEND_NOTIFICATION',
+        jour: jourActuel,
+        titre: defi.titre,
+        description: defi.description,
+        tag: `envol-jour-${jourActuel}`
+      });
+    } else {
+      // Fallback : Notification simple
+      const options = {
+        body: `Jour ${jourActuel}: ${defi.titre}\n\n${defi.description.substring(0, 100)}...`,
+        icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+        tag: `envol-jour-${jourActuel}`,
+        requireInteraction: true
+      };
     
     // 4. Envoyer la notification
-    const notification = new Notification(`Jour ${jourActuel} - ${defi.titre}`, options);
+    const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
     
     console.log('✅ Notification envoyée:', {
       jour: jourActuel,
@@ -601,45 +607,17 @@ async function envoyerNotificationDuJour() {
     });
     
     // 5. Gérer les clics
-    notification.onclick = function(event) {
-      event.preventDefault();
-      window.focus();
-      notification.close();
-      
-      // Ouvrir l'application
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          action: 'OPEN_APP',
-          jour: jourActuel
-        });
-      }
-    };
-    
-    // Gérer les actions (boutons)
-    notification.onaction = function(event) {
-      event.preventDefault();
-      
-      if (event.action === 'mark-done') {
-        // Marquer le défi comme accompli
-        defi.termine = true;
-        defi.dateValidation = new Date().toISOString();
-        
-        if (typeof saveProgression === 'function') {
-          saveProgression();
-        }
-        
-        // Afficher confirmation
-        new Notification('✅ Défi accompli !', {
-          body: `Le défi du jour ${jourActuel} a été marqué comme terminé.`,
-          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-        });
-      } else if (event.action === 'view') {
-        // Ouvrir l'app sur le défi du jour
+    notification.onclick = () => {
         window.focus();
-      }
-      
-      notification.close();
-    };
+        notification.close();
+      };
+      setTimeout(() => notification.close(), 30000);
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur envoi notification:', error);
+  }
+}
     
     // Auto-fermeture après 30 secondes
     setTimeout(() => notification.close(), 30000);
