@@ -351,7 +351,7 @@ async function setupNotificationUI(oneSignal) {
     console.log('✅ [Envol-Notifications] Bouton test trouvé');
     
     testBtn.addEventListener('click', async function() {
-      console.log('🔔 [Envol-Notifications] Clic sur test notification');
+      console.log('🔔 Test complet des notifications...');
 
       //===== Test simple des notif natives et notif OneSignal============
 
@@ -361,10 +361,18 @@ async function setupNotificationUI(oneSignal) {
       if ('Notification' in window) {
         if (Notification.permission === "granted") {
           try {
-            const notif = new Notification('🎯 ENVOL - Test', {
-              body: 'Notification native de test',
+            const notif = new Notification(`🎯 ENVOL iOS - Jour ${jourActuel}`, {
+              body: 'Notification locale de test - Bravo !',
               icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
             });
+
+            // AJOUTE APRÈS :
+            notif.onclick = function(event) {
+              event.preventDefault();
+              window.focus();
+              notif.close();
+            };
+            
             resultats.push('✅ Notifications natives: OK');
             setTimeout(() => notif.close(), 2000);
           } catch (e) {
@@ -566,6 +574,7 @@ async function envoyerNotificationDuJour() {
       // 4. Envoyer la notification
       const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
       
+      
       console.log('✅ Notification native envoyée:', {
         jour: jourActuel,
         titre: defi.titre,
@@ -573,9 +582,10 @@ async function envoyerNotificationDuJour() {
       });
       
       // 5. Gérer les clics
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
+      notification.onclick = function(event) {
+        event.preventDefault(); // ← BLOQUE le comportement par défaut
+        window.focus();         // ← Met l'app au premier plan
+        notification.close();   // ← Ferme la notification
       };
       
       // Auto-fermeture après 30 secondes
