@@ -351,83 +351,90 @@ async function setupNotificationUI(oneSignal) {
     console.log('✅ [Envol-Notifications] Bouton test trouvé');
     
     testBtn.addEventListener('click', async function() {
-      console.log('🔔 Test complet des notifications...');
-
-      //===== Test simple des notif natives et notif OneSignal============
-
-      let resultats = [];
+  console.log('🔔 Test complet des notifications...');
   
-      // Test 1 : Notifications natives
-      if ('Notification' in window) {
-        if (Notification.permission === "granted") {
-          try {
-            const notif = new Notification(`🎯 ENVOL iOS - Jour ${jourActuel}`, {
-              body: 'Notification locale de test - Bravo !',
-              icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-            });
-
-            // AJOUTE APRÈS :
-            notif.onclick = function(event) {
-              event.preventDefault();
-              window.focus();
-              notif.close();
-            };
-            
-            resultats.push('✅ Notifications natives: OK');
-            setTimeout(() => notif.close(), 2000);
-          } catch (e) {
-            resultats.push('❌ Notifications natives: ' + e.message);
-          }
-        } else {
-          resultats.push('⚠️ Notifications natives: Permission non accordée');
-        }
-      } else {
-        resultats.push('❌ Notifications natives: Non supporté');
-      }
-
-
-     // Test 2 : OneSignal
-      
-      if (typeof OneSignal !== 'undefined') {
+  let resultats = [];
+  let conseils = [];
+  let permissionOk = true;
+  
+  // 1. TEST PERMISSION
+  if (Notification.permission !== "granted") {
+    resultats.push('❌ PERMISSION: Non accordée');
+    conseils.push('• Clique sur "Activer les notifications"');
+    permissionOk = false;
+  } else {
+    resultats.push('✅ PERMISSION: Accordée');
+  }
+  
+  // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
+  if (permissionOk) {
     try {
-      await OneSignal.Notifications.addTrigger({ test: 'envol-test' });
-      resultats.push('✅ OneSignal: Test envoyé');
+      const testNotif = new Notification('🎯 ENVOL - Test', {
+        body: 'Test notification native',
+        icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+      });
+      
+      testNotif.onclick = function(event) {
+        event.preventDefault();
+        window.focus();
+        testNotif.close();
+      };
+      
+      resultats.push('✅ NATIVES: Fonctionnent');
+      setTimeout(() => testNotif.close(), 2000);
     } catch (e) {
-      resultats.push('❌ OneSignal: ' + e.message);
+      resultats.push('❌ NATIVES: ' + e.message);
     }
   } else {
-    resultats.push('⚠️ OneSignal: Non disponible');
+    resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
   }
   
-  // Test Service Worker (pour notifications avec actions)
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    resultats.push('✅ Service Worker: Actif');
-    
-    // Tester une notification complète
-    const jourActuel = localStorage.getItem('jour_actuel') || 1;
-    const defi = getDefiByDay(jourActuel);
-    
-    if (defi) {
-      try {
-        navigator.serviceWorker.controller.postMessage({
-          action: 'SEND_NOTIFICATION',
-          jour: jourActuel,
-          titre: defi.titre,
-          description: defi.description.substring(0, 50) + '...',
-          tag: 'test-notification'
-        });
-        resultats.push('✅ Notification avec actions: Envoyée');
-      } catch (e) {
-        resultats.push('❌ Service Worker notification: ' + e.message);
+  // 3. TEST ONESIGNAL (toujours, même sans permission native)
+  if (typeof OneSignal !== 'undefined') {
+    try {
+      await OneSignal.Notifications.addTrigger({ 
+        'test-notification': Date.now(),
+        'message': 'Test OneSignal ENVOL'
+      });
+      resultats.push('✅ ONESIGNAL: Test envoyé');
+    } catch (e) {
+      resultats.push('❌ ONESIGNAL: ' + e.message);
+      if (e.message.includes('not subscribed')) {
+        conseils.push('• Active OneSignal avec le bouton toggle');
       }
     }
   } else {
-    resultats.push('⚠️ Service Worker: Inactif');
+    resultats.push('⚠️ ONESIGNAL: Non disponible');
+    if (/Firefox/i.test(navigator.userAgent)) {
+      conseils.push('• Firefox bloque OneSignal (normal)');
+    }
+    conseils.push('• Utilise les notifications natives');
   }
   
-  // Afficher résultats
-  alert('🔔 TESTS NOTIFICATIONS 🔔\n\n' + resultats.join('\n') + 
-        '\n\n📱 Sur iOS: Notifications limitées quand l\'app est fermée\n🦊 Firefox: Peut bloquer OneSignal\n\nPour les notifications quotidiennes:\n• Chrome/Edge: Complet\n• Firefox: Natives seulement\n• iOS Safari: Quand l\'app est ouverte');
+  // 4. AFFICHER RÉSULTATS COMPLETS
+  const message = 
+    '🔔 TESTS TERMINÉS 🔔\n\n' +
+    resultats.join('\n') + '\n\n';
+    
+  if (conseils.length > 0) {
+    message += '💡 CONSEILS :\n' + conseils.join('\n') + '\n\n';
+  }
+  
+  message += 
+    '📱 Sur iOS et 🦊 Firefox : Garde l\'app ouverte\n';
+  
+  alert(message);
+  
+  // 5. SI PERMISSION MANQUANTE, PROPOSER DE L'ACTIVER
+  if (!permissionOk) {
+    if (confirm('Voudrais-tu activer les notifications maintenant ?')) {
+      if (typeof OneSignal !== 'undefined' && OneSignal.Slidedown) {
+        OneSignal.Slidedown.promptPush();
+      } else if ('Notification' in window) {
+        Notification.requestPermission();
+      }
+    }
+  }
 });
   
 
