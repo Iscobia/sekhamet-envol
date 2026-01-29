@@ -358,133 +358,69 @@ async function setupNotificationUI(oneSignal) {
       let resultats = [];
   
       // Test 1 : Notifications natives
-      try {
-        const notification = new Notification('🎯 ENVOL - Test natif', {
-          body: 'Test de notification native',
-          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-        });
-        resultats.push('✅ Notifications natives OK');
-        notification.close();
-      } catch (e) {
-        resultats.push('❌ Notifications natives: ' + e.message);
-      }
-      
-      // Test 2 : OneSignal (si disponible)
-      if (typeof OneSignal !== 'undefined') {
-        try {
-          await OneSignal.Notifications.addTrigger({ test: Date.now() });
-          resultats.push('✅ OneSignal OK');
-        } catch (e) {
-          resultats.push('❌ OneSignal: ' + e.message);
-        }
-      }
-      
-      // Afficher le rapport
-      alert('Résultats des tests :\n\n' + resultats.join('\n'));
-
-
-      //======= FIN des tests simples pour notif natives et OneSignal
-      
-      if (Notification.permission !== "granted") {
-        alert('Hey ! Avant de tester, il faut que tu autorises les notifications.\n\nClique sur "Activer les notifications" juste au-dessus, puis reviens ici !\n\nJe t\'attends 😊');
-        return;
-      }
-      
-      if (isIOS) {
-        alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
-        return;
-        
-        if ('Notification' in window) {
-          const jourActuel = localStorage.getItem('jour_actuel') || 1;
-          const notif = new Notification(`🎯 ENVOL iOS - Jour ${jourActuel}`, {
-            body: 'Notification locale de test - Bravo !',
-            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-          });
-          
-          notif.onclick = () => {
-            window.focus();
-            notif.close();
-          };
-          
-          alert('✨ Parfait ! Notification locale envoyée !\n\nC\'est comme ça que tu verras les rappels quand l\'app est ouverte.\n\nGarde ENVOL dans un onglet pour ne rien manquer ! 💫');
-        }
-        return;
-      }
-      
-      try {
-        const jourActuel = localStorage.getItem('jour_actuel') || 1;
-        console.log('🔔 Test pour le jour:', jourActuel);
-        
-        // Méthode 1: OneSignal addTrigger (v16)
-        if (oneSignal.Notifications?.addTrigger) {
-          console.log('🔔 Utilisation addTrigger');
-          await oneSignal.Notifications.addTrigger({
-            'test': Date.now(),
-            'jour': jourActuel,
-            'message': 'Test de notification ENVOL'
-          });
-          
-          alert('✅ Super ! J\'ai envoyé une notification test.\n\nRegarde en haut à droite de ton écran, elle devrait arriver d\'ici quelques secondes !\n\nSi tu ne la vois pas, vérifie tes paramètres de notifications 😊');
-          
-        } else {
-          // Fallback: Notification API native
-          console.log('🔔 Fallback: Notification API native');
-          const notif = new Notification('🎯 ENVOL - Test réussi !', {
-            body: `Jour ${jourActuel} - Merci d'avoir testé !`,
-            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-            badge: '/sekhamet-envol/assets/icons/ENVOL-192.png'
-          });
-          
-          notif.onclick = () => {
-            window.focus();
-            notif.close();
-          };
-          
-          // Auto-fermeture après 5 secondes
-          setTimeout(() => notif.close(), 5000);
-          
-          alert('✨ Bravo ! Notification locale envoyée !\n\nC\'est exactement comme ça que tu recevras tes défis quotidiens.\n\nÀ très vite pour le prochain défi ! 💫');
-        }
-        
-      } catch (error) {
-        console.error('❌ Erreur test:', error);
-        
-        let message = 'Oh non ! Une petite erreur s\'est produite...\n\n';
-        let showMailOption = false;
-        
-        if (error.message.includes('permission')) {
-          message = 'Oups ! On dirait que la permission a été révoquée...\n\nRéautorise les notifications dans les paramètres de ton navigateur, s\'il te plaît 🌸';
-        } else if (error.message.includes('Illegal constructor')) {
-          message = 'Ton navigateur a besoin d\'une mise à jour ou d\'un rechargement.\n\n';
-          message += 'Essaie de :\n';
-          message += '1. Recharger la page\n';
-          message += '2. Vérifier que tu es en ligne\n';
-          message += '3. Réessayer dans quelques instants\n\n';
-          showMailOption = true;
-        } else if (error.message.includes('user isn\'t subscribed')) {
-          message = 'Active d\'abord les notifications avec le bouton vert ci-dessus 😊';
-        } else {
-          message += error.message + '\n\nRecharge la page et réessaie 🌸';
-          showMailOption = true;
-        }
-        
-        // Si erreur persistante, proposer de contacter
-        if (showMailOption) {
-          message += '\n\nSi le problème persiste, nous contacter peut nous aider à le résoudre !';
-          
-          if (confirm(message + '\n\nSouhaites-tu ouvrir ton client mail pour nous écrire ?')) {
-            const sujet = '⚠️🔔🕊️ Problème notifications ENVOL';
-            const corps = `Bonjour,\n\nJ'ai un problème avec les notifications ENVOL.\n\nDétails : ${error.message}\n\nMerci !`;
-            window.location.href = `mailto:contact@sekhamet.com?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
-            return;
+      if ('Notification' in window) {
+        if (Notification.permission === "granted") {
+          try {
+            const notif = new Notification('🎯 ENVOL - Test', {
+              body: 'Notification native de test',
+              icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+            });
+            resultats.push('✅ Notifications natives: OK');
+            setTimeout(() => notif.close(), 2000);
+          } catch (e) {
+            resultats.push('❌ Notifications natives: ' + e.message);
           }
         } else {
-          alert(message);
+          resultats.push('⚠️ Notifications natives: Permission non accordée');
         }
+      } else {
+        resultats.push('❌ Notifications natives: Non supporté');
       }
-    }); // ← ferme addEventListener
-  } // ← ferme if (testBtn)
-}
+
+
+     // Test 2 : OneSignal
+      
+      if (typeof OneSignal !== 'undefined') {
+    try {
+      await OneSignal.Notifications.addTrigger({ test: 'envol-test' });
+      resultats.push('✅ OneSignal: Test envoyé');
+    } catch (e) {
+      resultats.push('❌ OneSignal: ' + e.message);
+    }
+  } else {
+    resultats.push('⚠️ OneSignal: Non disponible');
+  }
+  
+  // Test Service Worker (pour notifications avec actions)
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    resultats.push('✅ Service Worker: Actif');
+    
+    // Tester une notification complète
+    const jourActuel = localStorage.getItem('jour_actuel') || 1;
+    const defi = getDefiByDay(jourActuel);
+    
+    if (defi) {
+      try {
+        navigator.serviceWorker.controller.postMessage({
+          action: 'SEND_NOTIFICATION',
+          jour: jourActuel,
+          titre: defi.titre,
+          description: defi.description.substring(0, 50) + '...',
+          tag: 'test-notification'
+        });
+        resultats.push('✅ Notification avec actions: Envoyée');
+      } catch (e) {
+        resultats.push('❌ Service Worker notification: ' + e.message);
+      }
+    }
+  } else {
+    resultats.push('⚠️ Service Worker: Inactif');
+  }
+  
+  // Afficher résultats
+  alert('🔔 TESTS NOTIFICATIONS 🔔\n\n' + resultats.join('\n') + 
+        '\n\n📱 Sur iOS: Notifications limitées quand l\'app est fermée\n🦊 Firefox: Peut bloquer OneSignal\n\nPour les notifications quotidiennes:\n• Chrome/Edge: Complet\n• Firefox: Natives seulement\n• iOS Safari: Quand l\'app est ouverte');
+});
   
 
 //===========================================================================//
