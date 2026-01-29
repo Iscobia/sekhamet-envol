@@ -604,3 +604,15 @@ async function envoyerNotificationDuJour() {
   }
 }
 
+
+//=================================================================================
+//=========== VARIABLES EN EXPOSITION GLOBALE POUR DEBOGGAGE : ====================
+    
+
+window.envoyerNotificationDuJour = envoyerNotificationDuJour;
+window.programmerNotificationQuotidienne = programmerNotificationQuotidienne;
+    
+
+//============= FIN DE L'EXPOSITION GLOBALE POUR DEBOGGAGE : ======================
+//=================================================================================
+
