@@ -189,55 +189,46 @@ async function setupNotificationUI(oneSignal) {
     
     
   async function updateToggleButton() {
-    const toggleBtn = document.getElementById('notifications-toggle-btn');
-    if (!toggleBtn) return;
-    
-    // INITIALISER À false
-    let isActive = false;
-    
-    // VÉRIFICATION 1 : OneSignal (si disponible)
-    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
-      try {
-          const subscription = OneSignal.User.PushSubscription;
-          // optIn est une fonction qui retourne une Promise
-          isActive = await subscription.optIn(); // ← ATTENDRE le résultat
-      } catch (e) {
-          console.warn('⚠️ Erreur vérification OneSignal optIn:', e);
-          isActive = false;
-      }
-        
-        console.log('🔔 État OneSignal:', isActive ? 'ACTIF' : 'INACTIF');
-      } catch (e) {
-        console.warn('⚠️ Erreur vérification OneSignal:', e);
-        // Fallback à Notification API
-        isActive = Notification.permission === "granted";
-      }
-    } 
-    // VÉRIFICATION 2 : Notification API native
-    else {
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  if (!toggleBtn) return;
+  
+  let isActive = false;
+  
+  // VÉRIFICATION 1 : OneSignal (si disponible)
+  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+    try {
+      const subscription = OneSignal.User.PushSubscription;
+      isActive = await subscription.optIn();
+      console.log('🔔 État OneSignal (optIn):', isActive);
+    } catch (e) {
+      console.warn('⚠️ Erreur vérification OneSignal:', e);
       isActive = Notification.permission === "granted";
-      console.log('🔔 État Notification API:', isActive ? 'ACTIF' : 'INACTIF');
     }
+  } 
+  // VÉRIFICATION 2 : Notification API native
+  else {
+    isActive = Notification.permission === "granted";
+    console.log('🔔 État Notification API:', isActive);
+  }
+  
+  // MISE À JOUR DU BOUTON
+  if (isActive) {
+    toggleBtn.className = 'backup-btn toggle-on';
+    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
     
-    // MISE À JOUR DU BOUTON
-    if (isActive) {
-      toggleBtn.className = 'backup-btn toggle-on';
-      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-      
-      // Démarrer les notifications (sans blocage)
-      setTimeout(() => {
-        programmerNotificationQuotidienne();
-      }, 1000); // Petit délai pour éviter les conflits
-    } else {
-      toggleBtn.className = 'backup-btn toggle-off';
-      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-    }
-    
+    // Démarrer les notifications
+    setTimeout(() => {
+      programmerNotificationQuotidienne();
+    }, 1000);
+  } else {
+    toggleBtn.className = 'backup-btn toggle-off';
+    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+  }
+  
     console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
   }
 
 
-    
     
     updateToggleButton();
 
@@ -361,6 +352,38 @@ async function setupNotificationUI(oneSignal) {
     
     testBtn.addEventListener('click', async function() {
       console.log('🔔 [Envol-Notifications] Clic sur test notification');
+
+      //===== Test simple des notif natives et notif OneSignal============
+
+      let resultats = [];
+  
+      // Test 1 : Notifications natives
+      try {
+        const notification = new Notification('🎯 ENVOL - Test natif', {
+          body: 'Test de notification native',
+          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+        });
+        resultats.push('✅ Notifications natives OK');
+        notification.close();
+      } catch (e) {
+        resultats.push('❌ Notifications natives: ' + e.message);
+      }
+      
+      // Test 2 : OneSignal (si disponible)
+      if (typeof OneSignal !== 'undefined') {
+        try {
+          await OneSignal.Notifications.addTrigger({ test: Date.now() });
+          resultats.push('✅ OneSignal OK');
+        } catch (e) {
+          resultats.push('❌ OneSignal: ' + e.message);
+        }
+      }
+      
+      // Afficher le rapport
+      alert('Résultats des tests :\n\n' + resultats.join('\n'));
+
+
+      //======= FIN des tests simples pour notif natives et OneSignal
       
       if (Notification.permission !== "granted") {
         alert('Hey ! Avant de tester, il faut que tu autorises les notifications.\n\nClique sur "Activer les notifications" juste au-dessus, puis reviens ici !\n\nJe t\'attends 😊');
@@ -579,7 +602,7 @@ async function envoyerNotificationDuJour() {
     }
     
     // 3. Créer la notification avec le SERVICE-WORKER (permet les actions)
-   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       // Envoyer via Service Worker
       navigator.serviceWorker.controller.postMessage({
         action: 'SEND_NOTIFICATION',
@@ -588,6 +611,13 @@ async function envoyerNotificationDuJour() {
         description: defi.description,
         tag: `envol-jour-${jourActuel}`
       });
+      
+      console.log('✅ Notification envoyée via Service Worker:', {
+        jour: jourActuel,
+        titre: defi.titre,
+        heure: new Date().toLocaleTimeString('fr-FR')
+      });
+      
     } else {
       // Fallback : Notification simple
       const options = {
@@ -596,31 +626,25 @@ async function envoyerNotificationDuJour() {
         tag: `envol-jour-${jourActuel}`,
         requireInteraction: true
       };
-    
-    // 4. Envoyer la notification
-    const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
-    
-    console.log('✅ Notification envoyée:', {
-      jour: jourActuel,
-      titre: defi.titre,
-      heure: new Date().toLocaleTimeString('fr-FR')
-    });
-    
-    // 5. Gérer les clics
-    notification.onclick = () => {
+      
+      // 4. Envoyer la notification
+      const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
+      
+      console.log('✅ Notification native envoyée:', {
+        jour: jourActuel,
+        titre: defi.titre,
+        heure: new Date().toLocaleTimeString('fr-FR')
+      });
+      
+      // 5. Gérer les clics
+      notification.onclick = () => {
         window.focus();
         notification.close();
       };
+      
+      // Auto-fermeture après 30 secondes
       setTimeout(() => notification.close(), 30000);
     }
-    
-  } catch (error) {
-    console.error('❌ Erreur envoi notification:', error);
-  }
-}
-    
-    // Auto-fermeture après 30 secondes
-    setTimeout(() => notification.close(), 30000);
     
   } catch (error) {
     console.error('❌ Erreur envoi notification:', error);
