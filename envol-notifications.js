@@ -621,8 +621,8 @@ async function envoyerNotificationDuJour() {
     
   } catch (error) {
     console.error('❌ Erreur envoi notification:', error);
-  }
-}
+  } // fin de else
+} // fin de async function envoyerNotificationDuJour()
 
 
 //=================================================================================
