@@ -421,7 +421,7 @@ async function setupNotificationUI(oneSignal) {
   }
   
   message += 
-    '📱 Sur iOS et 🦊 Firefox : Garde l\'app ouverte\n';
+    '📱 iOS & 🦊 Firefox : Garde l\'app ouverte pour les notifications';
   
   alert(message);
   
