@@ -47,3 +47,52 @@ self.addEventListener('fetch', event => {
       .then(response => response || fetch(event.request))
   );
 });
+
+
+//=================================================
+//====== GESTION NOTIFICATIONS NATIVES ============
+
+self.addEventListener('message', event => {
+  if (event.data.action === 'SEND_NOTIFICATION') {
+    const { jour, titre, description } = event.data;
+    
+    self.registration.showNotification(`Jour ${jour} - ${titre}`, {
+      body: description.substring(0, 120) + '...',
+      icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+      badge: '/sekhamet-envol/assets/icons/ENVOL-192.png',
+      tag: `envol-jour-${jour}`,
+      requireInteraction: true,
+      actions: [
+        {
+          action: 'view',
+          title: '👁️ Voir le défi'
+        },
+        {
+          action: 'mark-done',
+          title: '✅ Marquer comme accompli'
+        }
+      ]
+    });
+  }
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  if (event.action === 'mark-done') {
+    // Envoyer un message à la page pour marquer comme accompli
+    event.waitUntil(
+      clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            action: 'MARK_DONE',
+            jour: event.notification.tag.replace('envol-jour-', '')
+          });
+        });
+      })
+    );
+  } else {
+    // Ouvrir/activer l'app
+    event.waitUntil(clients.openWindow('/sekhamet-envol/'));
+  }
+});
