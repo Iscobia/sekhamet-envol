@@ -455,7 +455,7 @@ function testNotification() {
 
 // Exposer pour la console
 window.testNotification = testNotification;
-    
+window.envoyerNotificationDuJour = envoyerNotificationDuJour;
     
 
 //===========================================================================//
