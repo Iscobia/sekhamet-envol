@@ -412,11 +412,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function verifierEtAvancerJour() {
-      // D'abord vérifier les jours manqués (cela met à jour dernier_acces et derniere_verif_manques)
-      verifierJoursManques();
-      
-      // Récupérer le jour actuel depuis localStorage
+       // 1. Mettre à jour jourActuel depuis localStorage
       let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+      
+      // 2. Vérifier jours manqués
+      verifierJoursManques();
       
       console.log('🔍 VERIFICATION AVANCEMENT JOUR');
       console.log('Jour actuel avant:', jourActuel);
