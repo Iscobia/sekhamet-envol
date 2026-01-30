@@ -784,3 +784,21 @@ setTimeout(() => {
 });
 
 //============ FIN DU DOM CONTENT LOADED ===================
+
+
+//==========================================================
+//================== DEBOGG SECTION =========================
+
+// app.js - À la toute fin du fichier
+console.log('✅ app.js chargé complètement');
+
+// Déclencher l'événement pour signaler que app.js est prêt
+window.dispatchEvent(new Event('app-ready'));
+
+// Exporter les fonctions nécessaires
+window.getDefiByDay = getDefiByDay; // Si elle n'est pas déjà globale
+
+console.log('📋 Fonctions disponibles:', {
+  getDefiByDay: typeof getDefiByDay,
+  envoyerNotificationDuJour: typeof window.envoyerNotificationDuJour
+});
