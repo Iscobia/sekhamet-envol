@@ -789,7 +789,10 @@ setTimeout(() => {
 //==========================================================
 //================== DEBOGG SECTION =========================
 
-// app.js - À la toute fin du fichier
+// Export de la fonction getDefiByDay() pour l'utiliser dans envol-notifications.js
+window.getDefiByDay = getDefiByDay;
+console.log('✅ getDefiByDay exposée globalement');
+
 console.log('✅ app.js chargé complètement');
 
 // Déclencher l'événement pour signaler que app.js est prêt
