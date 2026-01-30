@@ -4,6 +4,31 @@ const CACHE_NAME = 'envol-pwa-v2.0';
 const userAgent = navigator.userAgent;
 const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
 
+// === On attend que envol-notifications.js soit chargé :
+
+// Au début de app.js
+console.log('🔔 app.js chargement...');
+
+// Attendre que envol-notifications.js soit prêt
+function initApp() {
+  console.log('🔔 Initialisation app...');
+  
+  // Vos fonctions existantes
+  if (typeof setupNotificationUI === 'function') {
+    console.log('✅ notifications disponibles');
+  }
+}
+
+// Deux méthodes pour attendre
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  setTimeout(initApp, 1000); // Donner du temps à envol-notifications.js
+}
+
+
+
+
 // ========== FONCTIONS GÉRANT ONESIGNAL ==========
 
 // Fonction sécurisée pour accéder à OneSignal - AMÉLIORÉE
