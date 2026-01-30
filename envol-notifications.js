@@ -148,19 +148,31 @@ console.log('🔍 Boutons trouvés:', {
 
   //===== Définition de pdateToggleButton() :
 
-   async function updateToggleButton() {
+  async function updateToggleButton() {
   const toggleBtn = document.getElementById('notifications-toggle-btn');
   if (!toggleBtn) return;
   
   let isActive = false;
   
-  // VÉRIFICATION 1 : OneSignal (si disponible)
+  // VÉRIFICATION 1 : OneSignal v16 (Nouvelle API)
   if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
     try {
-      // CORRECTION : Utilisez optIn comme PROMESSE
+      // CORRECTION CRITIQUE : optIn est une fonction ASYNC dans v16
       const subscription = OneSignal.User.PushSubscription;
-      isActive = await subscription.optIn();
-      console.log('🔔 État OneSignal (optIn):', isActive);
+      
+      // Méthode 1 : Essayez d'appeler optIn() si c'est une fonction
+      if (typeof subscription.optIn === 'function') {
+        console.log('🔔 Appel de optIn()...');
+        isActive = await subscription.optIn();
+      } 
+      // Méthode 2 : Vérifiez la permission directement
+      else {
+        console.log('🔔 Vérification permission directe...');
+        const permissionStatus = await OneSignal.Notifications.permission;
+        isActive = permissionStatus === 'granted';
+      }
+      
+      console.log('✅ État OneSignal:', isActive);
     } catch (e) {
       console.warn('⚠️ Erreur vérification OneSignal:', e);
       // Fallback sur permission native
@@ -177,6 +189,7 @@ console.log('🔍 Boutons trouvés:', {
   if (isActive) {
     toggleBtn.className = 'backup-btn toggle-on';
     toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+    toggleBtn.setAttribute('data-state', 'on');
     
     // Démarrer les notifications
     setTimeout(() => {
@@ -185,10 +198,12 @@ console.log('🔍 Boutons trouvés:', {
   } else {
     toggleBtn.className = 'backup-btn toggle-off';
     toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+    toggleBtn.setAttribute('data-state', 'off');
   }
   
-  console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
-}
+  console.log('🎯 Bouton toggle final:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
+  return isActive;
+ }
 
   //==== Fin de la définition d'updateToggleButton() 
 
@@ -389,278 +404,281 @@ console.log('🔍 Boutons trouvés:', {
     if (testBtn) {
       console.log('✅ [Envol-Notifications] Bouton test trouvé');
       
-      testBtn.addEventListener('click', async function() {
-    console.log('🔔 Test complet des notifications...');
-    
-    let resultats = [];
-    let conseils = [];
-    let permissionOk = true;
-    
-    // 1. TEST PERMISSION
-    if (Notification.permission !== "granted") {
-      resultats.push('❌ PERMISSION: Non accordée');
-      conseils.push('• Clique sur "Activer les notifications"');
-      permissionOk = false;
-    } else {
-      resultats.push('✅ PERMISSION: Accordée');
-    }
-    
-    // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
-    if (permissionOk) {
-      try {
-        const testNotif = new Notification('🎯 ENVOL - Test', {
-          body: 'Test notification native',
-          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-        });
-        
-        testNotif.onclick = function(event) {
-          event.preventDefault();
-          window.focus();
-          testNotif.close();
-        };
-        
-        resultats.push('✅ NATIVES: Fonctionnent');
-        setTimeout(() => testNotif.close(), 2000);
-      } catch (e) {
-        resultats.push('❌ NATIVES: ' + e.message);
-      }
-    } else {
-      resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
-    }
-    
-    // 3. TEST ONESIGNAL (toujours, même sans permission native)
-    if (typeof OneSignal !== 'undefined') {
-      try {
-        await OneSignal.Notifications.addTrigger({ 
-          'test-notification': Date.now(),
-          'message': 'Test OneSignal ENVOL'
-        });
-        resultats.push('✅ ONESIGNAL: Test envoyé');
-      } catch (e) {
-        resultats.push('❌ ONESIGNAL: ' + e.message);
-        if (e.message.includes('not subscribed')) {
-          conseils.push('• Active OneSignal avec le bouton toggle');
-        }
-      }
-    } else {
-      resultats.push('⚠️ ONESIGNAL: Non disponible');
-      if (/Firefox/i.test(navigator.userAgent)) {
-        conseils.push('• Firefox bloque OneSignal (normal)');
-      }
-      conseils.push('• Utilise les notifications natives');
-    }
-    
-    // 4. AFFICHER RÉSULTATS COMPLETS
-    let message = 
-      '🔔 TESTS TERMINÉS 🔔\n\n' +
-      resultats.join('\n') + '\n\n';
+      // MARQUER le bouton comme ayant déjà un gestionnaire
+      testBtn.setAttribute('data-has-handler', 'true');
       
-    if (conseils.length > 0) {
-      message += '💡 CONSEILS :\n' + conseils.join('\n') + '\n\n';
-    }
-    
-    message += 
-      '📱 iOS & 🦊 Firefox : Garde l\'app ouverte pour les notifications';
-    
-    alert(message);
-    
-    // 5. SI PERMISSION MANQUANTE, PROPOSER DE L'ACTIVER
-    if (!permissionOk) {
-      if (confirm('Voudrais-tu activer les notifications maintenant ?')) {
-        if (typeof OneSignal !== 'undefined' && OneSignal.Slidedown) {
-          OneSignal.Slidedown.promptPush();
-        } else if ('Notification' in window) {
-          Notification.requestPermission();
-        }
-      }
-    }
-  });
-  } // ←  FERMER if (testBtn)
-} //---- fin de  async function setupNotificationUI(oneSignal)
-
-// ========== FONCTION TEST NOTIFICATIONS ==========
-function testNotification() {
-  console.log('🔔 Test manuel de notification...');
-  
-  if (typeof envoyerNotificationDuJour === 'function') {
-    envoyerNotificationDuJour();
-  } else if (typeof window.envoyerNotificationDuJour === 'function') {
-    window.envoyerNotificationDuJour();
-  } else {
-    console.error('❌ Fonction non disponible');
-    console.log('💡 Recharge la page pour charger envol-notifications.js');
-  }
-}
-
-
-
-
-//===========================================================================//
-//======================= FIN BOUTONS TECHNIQUES ============================//
-//===========================================================================//
-
-
-
-//===========================================================================
-// 5. Fallback (plan B) - FONCTION SÉPARÉE !
-  
-  function setupFallbackNotifications() {
-  console.log('🔔 [Envol-Notifications] Utilisation fallback (notifications natives)');
-
-    // Détecter Firefox
-  if (/Firefox/i.test(navigator.userAgent)) {
-    console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
-  }
-  
-  // Code de fallback simple
-  const testBtn = document.getElementById('test-notification-android-btn');
-  if (testBtn) {
-    testBtn.addEventListener('click', function() {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const jourActuel = localStorage.getItem('jour_actuel') || 1;
-        const notif = new Notification(`🎯 ENVOL - Jour ${jourActuel}`, {
-          body: 'Notification de test',
-          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-        });
-        
-        notif.onclick = () => {
-          window.focus();
-          notif.close();
-        };
-        
-        alert('✅ Notification native envoyée !');
+      testBtn.addEventListener('click', async function() {
+      console.log('🔔 Test complet des notifications...');
+      
+      let resultats = [];
+      let conseils = [];
+      let permissionOk = true;
+      
+      // 1. TEST PERMISSION
+      if (Notification.permission !== "granted") {
+        resultats.push('❌ PERMISSION: Non accordée');
+        conseils.push('• Clique sur "Activer les notifications"');
+        permissionOk = false;
       } else {
-        alert('❌ Les notifications ne sont pas autorisées dans les paramètres de ton navigateur :\nvérifies tes autorisations et réessaie. 🙂\nSi ça ne fonctionne toujours pas, envoie-moi une capture d\'écran à contact@sekhamet.com');
+        resultats.push('✅ PERMISSION: Accordée');
+      }
+      
+      // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
+      if (permissionOk) {
+        try {
+          const testNotif = new Notification('🎯 ENVOL - Test', {
+            body: 'Test notification native',
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+          });
+          
+          testNotif.onclick = function(event) {
+            event.preventDefault();
+            window.focus();
+            testNotif.close();
+          };
+          
+          resultats.push('✅ NATIVES: Fonctionnent');
+          setTimeout(() => testNotif.close(), 2000);
+        } catch (e) {
+          resultats.push('❌ NATIVES: ' + e.message);
+        }
+      } else {
+        resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
+      }
+      
+      // 3. TEST ONESIGNAL (toujours, même sans permission native)
+      if (typeof OneSignal !== 'undefined') {
+        try {
+          await OneSignal.Notifications.addTrigger({ 
+            'test-notification': Date.now(),
+            'message': 'Test OneSignal ENVOL'
+          });
+          resultats.push('✅ ONESIGNAL: Test envoyé');
+        } catch (e) {
+          resultats.push('❌ ONESIGNAL: ' + e.message);
+          if (e.message.includes('not subscribed')) {
+            conseils.push('• Active OneSignal avec le bouton toggle');
+          }
+        }
+      } else {
+        resultats.push('⚠️ ONESIGNAL: Non disponible');
+        if (/Firefox/i.test(navigator.userAgent)) {
+          conseils.push('• Firefox bloque OneSignal (normal)');
+        }
+        conseils.push('• Utilise les notifications natives');
+      }
+      
+      // 4. AFFICHER RÉSULTATS COMPLETS
+      let message = 
+        '🔔 TESTS TERMINÉS 🔔\n\n' +
+        resultats.join('\n') + '\n\n';
+        
+      if (conseils.length > 0) {
+        message += '💡 CONSEILS :\n' + conseils.join('\n') + '\n\n';
+      }
+      
+      message += 
+        '📱 iOS & 🦊 Firefox : Garde l\'app ouverte pour les notifications';
+      
+      alert(message);
+      
+      // 5. SI PERMISSION MANQUANTE, PROPOSER DE L'ACTIVER
+      if (!permissionOk) {
+        if (confirm('Voudrais-tu activer les notifications maintenant ?')) {
+          if (typeof OneSignal !== 'undefined' && OneSignal.Slidedown) {
+            OneSignal.Slidedown.promptPush();
+          } else if ('Notification' in window) {
+            Notification.requestPermission();
+          }
+        }
       }
     });
-  }
-} // ← fin de function setupFallbackNotifications()
-
-
-
-// =====================================================================
-// ==============🔔 NOTIFICATIONS NATIVES QUOTIDIENNES 🔔===============
-// =====================================================================
-
-let notificationsProgrammees = false;
-
-async function programmerNotificationQuotidienne() {
-  console.log('🔔 [Programmation] Début...');
+    } // ←  FERMER if (testBtn)
+  } //---- fin de  async function setupNotificationUI(oneSignal)
   
-  // Vérifier si déjà programmée
-  if (notificationsProgrammees) {
-    console.log('🔔 [Programmation] Déjà en cours');
-    return;
-  }
-  
-  // VÉRIFIER LA PERMISSION AVANT de mettre à true
-  if (Notification.permission !== 'granted') {
-    console.log('❌ [Programmation] Permission non accordée');
-    return;
-  }
-  
-  // MAINTENANT on peut marquer comme programmée
-  notificationsProgrammees = true;
-  
-  
-  // 1. Vérifier la permission 
-  if (Notification.permission !== 'granted') {
-    console.log('❌ Permission non accordée');
-    return;
-  }
-  
-  // 2. Récupérer l'heure configurée
-  const heureNotification = localStorage.getItem('heure_notification') || '09:00';
-  const [heures, minutes] = heureNotification.split(':').map(Number);
-  
-  // 3. Calculer l'heure de déclenchement
-  const maintenant = new Date();
-  const heureDeclenchement = new Date();
-  heureDeclenchement.setHours(heures, minutes, 0, 0);
-  
-  // Si l'heure est déjà passée aujourd'hui, programmer pour demain
-  if (heureDeclenchement < maintenant) {
-    heureDeclenchement.setDate(heureDeclenchement.getDate() + 1);
-  }
-  
-  const delaiMs = heureDeclenchement.getTime() - maintenant.getTime();
-  
-  console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs/1000/60)} minutes)`);
-  
-  // 4. Programmer la notification
-  setTimeout(async () => {
-    await envoyerNotificationDuJour();
+  // ========== FONCTION TEST NOTIFICATIONS ==========
+  function testNotification() {
+    console.log('🔔 Test manuel de notification...');
     
-    // Reprogrammer pour le lendemain
-    programmerNotificationQuotidienne();
-  }, delaiMs);
-} // ← fin de async function programmerNotificationQuotidienne()
+    if (typeof envoyerNotificationDuJour === 'function') {
+      envoyerNotificationDuJour();
+    } else if (typeof window.envoyerNotificationDuJour === 'function') {
+      window.envoyerNotificationDuJour();
+    } else {
+      console.error('❌ Fonction non disponible');
+      console.log('💡 Recharge la page pour charger envol-notifications.js');
+    }
+  }
 
-async function envoyerNotificationDuJour() {
-  try {
-    // 1. Récupérer le jour actuel
-    const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+
+
+  
+  //===========================================================================//
+  //======================= FIN BOUTONS TECHNIQUES ============================//
+  //===========================================================================//
+  
+  
+  
+  //===========================================================================
+  // 5. Fallback (plan B) - FONCTION SÉPARÉE !
     
-    // 2. Récupérer le défi du jour
-    const defi = getDefiByDay(jourActuel);
+    function setupFallbackNotifications() {
+    console.log('🔔 [Envol-Notifications] Utilisation fallback (notifications natives)');
+  
+      // Détecter Firefox
+    if (/Firefox/i.test(navigator.userAgent)) {
+      console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
+    }
     
-    if (!defi) {
-      console.error('❌ Défi non trouvé pour le jour', jourActuel);
+    // Code de fallback simple
+    const testBtn = document.getElementById('test-notification-android-btn');
+    if (testBtn) {
+      testBtn.addEventListener('click', function() {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const jourActuel = localStorage.getItem('jour_actuel') || 1;
+          const notif = new Notification(`🎯 ENVOL - Jour ${jourActuel}`, {
+            body: 'Notification de test',
+            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+          });
+          
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
+          
+          alert('✅ Notification native envoyée !');
+        } else {
+          alert('❌ Les notifications ne sont pas autorisées dans les paramètres de ton navigateur :\nvérifies tes autorisations et réessaie. 🙂\nSi ça ne fonctionne toujours pas, envoie-moi une capture d\'écran à contact@sekhamet.com');
+        }
+      });
+    }
+  } // ← fin de function setupFallbackNotifications()
+  
+  
+  
+  // =====================================================================
+  // ==============🔔 NOTIFICATIONS NATIVES QUOTIDIENNES 🔔===============
+  // =====================================================================
+  
+  let notificationsProgrammees = false;
+  
+  async function programmerNotificationQuotidienne() {
+    console.log('🔔 [Programmation] Début...');
+    
+    // Vérifier si déjà programmée
+    if (notificationsProgrammees) {
+      console.log('🔔 [Programmation] Déjà en cours');
       return;
     }
     
-    // 3. Créer la notification avec le SERVICE-WORKER (permet les actions)
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Envoyer via Service Worker
-      navigator.serviceWorker.controller.postMessage({
-        action: 'SEND_NOTIFICATION',
-        jour: jourActuel,
-        titre: defi.titre,
-        description: defi.description,
-        tag: `envol-jour-${jourActuel}`
-      });
-      
-      console.log('✅ Notification envoyée via Service Worker:', {
-        jour: jourActuel,
-        titre: defi.titre,
-        heure: new Date().toLocaleTimeString('fr-FR')
-      });
-      
-    } else {
-      // Fallback : Notification simple
-      const options = {
-        body: `Jour ${jourActuel}: ${defi.titre}\n\n${defi.description.substring(0, 100)}...`,
-        icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-        tag: `envol-jour-${jourActuel}`,
-        requireInteraction: true
-      };
-      
-      // 4. Envoyer la notification
-      const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
-      
-      
-      console.log('✅ Notification native envoyée:', {
-        jour: jourActuel,
-        titre: defi.titre,
-        heure: new Date().toLocaleTimeString('fr-FR')
-      });
-      
-      // 5. Gérer les clics
-      notification.onclick = function(event) {
-        event.preventDefault(); // ← BLOQUE le comportement par défaut
-        window.focus();         // ← Met l'app au premier plan
-        notification.close();   // ← Ferme la notification
-      };
-      
-      // Auto-fermeture après 30 secondes
-      setTimeout(() => notification.close(), 30000);
+    // VÉRIFIER LA PERMISSION AVANT de mettre à true
+    if (Notification.permission !== 'granted') {
+      console.log('❌ [Programmation] Permission non accordée');
+      return;
     }
     
-  } catch (error) {
-    console.error('❌ Erreur envoi notification:', error);
-  } // fin de else
-
-} // fin de async function envoyerNotificationDuJour()
+    // MAINTENANT on peut marquer comme programmée
+    notificationsProgrammees = true;
+    
+    
+    // 1. Vérifier la permission 
+    if (Notification.permission !== 'granted') {
+      console.log('❌ Permission non accordée');
+      return;
+    }
+    
+    // 2. Récupérer l'heure configurée
+    const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+    const [heures, minutes] = heureNotification.split(':').map(Number);
+    
+    // 3. Calculer l'heure de déclenchement
+    const maintenant = new Date();
+    const heureDeclenchement = new Date();
+    heureDeclenchement.setHours(heures, minutes, 0, 0);
+    
+    // Si l'heure est déjà passée aujourd'hui, programmer pour demain
+    if (heureDeclenchement < maintenant) {
+      heureDeclenchement.setDate(heureDeclenchement.getDate() + 1);
+    }
+    
+    const delaiMs = heureDeclenchement.getTime() - maintenant.getTime();
+    
+    console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs/1000/60)} minutes)`);
+    
+    // 4. Programmer la notification
+    setTimeout(async () => {
+      await envoyerNotificationDuJour();
+      
+      // Reprogrammer pour le lendemain
+      programmerNotificationQuotidienne();
+    }, delaiMs);
+  } // ← fin de async function programmerNotificationQuotidienne()
+  
+  async function envoyerNotificationDuJour() {
+    try {
+      // 1. Récupérer le jour actuel
+      const jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+      
+      // 2. Récupérer le défi du jour
+      const defi = getDefiByDay(jourActuel);
+      
+      if (!defi) {
+        console.error('❌ Défi non trouvé pour le jour', jourActuel);
+        return;
+      }
+      
+      // 3. Créer la notification avec le SERVICE-WORKER (permet les actions)
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // Envoyer via Service Worker
+        navigator.serviceWorker.controller.postMessage({
+          action: 'SEND_NOTIFICATION',
+          jour: jourActuel,
+          titre: defi.titre,
+          description: defi.description,
+          tag: `envol-jour-${jourActuel}`
+        });
+        
+        console.log('✅ Notification envoyée via Service Worker:', {
+          jour: jourActuel,
+          titre: defi.titre,
+          heure: new Date().toLocaleTimeString('fr-FR')
+        });
+        
+      } else {
+        // Fallback : Notification simple
+        const options = {
+          body: `Jour ${jourActuel}: ${defi.titre}\n\n${defi.description.substring(0, 100)}...`,
+          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+          tag: `envol-jour-${jourActuel}`,
+          requireInteraction: true
+        };
+        
+        // 4. Envoyer la notification
+        const notification = new Notification(`🎯 ENVOL - Défi du jour`, options);
+        
+        
+        console.log('✅ Notification native envoyée:', {
+          jour: jourActuel,
+          titre: defi.titre,
+          heure: new Date().toLocaleTimeString('fr-FR')
+        });
+        
+        // 5. Gérer les clics
+        notification.onclick = function(event) {
+          event.preventDefault(); // ← BLOQUE le comportement par défaut
+          window.focus();         // ← Met l'app au premier plan
+          notification.close();   // ← Ferme la notification
+        };
+        
+        // Auto-fermeture après 30 secondes
+        setTimeout(() => notification.close(), 30000);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur envoi notification:', error);
+    } // fin de else
+  
+  } // fin de async function envoyerNotificationDuJour()
 
 
 //=================================================================================
