@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🔔 [Envol-Notifications] Configuration OneSignal...');
         
         try {
-          // VÉRIFIER SI DÉJÀ INITIALISÉ
+          // Vérifier si OneSignal est déjà initialisé (optionnel)
           if (oneSignal.config && oneSignal.config.appId) {
             console.log('✅ [Envol-Notifications] OneSignal déjà initialisé avec App ID:', oneSignal.config.appId);
           } else {
@@ -62,23 +62,38 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           
          // 1. D'ABORD l'interface utilisateur (CRITIQUE)
+          console.log('🎯 Configuration interface...');
           setupNotificationUI(oneSignal);
           
           // 2. ENSUITE les notifications (peuvent échouer sans bloquer l'app)
+          console.log('🔔 Configuration notifications...');
+
+          // 2A. OneSignal (silencieux si échec)
           try {
             await setupDailyNotifications(oneSignal);
+            console.log('✅ OneSignal configuré');
           } catch (e) {
             console.warn('⚠️ OneSignal notifications échoué:', e);
           }
-          
+
+          // 2B. Notifications natives (toujours essayer)
           try {
             await programmerNotificationQuotidienne();
+            console.log('✅ Notifications natives prêtes');
           } catch (e) {
             console.warn('⚠️ Notifications natives échouées:', e);
           }
           
         } catch (error) {
           console.error('❌ [Envol-Notifications] Erreur configuration:', error);
+              // ESSAYER QUAND MÊME l'interface minimaliste
+          try {
+            if (typeof setupNotificationUI === 'function') {
+              setupNotificationUI({}); // Version minimaliste
+            }
+          } catch (uiError) {
+            console.error('❌ Interface aussi en échec');
+          }
         }
       }
 
