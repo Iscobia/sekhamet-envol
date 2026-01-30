@@ -61,15 +61,21 @@ document.addEventListener('DOMContentLoaded', function() {
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
           
-          // CONFIGURER LES NOTIFICATIONS QUOTIDIENNES One Signal
-          await setupDailyNotifications(oneSignal);
-          // PROGRAMMER LES NOTIFICATIONS NATIVES
-          await programmerNotificationQuotidienne();
-          
-          // CONFIGURER L'INTERFACE UTILISATEUR
+         // 1. D'ABORD l'interface utilisateur (CRITIQUE)
           setupNotificationUI(oneSignal);
           
-          console.log('✅ [Envol-Notifications] Configuration terminée');
+          // 2. ENSUITE les notifications (peuvent échouer sans bloquer l'app)
+          try {
+            await setupDailyNotifications(oneSignal);
+          } catch (e) {
+            console.warn('⚠️ OneSignal notifications échoué:', e);
+          }
+          
+          try {
+            await programmerNotificationQuotidienne();
+          } catch (e) {
+            console.warn('⚠️ Notifications natives échouées:', e);
+          }
           
         } catch (error) {
           console.error('❌ [Envol-Notifications] Erreur configuration:', error);
@@ -101,136 +107,133 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
 
-
-
-
-//===========================================================================//
-//========================= BOUTONS TECHNIQUES ==============================//
-//===========================================================================//
-
-
-//===========================================================================
-// 4. Configuration INTERFACE UTILISATEUR (boutons, messages)
-
-
-async function setupNotificationUI(oneSignal) {
-  console.log('🔔 [Envol-Notifications] Configuration UI...');
-
-  // ========== MISE À JOUR INITIALE DU BOUTON ==========
-   await updateToggleButton();
-  
-  // ========== DÉTECTION NAVIGATEUR ==========
-  const userAgent = navigator.userAgent;
-  const platform = navigator.platform;
-  
-  console.log('🔔 [Envol-Notifications] User Agent:', userAgent.substring(0, 80) + '...');
-  console.log('🔔 [Envol-Notifications] Platform:', platform);
-  
-  const isIOS = /iPhone|iPad|iPod/i.test(platform) || 
-                /iPhone|iPad|iPod/i.test(userAgent);
-  const isFirefox = /Firefox/i.test(userAgent);
-  const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
-  
-  console.log('🔔 [Envol-Notifications] Détection:', { isIOS, isFirefox, isChrome });
-
-
+  //===========================================================================//
+  //========================= BOUTONS TECHNIQUES ==============================//
+  //===========================================================================//
   
   
-  // ========== MESSAGES INFORMATIFS ==========
-  if (isIOS) {
-    console.log('🍎 iOS détecté - Notifications push non supportées');
+  //===========================================================================
+  // 4. Configuration INTERFACE UTILISATEUR (boutons, messages)
+  
+  
+  async function setupNotificationUI(oneSignal) {
+    console.log('🔔 [Envol-Notifications] Configuration UI...');
+  
+    // ========== MISE À JOUR INITIALE DU BOUTON ==========
+     await updateToggleButton();
     
-    // Message visuel pour iOS
-    const iosWarning = document.createElement('div');
-    iosWarning.className = 'browser-warning';
-    iosWarning.innerHTML = `
-      <p><strong>📱 Sur iOS</strong>, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).</p>
-      <p>Mais <strong>tu peux recevoir des notifications quand ENVOL est ouverte !</strong></p>
-      <p>Garde un onglet ouvert pour tes rappels quotidiens 😊</p>
-    `;
+    // ========== DÉTECTION NAVIGATEUR ==========
+    const userAgent = navigator.userAgent;
+    const platform = navigator.platform;
     
-    const troubleshooting = document.querySelector('.troubleshooting');
-    if (troubleshooting) {
-      troubleshooting.insertBefore(iosWarning, troubleshooting.firstChild);
+    console.log('🔔 [Envol-Notifications] User Agent:', userAgent.substring(0, 80) + '...');
+    console.log('🔔 [Envol-Notifications] Platform:', platform);
+    
+    const isIOS = /iPhone|iPad|iPod/i.test(platform) || 
+                  /iPhone|iPad|iPod/i.test(userAgent);
+    const isFirefox = /Firefox/i.test(userAgent);
+    const isChrome = /Chrome/i.test(userAgent) && !/Edge|Edg/i.test(userAgent);
+    
+    console.log('🔔 [Envol-Notifications] Détection:', { isIOS, isFirefox, isChrome });
+  
+  
+    
+    
+    // ========== MESSAGES INFORMATIFS ==========
+    if (isIOS) {
+      console.log('🍎 iOS détecté - Notifications push non supportées');
+      
+      // Message visuel pour iOS
+      const iosWarning = document.createElement('div');
+      iosWarning.className = 'browser-warning';
+      iosWarning.innerHTML = `
+        <p><strong>📱 Sur iOS</strong>, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).</p>
+        <p>Mais <strong>tu peux recevoir des notifications quand ENVOL est ouverte !</strong></p>
+        <p>Garde un onglet ouvert pour tes rappels quotidiens 😊</p>
+      `;
+      
+      const troubleshooting = document.querySelector('.troubleshooting');
+      if (troubleshooting) {
+        troubleshooting.insertBefore(iosWarning, troubleshooting.firstChild);
+      }
+    } // fin de if (isIOS)
+  
+  
+    
+    if (isFirefox && !isIOS) {
+      console.log('🦊 Firefox détecté - Notifications possibles avec limitations');
+      
+      // Message pour Firefox
+      const firefoxWarning = document.createElement('div');
+      firefoxWarning.className = 'browser-warning.firefox';
+      firefoxWarning.innerHTML = `
+        <p><strong>🦊 Firefox détecté :</strong></p>
+        <p>Tes notifications peuvent être bloquées par la "Protection renforcée".</p>
+        <p><em>Si besoin, désactive-la temporairement dans les paramètres.</em></p>
+      `;
+      
+      const troubleshooting = document.querySelector('.troubleshooting');
+      if (troubleshooting && !isIOS) {
+        troubleshooting.insertBefore(firefoxWarning, troubleshooting.firstChild);
+      }
     }
-  } // fin de if (isIOS)
-
-
   
-  if (isFirefox && !isIOS) {
-    console.log('🦊 Firefox détecté - Notifications possibles avec limitations');
+  
     
-    // Message pour Firefox
-    const firefoxWarning = document.createElement('div');
-    firefoxWarning.className = 'browser-warning.firefox';
-    firefoxWarning.innerHTML = `
-      <p><strong>🦊 Firefox détecté :</strong></p>
-      <p>Tes notifications peuvent être bloquées par la "Protection renforcée".</p>
-      <p><em>Si besoin, désactive-la temporairement dans les paramètres.</em></p>
-    `;
+    // =======================================================================
+    // ========== BOUTON ON/OFF INTELLIGENT ==================================
+    // =======================================================================
     
-    const troubleshooting = document.querySelector('.troubleshooting');
-    if (troubleshooting && !isIOS) {
-      troubleshooting.insertBefore(firefoxWarning, troubleshooting.firstChild);
-    }
-  }
-
-
+    const toggleBtn = document.getElementById('notifications-toggle-btn');
   
-  // =======================================================================
-  // ========== BOUTON ON/OFF INTELLIGENT ==================================
-  // =======================================================================
-  
-  const toggleBtn = document.getElementById('notifications-toggle-btn');
-
-  
-  if (toggleBtn) {
-    console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
     
+    if (toggleBtn) {
+      console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
+      
+      
+    async function updateToggleButton() {
+    const toggleBtn = document.getElementById('notifications-toggle-btn');
+    if (!toggleBtn) return;
     
-  async function updateToggleButton() {
-  const toggleBtn = document.getElementById('notifications-toggle-btn');
-  if (!toggleBtn) return;
-  
-  let isActive = false;
-  
-  // VÉRIFICATION 1 : OneSignal (si disponible)
-  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
-    try {
-      const subscription = OneSignal.User.PushSubscription;
-      isActive = await subscription.optIn();
-      console.log('🔔 État OneSignal (optIn):', isActive);
-    } catch (e) {
-      console.warn('⚠️ Erreur vérification OneSignal:', e);
+    let isActive = false;
+    
+    // VÉRIFICATION 1 : OneSignal (si disponible)
+    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+      try {
+        const subscription = OneSignal.User.PushSubscription;
+        isActive = await subscription.optIn();
+        console.log('🔔 État OneSignal (optIn):', isActive);
+      } catch (e) {
+        console.warn('⚠️ Erreur vérification OneSignal:', e);
+        isActive = Notification.permission === "granted";
+      }
+    } 
+    // VÉRIFICATION 2 : Notification API native
+    else {
       isActive = Notification.permission === "granted";
+      console.log('🔔 État Notification API:', isActive);
     }
-  } 
-  // VÉRIFICATION 2 : Notification API native
-  else {
-    isActive = Notification.permission === "granted";
-    console.log('🔔 État Notification API:', isActive);
-  }
-  
-  // MISE À JOUR DU BOUTON
-  if (isActive) {
-    toggleBtn.className = 'backup-btn toggle-on';
-    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
     
-    // Démarrer les notifications
-    setTimeout(() => {
-      programmerNotificationQuotidienne();
-    }, 1000);
-  } else {
-    toggleBtn.className = 'backup-btn toggle-off';
-    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-  }
-  
-    console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
-  }
-
-
+    // MISE À JOUR DU BOUTON
+    if (isActive) {
+      toggleBtn.className = 'backup-btn toggle-on';
+      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+      
+      // Démarrer les notifications
+      setTimeout(() => {
+        programmerNotificationQuotidienne();
+      }, 1000);
+    } else {
+      toggleBtn.className = 'backup-btn toggle-off';
+      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+    }
     
-    updateToggleButton();
+      console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
+    }
+  
+  
+      
+      updateToggleButton();
 
 
     //================================================================
@@ -436,7 +439,7 @@ async function setupNotificationUI(oneSignal) {
     }
   }
 });
-
+} // ←  FERMER if (testBtn)
     
 
 // ========== FONCTION TEST NOTIFICATIONS ==========
@@ -454,9 +457,13 @@ function testNotification() {
 }
 
 // Exposer pour la console
-window.testNotification = testNotification;
-window.envoyerNotificationDuJour = envoyerNotificationDuJour;
+//window.testNotification = testNotification;
+//window.envoyerNotificationDuJour = envoyerNotificationDuJour;
     
+} //---- fin de  async function setupNotificationUI(oneSignal)
+
+
+
 
 //===========================================================================//
 //======================= FIN BOUTONS TECHNIQUES ============================//
@@ -467,7 +474,7 @@ window.envoyerNotificationDuJour = envoyerNotificationDuJour;
 //===========================================================================
 // 5. Fallback (plan B) - FONCTION SÉPARÉE !
   
-function setupFallbackNotifications() {
+  function setupFallbackNotifications() {
   console.log('🔔 [Envol-Notifications] Utilisation fallback (notifications natives)');
 
     // Détecter Firefox
@@ -622,17 +629,20 @@ async function envoyerNotificationDuJour() {
   } catch (error) {
     console.error('❌ Erreur envoi notification:', error);
   } // fin de else
+
 } // fin de async function envoyerNotificationDuJour()
 
 
 //=================================================================================
 //=========== VARIABLES EN EXPOSITION GLOBALE POUR DEBOGGAGE : ====================
     
-
 window.envoyerNotificationDuJour = envoyerNotificationDuJour;
 window.programmerNotificationQuotidienne = programmerNotificationQuotidienne;
+window.testNotification = testNotification; // Définie DANS setupNotificationUI
+window.setupNotificationUI = setupNotificationUI; // Pour debug
+
+console.log('✅ envol-notifications.js - Toutes les fonctions disponibles');
     
 
 //============= FIN DE L'EXPOSITION GLOBALE POUR DEBOGGAGE : ======================
 //=================================================================================
-
