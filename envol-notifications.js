@@ -14,31 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===========================================================================
 // DEBUG: SURVEILLANCE DES BOUTONS
 // ===========================================================================
-console.log('🔔 [DEBUG] envol-notifications.js chargé');
 
-// Fonction utilitaire pour vérifier l'état des boutons
-function debugBoutons() {
-  const boutons = {
-    'toggle': document.getElementById('notifications-toggle-btn'),
-    'allow': document.getElementById('allow-notifications-btn'),
-    'test': document.getElementById('test-notification-android-btn')
-  };
-  
-  console.log('🔔 [DEBUG] État des boutons:', {
-    toggle: boutons.toggle ? 'TROUVÉ' : 'NON TROUVÉ',
-    allow: boutons.allow ? 'TROUVÉ' : 'NON TROUVÉ',
-    test: boutons.test ? 'TROUVÉ' : 'NON TROUVÉ'
-  });
-  
-  // Vérifier si des écouteurs sont attachés
-  if (boutons.test) {
-    const ecouteurs = getEventListeners ? getEventListeners(boutons.test) : 'getEventListeners non disponible';
-    console.log('🔔 [DEBUG] Écouteurs sur bouton test:', ecouteurs);
-  }
-}
-
-// Exécuter après le chargement
-setTimeout(debugBoutons, 3000);
+console.log('🔍 Boutons trouvés:', {
+  toggle: !!document.getElementById('notifications-toggle-btn'),
+  allow: !!document.getElementById('allow-notifications-btn'),
+  test: !!document.getElementById('test-notification-android-btn')
+});
 
 
 
@@ -468,7 +449,7 @@ setTimeout(debugBoutons, 3000);
     }
     
     // 4. AFFICHER RÉSULTATS COMPLETS
-    const message = 
+    let message = 
       '🔔 TESTS TERMINÉS 🔔\n\n' +
       resultats.join('\n') + '\n\n';
       
