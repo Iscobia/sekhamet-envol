@@ -10,6 +10,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+
+// ===========================================================================
+// DEBUG: SURVEILLANCE DES BOUTONS
+// ===========================================================================
+console.log('🔔 [DEBUG] envol-notifications.js chargé');
+
+// Fonction utilitaire pour vérifier l'état des boutons
+function debugBoutons() {
+  const boutons = {
+    'toggle': document.getElementById('notifications-toggle-btn'),
+    'allow': document.getElementById('allow-notifications-btn'),
+    'test': document.getElementById('test-notification-android-btn')
+  };
+  
+  console.log('🔔 [DEBUG] État des boutons:', {
+    toggle: boutons.toggle ? 'TROUVÉ' : 'NON TROUVÉ',
+    allow: boutons.allow ? 'TROUVÉ' : 'NON TROUVÉ',
+    test: boutons.test ? 'TROUVÉ' : 'NON TROUVÉ'
+  });
+  
+  // Vérifier si des écouteurs sont attachés
+  if (boutons.test) {
+    const ecouteurs = getEventListeners ? getEventListeners(boutons.test) : 'getEventListeners non disponible';
+    console.log('🔔 [DEBUG] Écouteurs sur bouton test:', ecouteurs);
+  }
+}
+
+// Exécuter après le chargement
+setTimeout(debugBoutons, 3000);
+
+
+
+
 //===========================================================================
 // 1. Fonction principale d'initialisation
 
@@ -660,3 +693,49 @@ console.log('✅ envol-notifications.js - Toutes les fonctions disponibles');
 
 //============= FIN DE L'EXPOSITION GLOBALE POUR DEBOGGAGE : ======================
 //=================================================================================
+
+
+// Contrer les boutons qui ne répondent pas :
+
+
+// ===========================================================================
+// FALLBACK MANUEL : Attacher les événements si ils ne le sont pas
+// ===========================================================================
+setTimeout(function() {
+  console.log('🔔 [FALLBACK] Vérification attachement manuel...');
+  
+  // 1. BOUTON TEST
+  const testBtn = document.getElementById('test-notification-android-btn');
+  if (testBtn) {
+    // Vérifier si déjà un écouteur
+    const oldClick = testBtn.onclick;
+    if (!oldClick) {
+      console.log('🔔 [FALLBACK] Attachement manuel bouton test');
+      
+      testBtn.addEventListener('click', async function() {
+        console.log('🔔 [FALLBACK] Clic sur bouton test détecté!');
+        
+        // Utiliser la fonction globale
+        if (typeof window.envoyerNotificationDuJour === 'function') {
+          await window.envoyerNotificationDuJour();
+          alert('✅ Test notification envoyé via fallback!');
+        } else {
+          alert('❌ Fonction non disponible. Essayez depuis la console.');
+        }
+      });
+    }
+  }
+  
+  // 2. BOUTON TOGGLE
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  if (toggleBtn && !toggleBtn.onclick) {
+    console.log('🔔 [FALLBACK] Attachement manuel bouton toggle');
+    
+    toggleBtn.addEventListener('click', function() {
+      console.log('🔔 [FALLBACK] Clic sur toggle détecté!');
+      alert('Toggle fonctionne via fallback!');
+      // Ici, vous pourriez appeler votre logique toggle
+    });
+  }
+  
+}, 5000); // Attendre 5 secondes
