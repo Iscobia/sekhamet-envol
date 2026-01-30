@@ -125,11 +125,57 @@ document.addEventListener('DOMContentLoaded', function() {
   //===========================================================================//
   //========================= BOUTONS TECHNIQUES ==============================//
   //===========================================================================//
-  
+
+
+
   
   //===========================================================================
   // 4. Configuration INTERFACE UTILISATEUR (boutons, messages)
-  
+
+  //===== Définition de pdateToggleButton() :
+
+   async function updateToggleButton() {
+    const toggleBtn = document.getElementById('notifications-toggle-btn');
+    if (!toggleBtn) return;
+    
+    let isActive = false;
+    
+    // VÉRIFICATION 1 : OneSignal (si disponible)
+    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+      try {
+        const subscription = OneSignal.User.PushSubscription;
+        isActive = await subscription.optIn();
+        console.log('🔔 État OneSignal (optIn):', isActive);
+      } catch (e) {
+        console.warn('⚠️ Erreur vérification OneSignal:', e);
+        isActive = Notification.permission === "granted";
+      }
+    } 
+    // VÉRIFICATION 2 : Notification API native
+    else {
+      isActive = Notification.permission === "granted";
+      console.log('🔔 État Notification API:', isActive);
+    }
+    
+    // MISE À JOUR DU BOUTON
+    if (isActive) {
+      toggleBtn.className = 'backup-btn toggle-on';
+      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+      
+      // Démarrer les notifications
+      setTimeout(() => {
+        programmerNotificationQuotidienne();
+      }, 1000);
+    } else {
+      toggleBtn.className = 'backup-btn toggle-off';
+      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+    }
+    
+      console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
+    }
+
+  //==== Fin de la définition d'updateToggleButton() 
+
   
   async function setupNotificationUI(oneSignal) {
     console.log('🔔 [Envol-Notifications] Configuration UI...');
@@ -137,7 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== MISE À JOUR INITIALE DU BOUTON ==========
      await updateToggleButton();
     
-    // ========== DÉTECTION NAVIGATEUR ==========
+    
+    // ========== DÉTECTION NAVIGATEUR ============
     const userAgent = navigator.userAgent;
     const platform = navigator.platform;
     
@@ -203,49 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     
     if (toggleBtn) {
-      console.log('✅ [Envol-Notifications] Bouton toggle trouvé');
-      
-      
-    async function updateToggleButton() {
-    const toggleBtn = document.getElementById('notifications-toggle-btn');
-    if (!toggleBtn) return;
-    
-    let isActive = false;
-    
-    // VÉRIFICATION 1 : OneSignal (si disponible)
-    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
-      try {
-        const subscription = OneSignal.User.PushSubscription;
-        isActive = await subscription.optIn();
-        console.log('🔔 État OneSignal (optIn):', isActive);
-      } catch (e) {
-        console.warn('⚠️ Erreur vérification OneSignal:', e);
-        isActive = Notification.permission === "granted";
-      }
-    } 
-    // VÉRIFICATION 2 : Notification API native
-    else {
-      isActive = Notification.permission === "granted";
-      console.log('🔔 État Notification API:', isActive);
-    }
-    
-    // MISE À JOUR DU BOUTON
-    if (isActive) {
-      toggleBtn.className = 'backup-btn toggle-on';
-      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-      
-      // Démarrer les notifications
-      setTimeout(() => {
-        programmerNotificationQuotidienne();
-      }, 1000);
-    } else {
-      toggleBtn.className = 'backup-btn toggle-off';
-      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-    }
-    
-      console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
-    }
-  
+      console.log('✅ [Envol-Notifications] Bouton toggle trouvé');  
   
       
       updateToggleButton();
@@ -365,97 +370,97 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // ========== BOUTON "TEST NOTIFICATION" ==========
   const testBtn = document.getElementById('test-notification-android-btn');
-  if (testBtn) {
-    console.log('✅ [Envol-Notifications] Bouton test trouvé');
+    if (testBtn) {
+      console.log('✅ [Envol-Notifications] Bouton test trouvé');
+      
+      testBtn.addEventListener('click', async function() {
+    console.log('🔔 Test complet des notifications...');
     
-    testBtn.addEventListener('click', async function() {
-  console.log('🔔 Test complet des notifications...');
-  
-  let resultats = [];
-  let conseils = [];
-  let permissionOk = true;
-  
-  // 1. TEST PERMISSION
-  if (Notification.permission !== "granted") {
-    resultats.push('❌ PERMISSION: Non accordée');
-    conseils.push('• Clique sur "Activer les notifications"');
-    permissionOk = false;
-  } else {
-    resultats.push('✅ PERMISSION: Accordée');
-  }
-  
-  // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
-  if (permissionOk) {
-    try {
-      const testNotif = new Notification('🎯 ENVOL - Test', {
-        body: 'Test notification native',
-        icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-      });
-      
-      testNotif.onclick = function(event) {
-        event.preventDefault();
-        window.focus();
-        testNotif.close();
-      };
-      
-      resultats.push('✅ NATIVES: Fonctionnent');
-      setTimeout(() => testNotif.close(), 2000);
-    } catch (e) {
-      resultats.push('❌ NATIVES: ' + e.message);
+    let resultats = [];
+    let conseils = [];
+    let permissionOk = true;
+    
+    // 1. TEST PERMISSION
+    if (Notification.permission !== "granted") {
+      resultats.push('❌ PERMISSION: Non accordée');
+      conseils.push('• Clique sur "Activer les notifications"');
+      permissionOk = false;
+    } else {
+      resultats.push('✅ PERMISSION: Accordée');
     }
-  } else {
-    resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
-  }
-  
-  // 3. TEST ONESIGNAL (toujours, même sans permission native)
-  if (typeof OneSignal !== 'undefined') {
-    try {
-      await OneSignal.Notifications.addTrigger({ 
-        'test-notification': Date.now(),
-        'message': 'Test OneSignal ENVOL'
-      });
-      resultats.push('✅ ONESIGNAL: Test envoyé');
-    } catch (e) {
-      resultats.push('❌ ONESIGNAL: ' + e.message);
-      if (e.message.includes('not subscribed')) {
-        conseils.push('• Active OneSignal avec le bouton toggle');
+    
+    // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
+    if (permissionOk) {
+      try {
+        const testNotif = new Notification('🎯 ENVOL - Test', {
+          body: 'Test notification native',
+          icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
+        });
+        
+        testNotif.onclick = function(event) {
+          event.preventDefault();
+          window.focus();
+          testNotif.close();
+        };
+        
+        resultats.push('✅ NATIVES: Fonctionnent');
+        setTimeout(() => testNotif.close(), 2000);
+      } catch (e) {
+        resultats.push('❌ NATIVES: ' + e.message);
+      }
+    } else {
+      resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
+    }
+    
+    // 3. TEST ONESIGNAL (toujours, même sans permission native)
+    if (typeof OneSignal !== 'undefined') {
+      try {
+        await OneSignal.Notifications.addTrigger({ 
+          'test-notification': Date.now(),
+          'message': 'Test OneSignal ENVOL'
+        });
+        resultats.push('✅ ONESIGNAL: Test envoyé');
+      } catch (e) {
+        resultats.push('❌ ONESIGNAL: ' + e.message);
+        if (e.message.includes('not subscribed')) {
+          conseils.push('• Active OneSignal avec le bouton toggle');
+        }
+      }
+    } else {
+      resultats.push('⚠️ ONESIGNAL: Non disponible');
+      if (/Firefox/i.test(navigator.userAgent)) {
+        conseils.push('• Firefox bloque OneSignal (normal)');
+      }
+      conseils.push('• Utilise les notifications natives');
+    }
+    
+    // 4. AFFICHER RÉSULTATS COMPLETS
+    const message = 
+      '🔔 TESTS TERMINÉS 🔔\n\n' +
+      resultats.join('\n') + '\n\n';
+      
+    if (conseils.length > 0) {
+      message += '💡 CONSEILS :\n' + conseils.join('\n') + '\n\n';
+    }
+    
+    message += 
+      '📱 iOS & 🦊 Firefox : Garde l\'app ouverte pour les notifications';
+    
+    alert(message);
+    
+    // 5. SI PERMISSION MANQUANTE, PROPOSER DE L'ACTIVER
+    if (!permissionOk) {
+      if (confirm('Voudrais-tu activer les notifications maintenant ?')) {
+        if (typeof OneSignal !== 'undefined' && OneSignal.Slidedown) {
+          OneSignal.Slidedown.promptPush();
+        } else if ('Notification' in window) {
+          Notification.requestPermission();
+        }
       }
     }
-  } else {
-    resultats.push('⚠️ ONESIGNAL: Non disponible');
-    if (/Firefox/i.test(navigator.userAgent)) {
-      conseils.push('• Firefox bloque OneSignal (normal)');
-    }
-    conseils.push('• Utilise les notifications natives');
-  }
-  
-  // 4. AFFICHER RÉSULTATS COMPLETS
-  const message = 
-    '🔔 TESTS TERMINÉS 🔔\n\n' +
-    resultats.join('\n') + '\n\n';
-    
-  if (conseils.length > 0) {
-    message += '💡 CONSEILS :\n' + conseils.join('\n') + '\n\n';
-  }
-  
-  message += 
-    '📱 iOS & 🦊 Firefox : Garde l\'app ouverte pour les notifications';
-  
-  alert(message);
-  
-  // 5. SI PERMISSION MANQUANTE, PROPOSER DE L'ACTIVER
-  if (!permissionOk) {
-    if (confirm('Voudrais-tu activer les notifications maintenant ?')) {
-      if (typeof OneSignal !== 'undefined' && OneSignal.Slidedown) {
-        OneSignal.Slidedown.promptPush();
-      } else if ('Notification' in window) {
-        Notification.requestPermission();
-      }
-    }
-  }
-});
-} // ←  FERMER if (testBtn)
-    
+  });
+  } // ←  FERMER if (testBtn)
+} //---- fin de  async function setupNotificationUI(oneSignal)
 
 // ========== FONCTION TEST NOTIFICATIONS ==========
 function testNotification() {
@@ -470,12 +475,6 @@ function testNotification() {
     console.log('💡 Recharge la page pour charger envol-notifications.js');
   }
 }
-
-// Exposer pour la console
-//window.testNotification = testNotification;
-//window.envoyerNotificationDuJour = envoyerNotificationDuJour;
-    
-} //---- fin de  async function setupNotificationUI(oneSignal)
 
 
 
@@ -519,7 +518,7 @@ function testNotification() {
       }
     });
   }
-}
+} // ← fin de function setupFallbackNotifications()
 
 
 
@@ -579,7 +578,7 @@ async function programmerNotificationQuotidienne() {
     // Reprogrammer pour le lendemain
     programmerNotificationQuotidienne();
   }, delaiMs);
-}
+} // ← fin de async function programmerNotificationQuotidienne()
 
 async function envoyerNotificationDuJour() {
   try {
