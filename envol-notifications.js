@@ -149,44 +149,46 @@ console.log('🔍 Boutons trouvés:', {
   //===== Définition de pdateToggleButton() :
 
    async function updateToggleButton() {
-    const toggleBtn = document.getElementById('notifications-toggle-btn');
-    if (!toggleBtn) return;
-    
-    let isActive = false;
-    
-    // VÉRIFICATION 1 : OneSignal (si disponible)
-    if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
-      try {
-        const subscription = OneSignal.User.PushSubscription;
-        isActive = await subscription.optIn();
-        console.log('🔔 État OneSignal (optIn):', isActive);
-      } catch (e) {
-        console.warn('⚠️ Erreur vérification OneSignal:', e);
-        isActive = Notification.permission === "granted";
-      }
-    } 
-    // VÉRIFICATION 2 : Notification API native
-    else {
+  const toggleBtn = document.getElementById('notifications-toggle-btn');
+  if (!toggleBtn) return;
+  
+  let isActive = false;
+  
+  // VÉRIFICATION 1 : OneSignal (si disponible)
+  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+    try {
+      // CORRECTION : Utilisez optIn comme PROMESSE
+      const subscription = OneSignal.User.PushSubscription;
+      isActive = await subscription.optIn();
+      console.log('🔔 État OneSignal (optIn):', isActive);
+    } catch (e) {
+      console.warn('⚠️ Erreur vérification OneSignal:', e);
+      // Fallback sur permission native
       isActive = Notification.permission === "granted";
-      console.log('🔔 État Notification API:', isActive);
     }
+  } 
+  // VÉRIFICATION 2 : Notification API native
+  else {
+    isActive = Notification.permission === "granted";
+    console.log('🔔 État Notification API:', isActive);
+  }
+  
+  // MISE À JOUR DU BOUTON
+  if (isActive) {
+    toggleBtn.className = 'backup-btn toggle-on';
+    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
     
-    // MISE À JOUR DU BOUTON
-    if (isActive) {
-      toggleBtn.className = 'backup-btn toggle-on';
-      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-      
-      // Démarrer les notifications
-      setTimeout(() => {
-        programmerNotificationQuotidienne();
-      }, 1000);
-    } else {
-      toggleBtn.className = 'backup-btn toggle-off';
-      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-    }
-    
-      console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
-    }
+    // Démarrer les notifications
+    setTimeout(() => {
+      programmerNotificationQuotidienne();
+    }, 1000);
+  } else {
+    toggleBtn.className = 'backup-btn toggle-off';
+    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
+  }
+  
+  console.log('🔔 Bouton toggle:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
+}
 
   //==== Fin de la définition d'updateToggleButton() 
 
@@ -672,26 +674,24 @@ window.setupNotificationUI = setupNotificationUI; // Pour debug
 console.log('✅ envol-notifications.js - Toutes les fonctions disponibles');
     
 
-//============= FIN DE L'EXPOSITION GLOBALE POUR DEBOGGAGE : ======================
+//============= FIN DE L'EXPOSITION GLOBALE POUR DEBOGGAGE  =======================
 //=================================================================================
 
 
-// Contrer les boutons qui ne répondent pas :
-
-
 // ===========================================================================
-// FALLBACK MANUEL : Attacher les événements si ils ne le sont pas
+// FALLBACK MANUEL : À MODIFIER
 // ===========================================================================
 setTimeout(function() {
   console.log('🔔 [FALLBACK] Vérification attachement manuel...');
   
-  // 1. BOUTON TEST
+  // 1. BOUTON TEST - Ne s'attacher QUE si pas déjà d'écouteur
   const testBtn = document.getElementById('test-notification-android-btn');
   if (testBtn) {
-    // Vérifier si déjà un écouteur
-    const oldClick = testBtn.onclick;
-    if (!oldClick) {
-      console.log('🔔 [FALLBACK] Attachement manuel bouton test');
+    // Vérifier si le bouton a déjà un gestionnaire d'événements
+    const hasOriginalHandler = testBtn.getAttribute('data-has-handler') === 'true';
+    
+    if (!hasOriginalHandler) {
+      console.log('⚠️ [FALLBACK] Pas d\'écouteur original, attachement manuel');
       
       testBtn.addEventListener('click', async function() {
         console.log('🔔 [FALLBACK] Clic sur bouton test détecté!');
@@ -699,24 +699,13 @@ setTimeout(function() {
         // Utiliser la fonction globale
         if (typeof window.envoyerNotificationDuJour === 'function') {
           await window.envoyerNotificationDuJour();
-          alert('✅ Test notification envoyé via fallback!');
+          alert('✅ Notification de test envoyée !');
         } else {
           alert('❌ Fonction non disponible. Essayez depuis la console.');
         }
-      });
+      }, { once: false });
+    } else {
+      console.log('✅ [FALLBACK] Écouteur original déjà présent');
     }
   }
-  
-  // 2. BOUTON TOGGLE
-  const toggleBtn = document.getElementById('notifications-toggle-btn');
-  if (toggleBtn && !toggleBtn.onclick) {
-    console.log('🔔 [FALLBACK] Attachement manuel bouton toggle');
-    
-    toggleBtn.addEventListener('click', function() {
-      console.log('🔔 [FALLBACK] Clic sur toggle détecté!');
-      alert('Toggle fonctionne via fallback!');
-      // Ici, vous pourriez appeler votre logique toggle
-    });
-  }
-  
-}, 5000); // Attendre 5 secondes
+}, 5000);
