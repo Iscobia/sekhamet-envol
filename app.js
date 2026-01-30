@@ -772,7 +772,7 @@ setTimeout(() => {
   if (typeof OneSignal !== 'undefined' || typeof window.OneSignalGlobal !== 'undefined') {
     console.log('🔔 Chargement module notifications...');
     const script = document.createElement('script');
-    script.src = '/sekhamet-envol/envol-notifications.js';
+    // script.src = '/sekhamet-envol/envol-notifications.js';
     script.onload = () => console.log('✅ Module notifications chargé');
     document.head.appendChild(script);
   } else {
