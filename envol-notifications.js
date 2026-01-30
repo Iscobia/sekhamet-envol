@@ -154,28 +154,34 @@ console.log('🔍 Boutons trouvés:', {
   
   let isActive = false;
   
-  // VÉRIFICATION 1 : OneSignal v16 (Nouvelle API)
+  // VÉRIFICATION 1 : OneSignal v16 - NOUVELLE MÉTHODE
   if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
     try {
-      // CORRECTION CRITIQUE : optIn est une fonction ASYNC dans v16
       const subscription = OneSignal.User.PushSubscription;
       
-      // Méthode 1 : Essayez d'appeler optIn() si c'est une fonction
-      if (typeof subscription.optIn === 'function') {
-        console.log('🔔 Appel de optIn()...');
-        isActive = await subscription.optIn();
+      console.log('🔔 Subscription object:', subscription);
+      
+      // MÉTHODE CORRECTE pour v16 : vérifiez la propriété 'J' (subscribed)
+      // OU utilisez directement la permission
+      if (subscription.J === true) {  // 'J' = subscribed
+        isActive = true;
+        console.log('✅ OneSignal: Abonné (J=true)');
       } 
-      // Méthode 2 : Vérifiez la permission directement
-      else {
-        console.log('🔔 Vérification permission directe...');
-        const permissionStatus = await OneSignal.Notifications.permission;
-        isActive = permissionStatus === 'granted';
+      // Fallback: vérifiez la permission
+      else if (subscription.Y === 'granted') {  // 'Y' = permission
+        isActive = true;
+        console.log('✅ OneSignal: Permission granted');
+      }
+      // Fallback 2: optIn() (même si retourne undefined)
+      else if (typeof subscription.optIn === 'function') {
+        const result = await subscription.optIn();
+        console.log('🔔 optIn() retourne:', result);
+        // Même si undefined, vérifiez d'autres indicateurs
+        isActive = Notification.permission === "granted";
       }
       
-      console.log('✅ État OneSignal:', isActive);
     } catch (e) {
       console.warn('⚠️ Erreur vérification OneSignal:', e);
-      // Fallback sur permission native
       isActive = Notification.permission === "granted";
     }
   } 
@@ -185,11 +191,18 @@ console.log('🔍 Boutons trouvés:', {
     console.log('🔔 État Notification API:', isActive);
   }
   
+  // DEBUG : Affichez tout
+  console.log('🎯 Détection finale - isActive:', isActive);
+  console.log('🎯 Notification.permission:', Notification.permission);
+  console.log('🎯 OneSignal subscription:', OneSignal?.User?.PushSubscription);
+  
   // MISE À JOUR DU BOUTON
   if (isActive) {
     toggleBtn.className = 'backup-btn toggle-on';
     toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
     toggleBtn.setAttribute('data-state', 'on');
+    
+    console.log('🎉 BOUTON PASSÉ EN VERT (ON)');
     
     // Démarrer les notifications
     setTimeout(() => {
@@ -199,11 +212,12 @@ console.log('🔍 Boutons trouvés:', {
     toggleBtn.className = 'backup-btn toggle-off';
     toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
     toggleBtn.setAttribute('data-state', 'off');
+    
+    console.log('🔴 BOUTON RESTE ROUGE (OFF)');
   }
   
-  console.log('🎯 Bouton toggle final:', isActive ? 'VERT (ON)' : 'ROUGE (OFF)');
   return isActive;
- }
+}
 
   //==== Fin de la définition d'updateToggleButton() 
 
