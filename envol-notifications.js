@@ -203,32 +203,33 @@ console.log('🔍 Boutons trouvés:', {
       // 1. Vérification native
       status.hasPermission = Notification.permission === 'granted';
       
-      // 2. Vérification OneSignal si disponible
+      // 2. Vérification OneSignal (CORRIGÉE)
       if (typeof OneSignal !== 'undefined') {
         try {
           const sub = OneSignal.User?.PushSubscription;
           
-          // Mobile Chrome: propriété J
-          if (sub && sub.J === true) {
+          // VERSION CORRIGÉE : OneSignal.Notifications.permission est BOOLEAN
+          if (OneSignal.Notifications?.permission === true) {
             status.isSubscribed = true;
-            status.source = 'mobile (J)';
+            status.source = 'OneSignal.Notifications.permission (boolean true)';
+          }
+          // Mobile: propriété J
+          else if (sub && sub.J === true) {
+            status.isSubscribed = true;
+            status.source = 'mobile (J property)';
           }
           // Desktop: propriété Y
           else if (sub && sub.Y === 'granted') {
             status.isSubscribed = true;
-            status.source = 'desktop (Y)';
+            status.source = 'desktop (Y property)';
           }
-          // Fallback: permission API
-          else if (OneSignal.Notifications?.permission === true) {
-            status.isSubscribed = true;
-            status.source = 'notifications.permission';
-          }
+          
         } catch (e) {
           console.warn('Erreur détection OneSignal:', e);
         }
       }
       
-      // 3. Résultat final
+      // 3. Résultat final (SI l'une des deux est vraie)
       status.finalStatus = status.hasPermission || status.isSubscribed;
       
       console.log('🔍 Status détecté:', status);
