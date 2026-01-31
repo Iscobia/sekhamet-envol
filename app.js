@@ -445,35 +445,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     function verifierEtAvancerJour() {
-       // 1. Mettre à jour jourActuel depuis localStorage
-      let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-      
-      // 2. Vérifier jours manqués
-      verifierJoursManques();
-      
-      console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
-      console.log('   Jour actuel:', jourActuel);
-      console.log('   Peut avancer?', peutPasserAuJourSuivant());
-    
-      // CHECK CRITIQUE au cas où jourActuel n'est pas défini :
-      if (!jourActuel || isNaN(jourActuel)) {
-        console.error('❌ ERREUR: jourActuel invalide:', jourActuel);
-        jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-        console.log('📝 Correction: jourActuel =', jourActuel);
-      }
-    
-      // Ensuite vérifier si on peut avancer aujourd'hui
-      if (peutPasserAuJourSuivant() && jourActuel < 77) {
-        jourActuel++;
-        localStorage.setItem('jour_actuel', jourActuel.toString());
-        console.log('🎯 AVANCÉ au jour:', jourActuel);
-      } else {
-        console.log('⏸️ Reste au jour:', jourActuel, '(raison:', peutPasserAuJourSuivant() ? 'max 77' : 'même jour', ')');
-      }
-      
-      afficherDefiDuJour(jourActuel);
-      return jourActuel;
-    }
+  // 1) Lire le jour courant
+  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+
+  // 2) Vérifier jours manqués
+  verifierJoursManques();
+
+  console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
+  console.log('   Jour actuel:', jourActuel);
+
+  // Check sécurité
+  if (!jourActuel || isNaN(jourActuel)) {
+    console.error('❌ ERREUR: jourActuel invalide:', jourActuel);
+    jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+    console.log('📝 Correction: jourActuel =', jourActuel);
+  }
+
+  // IMPORTANT: n'appeler peutPasserAuJourSuivant() qu'UNE seule fois
+  const peutAvancer = peutPasserAuJourSuivant();
+  console.log('   Peut avancer?', peutAvancer);
+
+  if (peutAvancer && jourActuel < 77) {
+    jourActuel++;
+    localStorage.setItem('jour_actuel', String(jourActuel));
+    console.log('🎯 AVANCÉ au jour:', jourActuel);
+  } else {
+    console.log(
+      '⏸️ Reste au jour:',
+      jourActuel,
+      '(raison:',
+      (jourActuel >= 77 ? 'max 77' : 'même jour'),
+      ')'
+    );
+  }
+
+  afficherDefiDuJour(jourActuel);
+  return jourActuel;
+}
+
 
     // EXPOSER GLOBALEMENT pour débogage
     window.verifierEtAvancerJour = verifierEtAvancerJour;
