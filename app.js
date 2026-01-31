@@ -838,3 +838,10 @@ console.log('📋 Fonctions disponibles:', {
   getDefiByDay: typeof getDefiByDay,
   envoyerNotificationDuJour: typeof window.envoyerNotificationDuJour
 });
+
+window.peutPasserAuJourSuivant = peutPasserAuJourSuivant;
+window.verifierEtAvancerJour = verifierEtAvancerJour;
+
+console.log('🔧 Fonctions debug app.js exposées:');
+console.log('- peutPasserAuJourSuivant()');
+console.log('- verifierEtAvancerJour()');
