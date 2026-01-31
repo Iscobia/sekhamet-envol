@@ -407,36 +407,41 @@ document.addEventListener('DOMContentLoaded', function() {
       return jourActuel;
     }
 
-     //===================================================================
-     //======= FIN DE 'VÉRIFIER JOURS MANQUÉS' =============================
-    //===================================================================
-    
-
-    // Fonction originale anti-speed running (conservée)
-    function peutPasserAuJourSuivant() {
-      const aujourdhui = new Date().toLocaleDateString('fr-FR');
-      const dernierChangement = localStorage.getItem('dernier_changement_jour');
-    
-      console.log('📅 Comparaison dates:', {
-        aujourdhui: aujourdhui,
-        dernierChangement: dernierChangement,
-        sontEgaux: dernierChangement === aujourdhui
-      });
+      //===================================================================
+      //======= FIN DE 'VÉRIFIER JOURS MANQUÉS' =============================
+      //===================================================================
+      
+  
+      // Fonction originale anti-speed running (conservée)
+      function peutPasserAuJourSuivant() {
+        const aujourdhui = new Date().toLocaleDateString('fr-FR');
+        const dernierChangement = localStorage.getItem('dernier_changement_jour');
         
-      // Protection spéciale pour le jour 1
-      if (jourActuel === 1 && !dernierChangement) {
-        localStorage.setItem('dernier_changement_jour', aujourdhui);
+        // DEBUG
+        console.log('📅 [DEBUG] Vérification avancement:', {
+          aujourdhui,
+          dernierChangement,
+          sontIdentiques: dernierChangement === aujourdhui,
+          jourActuel: parseInt(localStorage.getItem('jour_actuel'))
+        });
+        
+        // TOUJOURS autoriser si pas de dernier changement
+        if (!dernierChangement) {
+          console.log('✅ Premier accès - autorisé');
+          localStorage.setItem('dernier_changement_jour', aujourdhui);
+          return true;
+        }
+        
+        // Autoriser si dates différentes
+        if (dernierChangement !== aujourdhui) {
+          console.log('✅ Nouveau jour - autorisé');
+          localStorage.setItem('dernier_changement_jour', aujourdhui);
+          return true;
+        }
+        
+        console.log('❌ Même jour - bloqué');
         return false;
       }
-      
-      if (!dernierChangement || dernierChangement !== aujourdhui) {
-        localStorage.setItem('dernier_changement_jour', aujourdhui);
-        return true;
-      }
-      return false;
-    }
-
-
 
     
     function verifierEtAvancerJour() {
@@ -446,9 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // 2. Vérifier jours manqués
       verifierJoursManques();
       
-      console.log('🔍 VERIFICATION AVANCEMENT JOUR');
-      console.log('Jour actuel avant:', jourActuel);
-      console.log('Peut avancer?', peutPasserAuJourSuivant());
+      console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
+      console.log('   Jour actuel:', jourActuel);
+      console.log('   Peut avancer?', peutPasserAuJourSuivant());
     
       // CHECK CRITIQUE au cas où jourActuel n'est pas défini :
       if (!jourActuel || isNaN(jourActuel)) {
@@ -461,10 +466,13 @@ document.addEventListener('DOMContentLoaded', function() {
       if (peutPasserAuJourSuivant() && jourActuel < 77) {
         jourActuel++;
         localStorage.setItem('jour_actuel', jourActuel.toString());
-        console.log('📈 Avancé au jour:', jourActuel);
+        console.log('🎯 AVANCÉ au jour:', jourActuel);
+      } else {
+        console.log('⏸️ Reste au jour:', jourActuel, '(raison:', peutPasserAuJourSuivant() ? 'max 77' : 'même jour', ')');
       }
       
       afficherDefiDuJour(jourActuel);
+      return jourActuel;
     }
 
     // EXPOSER GLOBALEMENT pour débogage
