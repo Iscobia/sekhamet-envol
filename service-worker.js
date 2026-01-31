@@ -96,3 +96,56 @@ self.addEventListener('notificationclick', event => {
     event.waitUntil(clients.openWindow('/sekhamet-envol/'));
   }
 });
+
+
+
+// ======== GESTION DES NOTIFICATIONS PUSH ========= 
+self.addEventListener('push', function(event) {
+  console.log('[SW] Push reçu:', event);
+  
+  try {
+    let data = {};
+    
+    if (event.data) {
+      try {
+        data = event.data.json();
+      } catch (e) {
+        data = { body: event.data.text() };
+      }
+    }
+    
+    const options = {
+      body: data.body || 'Nouveau défi ENVOL !',
+      icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+      badge: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
+      tag: data.tag || 'envol-notification',
+      requireInteraction: true,
+      vibrate: [200, 100, 200],
+      data: data,
+      actions: [
+        { action: 'open', title: '📖 Voir le défi' },
+        { action: 'later', title: '⏰ Plus tard' }
+      ]
+    };
+    
+    console.log('[SW] Affichage notification avec options:', options);
+    
+    event.waitUntil(
+      self.registration.showNotification('🎯 ENVOL', options)
+    );
+    
+  } catch (error) {
+    console.error('[SW] Erreur affichage notification:', error);
+  }
+}); // ← FIN de addEventListener('push')
+
+// Gardez séparément
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  
+  if (event.action === 'open') {
+    event.waitUntil(
+      clients.openWindow('/sekhamet-envol/')
+    );
+  }
+});
