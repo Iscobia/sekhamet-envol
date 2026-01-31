@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ===========================================================================
-// DEBUG: SURVEILLANCE DES BOUTONS
+// DEBUG: SURVEILLANCE DES BOUTONS et FONCTIONS UTILITAIRES
 // ===========================================================================
 
 console.log('🔍 Boutons trouvés:', {
@@ -20,6 +20,48 @@ console.log('🔍 Boutons trouvés:', {
   allow: !!document.getElementById('allow-notifications-btn'),
   test: !!document.getElementById('test-notification-android-btn')
 });
+
+    // ==============================================================
+    // =====  Préparation de l'update du bouton d'abonnement :
+    // ===== Fonction de test d'abonnement OneSignal améliorée
+
+    function debugOneSignalState() {
+      console.log('=== DEBUG ÉTAT ONESIGNAL ===');
+      
+      // 1. Permission native
+      console.log('1. Notification.permission:', Notification.permission);
+      
+      if (typeof OneSignal !== 'undefined') {
+        console.log('2. OneSignal disponible');
+        
+        // 2a. Notifications API
+        console.log('3. OneSignal.Notifications:', OneSignal.Notifications);
+        console.log('4. OneSignal.Notifications.permission:', OneSignal.Notifications?.permission);
+        
+        // 2b. Subscription
+        const sub = OneSignal.User?.PushSubscription;
+        console.log('5. OneSignal.User.PushSubscription:', sub);
+        
+        if (sub) {
+          console.log('6. Détails subscription:');
+          // Affiche toutes les propriétés (même privées)
+          console.log('   - raw object:', JSON.stringify(sub, null, 2));
+          
+          // Teste optIn()
+          if (typeof sub.optIn === 'function') {
+            sub.optIn().then(result => {
+              console.log('   - optIn() result:', result);
+            });
+          }
+        }
+      }
+      
+      console.log('=== FIN DEBUG ===');
+    }
+    
+    // Exécutez
+    debugOneSignalState();
+
 
 
 
@@ -146,46 +188,74 @@ console.log('🔍 Boutons trouvés:', {
   //===========================================================================
   // 4. Configuration INTERFACE UTILISATEUR (boutons, messages)
 
-  //===== Définition de pdateToggleButton() :
+  
+    // ==============================================================
+    // =============== Solution pour le bouton toggle et 
+    // ========== gestion de l'abonnement : Détection unifiée 
+
+    async function getNotificationStatus() {
+      let status = {
+        hasPermission: false,
+        isSubscribed: false,
+        source: 'unknown'
+      };
+      
+      // 1. Vérification native
+      status.hasPermission = Notification.permission === 'granted';
+      
+      // 2. Vérification OneSignal si disponible
+      if (typeof OneSignal !== 'undefined') {
+        try {
+          const sub = OneSignal.User?.PushSubscription;
+          
+          // Mobile Chrome: propriété J
+          if (sub && sub.J === true) {
+            status.isSubscribed = true;
+            status.source = 'mobile (J)';
+          }
+          // Desktop: propriété Y
+          else if (sub && sub.Y === 'granted') {
+            status.isSubscribed = true;
+            status.source = 'desktop (Y)';
+          }
+          // Fallback: permission API
+          else if (OneSignal.Notifications?.permission === true) {
+            status.isSubscribed = true;
+            status.source = 'notifications.permission';
+          }
+        } catch (e) {
+          console.warn('Erreur détection OneSignal:', e);
+        }
+      }
+      
+      // 3. Résultat final
+      status.finalStatus = status.hasPermission || status.isSubscribed;
+      
+      console.log('🔍 Status détecté:', status);
+      return status;
+    }
+
+  // ============================================
+  // ===== Définition de updateToggleButton() :
 
   async function updateToggleButton() {
-  const toggleBtn = document.getElementById('notifications-toggle-btn');
-  if (!toggleBtn) return;
-  
-  let isActive = false;
-  
-  // MÉTHODE UNIFIÉE : Vérifier la permission via l'API officielle
-  if (typeof OneSignal !== 'undefined' && OneSignal.Notifications) {
-    try {
-      // Méthode officielle OneSignal v16
-      const permission = await OneSignal.Notifications.permission;
-      console.log('🔔 Permission OneSignal:', permission);
-      isActive = permission === 'granted';
-    } catch (e) {
-      console.warn('⚠️ Erreur permission OneSignal:', e);
-      isActive = Notification.permission === "granted";
+    const toggleBtn = document.getElementById('notifications-toggle-btn');
+    if (!toggleBtn) return;
+    
+    const status = await getNotificationStatus();
+    const isActive = status.finalStatus;
+    
+    // Mise à jour UI
+    if (isActive) {
+      toggleBtn.className = 'backup-btn toggle-on';
+      toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
+    } else {
+      toggleBtn.className = 'backup-btn toggle-off';
+      toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
     }
+    
+    return isActive;
   }
-  // Fallback simple
-  else {
-    isActive = Notification.permission === "granted";
-  }
-  
-  console.log('🎯 État final isActive:', isActive);
-  
-  // MISE À JOUR DU BOUTON
-  if (isActive) {
-    toggleBtn.className = 'backup-btn toggle-on';
-    toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-    console.log('✅ Bouton: VERT (activé)');
-  } else {
-    toggleBtn.className = 'backup-btn toggle-off';
-    toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-    console.log('❌ Bouton: ROUGE (désactivé)');
-  }
-  
-  return isActive;
-}
 
   //==== Fin de la définition d'updateToggleButton() 
 
@@ -272,62 +342,76 @@ console.log('🔍 Boutons trouvés:', {
     //================================================================
     //======= ÉCOUTE D'UNE INTERACTION AVEC LE BOUTON TOGGLE =========
     
-    toggleBtn.addEventListener('click', async function() {
-    console.log('🔔 [Envol-Notifications] Clic toggle');
-    
-    if (Notification.permission === "granted") {
-      // DÉSACTIVER
-      if (confirm('Voudrais-tu désactiver tes notifications quotidiennes ?\n\nTu pourras les réactiver à tout moment si tu changes d\'avis 😊')) {
-        try {
-          if (oneSignal?.User?.PushSubscription?.optOut) {
-            await oneSignal.User.PushSubscription.optOut();
+      toggleBtn.addEventListener('click', async function() {
+      console.log('🔔 [Envol-Notifications] Clic toggle');
+      
+      const isCurrentlyActive = Notification.permission === "granted";
+      
+      if (isCurrentlyActive) {
+        // DÉSACTIVER
+        if (confirm('Voudrais-tu désactiver tes notifications quotidiennes ?\n\nTu pourras les réactiver à tout moment si tu changes d\'avis 😊')) {
+          try {
+            // MÉTHODE CORRECTE pour v16
+            if (oneSignal?.Notifications) {
+              // 1. Révoquer la permission
+              await oneSignal.Notifications.setPermission(false);
+              
+              // 2. Se désabonner
+              if (oneSignal.User?.PushSubscription?.optOut) {
+                await oneSignal.User.PushSubscription.optOut();
+              }
+              
+              // 3. Forcer la mise à jour immédiate
+              setTimeout(() => {
+                updateToggleButton();
+              }, 500);
+              
+              alert('✨ Parfait ! Tes notifications sont maintenant désactivées.');
+            }
+          } catch (error) {
+            console.error('Erreur désabonnement:', error);
+            alert('Oh mince ! Une erreur s\'est produite.');
           }
+        }
+      } else {
+        // ACTIVER
+        if (isIOS) {
+          alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
+          return;
+        }
+        
+        if (isFirefox) {
+          alert('🦊 Coucou ! Firefox a parfois une "Protection renforcée" qui peut bloquer les notifications.\n\nSi la popup n\'apparaît pas, désactive-la temporairement dans les paramètres.\n\nMerci pour ta patience 🙏');
+        }
+        
+        try {
+          await oneSignal.Slidedown.promptPush();
           
-          // Alerte chaleureuse de confirmation
-          alert('✨ Parfait ! Tes notifications sont maintenant désactivées.\n\nSi tu veux les réactiver plus tard, ce bouton sera toujours là pour toi !\n\nPrends soin de toi 🌟');
+          setTimeout(() => {
+            if (Notification.permission === "granted") {
+              // Alerte joyeuse de succès
+              alert('🎉 Génial ! Tes notifications sont maintenant activées !\n\nChaque jour, je te rappellerai de venir faire ton défi ENVOL.\n\nÀ demain pour la prochaine aventure ! 🚀');
+            } else if (Notification.permission === "denied") {
+              alert('Je comprends ! Tu as choisi de ne pas recevoir de notifications.\n\nSi tu changes d\'avis, tu peux les autoriser dans les paramètres de ton navigateur.\n\nTon parcours continue quand même ! 🌈');
+            }
+          }, 2000);
           
         } catch (error) {
-          console.error('Erreur désabonnement:', error);
-          alert('Oh mince ! Une petite erreur s\'est glissée...\n\nTu peux désactiver les notifications directement dans les paramètres de ton navigateur 💙');
+          console.error('Erreur activation:', error);
+          alert('Oups ! Je n\'ai pas réussi à afficher la demande de permission...\n\nPeut-être qu\'un bloqueur ou une protection de navigateur empêche ça.\n\nEssaie avec Chrome ou désactive temporairement les protections 💡');
         }
       }
-    } else {
-      // ACTIVER
-      if (isIOS) {
-        alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
-        return;
-      }
-      
-      if (isFirefox) {
-        alert('🦊 Coucou ! Firefox a parfois une "Protection renforcée" qui peut bloquer les notifications.\n\nSi la popup n\'apparaît pas, désactive-la temporairement dans les paramètres.\n\nMerci pour ta patience 🙏');
-      }
-      
-      try {
-        await oneSignal.Slidedown.promptPush();
-        
-        setTimeout(() => {
-          if (Notification.permission === "granted") {
-            // Alerte joyeuse de succès
-            alert('🎉 Génial ! Tes notifications sont maintenant activées !\n\nChaque jour, je te rappellerai de venir faire ton défi ENVOL.\n\nÀ demain pour la prochaine aventure ! 🚀');
-          } else if (Notification.permission === "denied") {
-            alert('Je comprends ! Tu as choisi de ne pas recevoir de notifications.\n\nSi tu changes d\'avis, tu peux les autoriser dans les paramètres de ton navigateur.\n\nTon parcours continue quand même ! 🌈');
-          }
-        }, 2000);
-        
-      } catch (error) {
-        console.error('Erreur activation:', error);
-        alert('Oups ! Je n\'ai pas réussi à afficher la demande de permission...\n\nPeut-être qu\'un bloqueur ou une protection de navigateur empêche ça.\n\nEssaie avec Chrome ou désactive temporairement les protections 💡');
-      }
-    }
-  
-        
     
-    // Mise à jour du bouton après un petit délai
-    setTimeout(updateToggleButton, 500);
-    });
-  } // Fin de if (toggleBtn) 
+          
+      
+      // Mise à jour du bouton après un petit délai
+      setTimeout(updateToggleButton, 500);
+      });
+    } // Fin de if (toggleBtn) plus haut que toggleBtn.addEventListener('click', async function()
 
 
+    
+    
 
   
     // =======================================================================
@@ -670,6 +754,14 @@ window.envoyerNotificationDuJour = envoyerNotificationDuJour;
 window.programmerNotificationQuotidienne = programmerNotificationQuotidienne;
 window.testNotification = testNotification; // Définie DANS setupNotificationUI
 window.setupNotificationUI = setupNotificationUI; // Pour debug
+window.debugOneSignalState = debugOneSignalState;
+window.getNotificationStatus = getNotificationStatus;
+window.updateToggleButton = updateToggleButton;
+
+console.log('🔧 Fonctions debug disponibles:');
+console.log('- debugOneSignalState()');
+console.log('- getNotificationStatus()');
+console.log('- updateToggleButton()');
 
 console.log('✅ envol-notifications.js - Toutes les fonctions disponibles');
     
