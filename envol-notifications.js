@@ -154,66 +154,34 @@ console.log('🔍 Boutons trouvés:', {
   
   let isActive = false;
   
-  // VÉRIFICATION 1 : OneSignal v16 - NOUVELLE MÉTHODE
-  if (typeof OneSignal !== 'undefined' && OneSignal.User && OneSignal.User.PushSubscription) {
+  // MÉTHODE UNIFIÉE : Vérifier la permission via l'API officielle
+  if (typeof OneSignal !== 'undefined' && OneSignal.Notifications) {
     try {
-      const subscription = OneSignal.User.PushSubscription;
-      
-      console.log('🔔 Subscription object:', subscription);
-      
-      // MÉTHODE CORRECTE pour v16 : vérifiez la propriété 'J' (subscribed)
-      // OU utilisez directement la permission
-      if (subscription.J === true) {  // 'J' = subscribed
-        isActive = true;
-        console.log('✅ OneSignal: Abonné (J=true)');
-      } 
-      // Fallback: vérifiez la permission
-      else if (subscription.Y === 'granted') {  // 'Y' = permission
-        isActive = true;
-        console.log('✅ OneSignal: Permission granted');
-      }
-      // Fallback 2: optIn() (même si retourne undefined)
-      else if (typeof subscription.optIn === 'function') {
-        const result = await subscription.optIn();
-        console.log('🔔 optIn() retourne:', result);
-        // Même si undefined, vérifiez d'autres indicateurs
-        isActive = Notification.permission === "granted";
-      }
-      
+      // Méthode officielle OneSignal v16
+      const permission = await OneSignal.Notifications.permission;
+      console.log('🔔 Permission OneSignal:', permission);
+      isActive = permission === 'granted';
     } catch (e) {
-      console.warn('⚠️ Erreur vérification OneSignal:', e);
+      console.warn('⚠️ Erreur permission OneSignal:', e);
       isActive = Notification.permission === "granted";
     }
-  } 
-  // VÉRIFICATION 2 : Notification API native
+  }
+  // Fallback simple
   else {
     isActive = Notification.permission === "granted";
-    console.log('🔔 État Notification API:', isActive);
   }
   
-  // DEBUG : Affichez tout
-  console.log('🎯 Détection finale - isActive:', isActive);
-  console.log('🎯 Notification.permission:', Notification.permission);
-  console.log('🎯 OneSignal subscription:', OneSignal?.User?.PushSubscription);
+  console.log('🎯 État final isActive:', isActive);
   
   // MISE À JOUR DU BOUTON
   if (isActive) {
     toggleBtn.className = 'backup-btn toggle-on';
     toggleBtn.innerHTML = '🔕 Notifications activées : Désactiver les notifications ?';
-    toggleBtn.setAttribute('data-state', 'on');
-    
-    console.log('🎉 BOUTON PASSÉ EN VERT (ON)');
-    
-    // Démarrer les notifications
-    setTimeout(() => {
-      programmerNotificationQuotidienne();
-    }, 1000);
+    console.log('✅ Bouton: VERT (activé)');
   } else {
     toggleBtn.className = 'backup-btn toggle-off';
     toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
-    toggleBtn.setAttribute('data-state', 'off');
-    
-    console.log('🔴 BOUTON RESTE ROUGE (OFF)');
+    console.log('❌ Bouton: ROUGE (désactivé)');
   }
   
   return isActive;
