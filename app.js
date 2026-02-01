@@ -848,7 +848,14 @@ console.log('📋 Fonctions disponibles:', {
   envoyerNotificationDuJour: typeof window.envoyerNotificationDuJour
 });
 
-window.peutPasserAuJourSuivant = peutPasserAuJourSuivant;
+// Expositions globales sécurisées (évite ReferenceError si fonctions non globales)
+if (typeof peutPasserAuJourSuivant === 'function') {
+  window.peutPasserAuJourSuivant = peutPasserAuJourSuivant;
+}
+if (typeof verifierEtAvancerJour === 'function') {
+  window.verifierEtAvancerJour = verifierEtAvancerJour;
+}
+
 window.verifierEtAvancerJour = verifierEtAvancerJour;
 
 console.log('🔧 Fonctions debug app.js exposées:');
