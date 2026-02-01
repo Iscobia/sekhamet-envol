@@ -1,6 +1,9 @@
 // envol-notifications.js - Version corrigée pour OneSignal
 console.log('🔔 [Envol-Notifications] Chargement du module...');
 
+// Préférence utilisateur (ON/OFF) pour les rappels (indépendant de la permission navigateur)
+const ENVOL_NOTIF_PREF_KEY = 'envol_notifications_enabled';
+
 // Attendre que le DOM soit chargé
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🔔 [Envol-Notifications] DOM chargé, initialisation...');
@@ -194,47 +197,25 @@ console.log('🔍 Boutons trouvés:', {
     // ========== gestion de l'abonnement : Détection unifiée 
 
     async function getNotificationStatus() {
-      let status = {
-        hasPermission: false,
-        isSubscribed: false,
-        source: 'unknown'
+      const permission = Notification.permission; // "granted" | "denied" | "default"
+      const hasPermission = (permission === "granted");
+    
+      // Préférence utilisateur (ON/OFF) pour ENVOL (indépendant de la permission navigateur)
+      const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
+      const enabledByUser = (pref !== "false"); // par défaut: true si jamais rien n'est stocké
+    
+      // Si pas de permission, on ne peut pas considérer "actif", même si l'utilisateur veut ON
+      const finalStatus = hasPermission && enabledByUser;
+    
+      return {
+        permission,
+        hasPermission,
+        enabledByUser,
+        finalStatus
       };
-      
-      // 1. Vérification native
-      status.hasPermission = Notification.permission === 'granted';
-      
-      // 2. Vérification OneSignal (CORRIGÉE)
-      if (typeof OneSignal !== 'undefined') {
-        try {
-          const sub = OneSignal.User?.PushSubscription;
-          
-          // VERSION CORRIGÉE : OneSignal.Notifications.permission est BOOLEAN
-          if (OneSignal.Notifications?.permission === true) {
-            status.isSubscribed = true;
-            status.source = 'OneSignal.Notifications.permission (boolean true)';
-          }
-          // Mobile: propriété J
-          else if (sub && sub.J === true) {
-            status.isSubscribed = true;
-            status.source = 'mobile (J property)';
-          }
-          // Desktop: propriété Y
-          else if (sub && sub.Y === 'granted') {
-            status.isSubscribed = true;
-            status.source = 'desktop (Y property)';
-          }
-          
-        } catch (e) {
-          console.warn('Erreur détection OneSignal:', e);
-        }
-      }
-      
-      // 3. Résultat final (SI l'une des deux est vraie)
-      status.finalStatus = status.hasPermission || status.isSubscribed;
-      
-      console.log('🔍 Status détecté:', status);
-      return status;
     }
+
+
 
   // ============================================
   // ===== Définition de updateToggleButton() :
@@ -242,10 +223,10 @@ console.log('🔍 Boutons trouvés:', {
   async function updateToggleButton() {
     const toggleBtn = document.getElementById('notifications-toggle-btn');
     if (!toggleBtn) return;
-    
+  
     const status = await getNotificationStatus();
     const isActive = status.finalStatus;
-    
+  
     // Mise à jour UI
     if (isActive) {
       toggleBtn.className = 'backup-btn toggle-on';
@@ -254,9 +235,10 @@ console.log('🔍 Boutons trouvés:', {
       toggleBtn.className = 'backup-btn toggle-off';
       toggleBtn.innerHTML = '🔔 Notifications désactivées : Activer les notifications ?';
     }
-    
+  
     return isActive;
   }
+
 
   //==== Fin de la définition d'updateToggleButton() 
 
@@ -344,82 +326,95 @@ console.log('🔍 Boutons trouvés:', {
     //======= ÉCOUTE D'UNE INTERACTION AVEC LE BOUTON TOGGLE =========
     
       toggleBtn.addEventListener('click', async function() {
-      console.log('🔔 [Envol-Notifications] Clic toggle');
+        console.log('🔔 [Envol-Notifications] Clic toggle');
       
-      const isCurrentlyActive = Notification.permission === "granted";
+        const status = await getNotificationStatus(); 
+        // status.finalStatus = ON réel (permission + pref)
       
-      if (isCurrentlyActive) {
-        // DÉSACTIVER
-        if (confirm('Voudrais-tu désactiver tes notifications quotidiennes ?\n\nTu pourras les réactiver à tout moment si tu changes d\'avis 😊')) {
+        if (status.finalStatus) {
+          // =========================
+          // DÉSACTIVER
+          // =========================
+          if (confirm('Voudrais-tu désactiver tes notifications quotidiennes ?\n\nTu pourras les réactiver à tout moment si tu changes d\'avis 😊')) {
+            try {
+              // 1) Préférence OFF (c'est CE qui pilote le bouton)
+              localStorage.setItem(ENVOL_NOTIF_PREF_KEY, 'false');
+      
+              // 2) Stopper les notifications locales programmées (si l'app est ouverte)
+              if (typeof window.stopNotificationsQuotidiennes === 'function') {
+                window.stopNotificationsQuotidiennes();
+              }
+      
+              // 3) OneSignal opt-out (désactive les push)
+              if (oneSignal?.User?.PushSubscription?.optOut) {
+                await oneSignal.User.PushSubscription.optOut();
+              }
+      
+              alert("✅ C'est noté. Tes notifications ENVOL sont désactivées.\n\n💡 Pour retirer l'autorisation du navigateur, fais-le dans les paramètres de notifications de ton navigateur.");
+            } catch (error) {
+              console.error('Erreur désactivation:', error);
+              alert('Oh mince ! Je n\'ai pas réussi à désactiver correctement.\n\nEssaie de fermer/réouvrir l\'app puis réessaye, ou utilise le bouton \"Vider le cache\".');
+            }
+          }
+        } else {
+          // =========================
+          // ACTIVER
+          // =========================
+      
+          // On enregistre l'intention ON tout de suite (le bouton passera ON)
+          localStorage.setItem(ENVOL_NOTIF_PREF_KEY, 'true');
+      
+          if (isIOS) {
+            alert('📱 Sur iOS, selon la configuration, les notifications peuvent être limitées quand l\'app est fermée.\n\nMais tu peux recevoir des rappels quand ENVOL est ouverte.\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
+            setTimeout(updateToggleButton, 300);
+            return;
+          }
+      
+          if (isFirefox) {
+            alert('🦊 Firefox peut bloquer les notifications avec sa "Protection renforcée".\n\nSi la popup n\'apparaît pas, désactive-la temporairement dans les paramètres.\n\nMerci pour ta patience 🙏');
+          }
+      
           try {
-            // MÉTHODE CORRECTE pour v16
-            if (oneSignal?.Notifications) {
-              try {
-                // MÉTHODE CORRECTE pour OneSignal v16
-                // 1. Se désabonner d'abord
-                if (oneSignal.User?.PushSubscription?.optOut) {
-                  await oneSignal.User.PushSubscription.optOut();
+            // Demande de permission via OneSignal
+            await oneSignal.Slidedown.promptPush();
+      
+            setTimeout(async () => {
+              if (Notification.permission === "granted") {
+                // OK : permission accordée -> ON réel
+                alert('🎉 Génial ! Tes notifications sont maintenant activées !\n\nChaque jour, je te rappellerai de venir faire ton défi ENVOL.\n\nÀ demain pour la prochaine aventure ! 🚀');
+      
+                // Optionnel : relancer la programmation locale si tu l'utilises
+                if (typeof programmerNotificationQuotidienne === 'function') {
+                  programmerNotificationQuotidienne();
                 }
-                
-                // 2. Révoquer la permission (si l'API existe)
-                if (oneSignal.Notifications.setPermission) {
-                  await oneSignal.Notifications.setPermission(false);
-                } else if (oneSignal.Notifications.permissionNative) {
-                  // Alternative
-                  await oneSignal.Notifications.permissionNative.revoke();
-                }
-                
-                console.log('✅ Désabonnement réussi');
-                
-              } catch (error) {
-                console.error('Erreur désabonnement:', error);
-                // Fallback simple
-                if (confirm('Essayer la méthode simple de désabonnement ?')) {
-                  if (oneSignal.User?.PushSubscription?.optOut) {
-                    await oneSignal.User.PushSubscription.optOut();
-                  }
+      
+              } else {
+                // Permission refusée -> on remet OFF pour ne pas être incohérent
+                localStorage.setItem(ENVOL_NOTIF_PREF_KEY, 'false');
+      
+                if (Notification.permission === "denied") {
+                  alert('Je comprends ! Tu as choisi de ne pas recevoir de notifications.\n\nSi tu changes d\'avis, tu peux les autoriser dans les paramètres de ton navigateur.\n\nTon parcours continue quand même ! 🌈');
+                } else {
+                  alert('Je n’ai pas pu activer les notifications (permission non accordée).\n\nTu peux réessayer ou vérifier les réglages du navigateur. 💡');
                 }
               }
-            }
+      
+              updateToggleButton();
+            }, 700);
+      
           } catch (error) {
-            console.error('Erreur désabonnement:', error);
-            alert('Oh mince ! Une erreur s\'est produite.');
+            console.error('Erreur activation:', error);
+      
+            // échec -> remettre OFF sinon bouton incohérent
+            localStorage.setItem(ENVOL_NOTIF_PREF_KEY, 'false');
+      
+            alert('Oups ! Je n\'ai pas réussi à afficher la demande de permission...\n\nPeut-être qu\'un bloqueur ou une protection de navigateur empêche ça.\n\nEssaie avec Chrome ou désactive temporairement les protections 💡');
           }
         }
-      } else {
-        // ACTIVER
-        if (isIOS) {
-          alert('📱 Sur iOS, les notifications push ne fonctionnent pas quand l\'app est fermée (limitation Apple).\n\nMais tu peux recevoir des notifications quand ENVOL est ouverte !\n\nGarde un onglet ouvert pour tes rappels quotidiens 😊');
-          return;
-        }
-        
-        if (isFirefox) {
-          alert('🦊 Coucou ! Firefox a parfois une "Protection renforcée" qui peut bloquer les notifications.\n\nSi la popup n\'apparaît pas, désactive-la temporairement dans les paramètres.\n\nMerci pour ta patience 🙏');
-        }
-        
-        try {
-          await oneSignal.Slidedown.promptPush();
-          
-          setTimeout(() => {
-            if (Notification.permission === "granted") {
-              // Alerte joyeuse de succès
-              alert('🎉 Génial ! Tes notifications sont maintenant activées !\n\nChaque jour, je te rappellerai de venir faire ton défi ENVOL.\n\nÀ demain pour la prochaine aventure ! 🚀');
-            } else if (Notification.permission === "denied") {
-              alert('Je comprends ! Tu as choisi de ne pas recevoir de notifications.\n\nSi tu changes d\'avis, tu peux les autoriser dans les paramètres de ton navigateur.\n\nTon parcours continue quand même ! 🌈');
-            }
-          }, 2000);
-          
-        } catch (error) {
-          console.error('Erreur activation:', error);
-          alert('Oups ! Je n\'ai pas réussi à afficher la demande de permission...\n\nPeut-être qu\'un bloqueur ou une protection de navigateur empêche ça.\n\nEssaie avec Chrome ou désactive temporairement les protections 💡');
-        }
-      }
-    
-          
       
-      // Mise à jour du bouton après un petit délai
-      setTimeout(updateToggleButton, 500);
+        setTimeout(updateToggleButton, 300);
       });
+
     } // Fin de if (toggleBtn) plus haut que toggleBtn.addEventListener('click', async function()
 
 
@@ -652,21 +647,63 @@ console.log('🔍 Boutons trouvés:', {
   // =====================================================================
   
   let notificationsProgrammees = false;
+  let notificationTimeoutId = null;
+  
+  // Permet d'arrêter proprement la programmation (pour le toggle OFF)
+  function stopNotificationsQuotidiennes() {
+    notificationsProgrammees = false;
+    if (notificationTimeoutId) {
+      clearTimeout(notificationTimeoutId);
+      notificationTimeoutId = null;
+    }
+    console.log('🔕 Notifications quotidiennes stoppées');
+  }
+  window.stopNotificationsQuotidiennes = stopNotificationsQuotidiennes;
+
   
   async function programmerNotificationQuotidienne() {
-    console.log('🔔 [Programmation] Début...');
-    
-    // Vérifier si déjà programmée
-    if (notificationsProgrammees) {
-      console.log('🔔 [Programmation] Déjà en cours');
-      return;
-    }
-    
-    // VÉRIFIER LA PERMISSION AVANT de mettre à true
-    if (Notification.permission !== 'granted') {
-      console.log('❌ [Programmation] Permission non accordée');
-      return;
-    }
+  console.log('🔔 [Programmation] Début...');
+
+  // Vérifier si déjà programmée
+  if (notificationsProgrammees) {
+    console.log('🔔 [Programmation] Déjà en cours');
+    return;
+  }
+
+  // Vérifier la permission AVANT
+  if (Notification.permission !== 'granted') {
+    console.log('❌ [Programmation] Permission non accordée');
+    return;
+  }
+
+  // MAINTENANT on peut marquer comme programmée
+  notificationsProgrammees = true;
+
+  // 2. Récupérer l'heure configurée
+  const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+  const [heures, minutes] = heureNotification.split(':').map(Number);
+
+  // 3. Calculer l'heure de déclenchement
+  const maintenant = new Date();
+  const heureDeclenchement = new Date();
+  heureDeclenchement.setHours(heures, minutes, 0, 0);
+
+  // Si l'heure est déjà passée aujourd'hui, programmer pour demain
+  if (heureDeclenchement < maintenant) {
+    heureDeclenchement.setDate(heureDeclenchement.getDate() + 1);
+  }
+
+  const delaiMs = heureDeclenchement.getTime() - maintenant.getTime();
+
+  console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs / 1000 / 60)} minutes)`);
+
+  // 4. Programmer la notification (ANNULABLE)
+  notificationTimeoutId = setTimeout(async () => {
+    await envoyerNotificationDuJour();
+    programmerNotificationQuotidienne();
+  }, delaiMs);
+}
+
     
     // MAINTENANT on peut marquer comme programmée
     notificationsProgrammees = true;
@@ -697,10 +734,8 @@ console.log('🔍 Boutons trouvés:', {
     console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs/1000/60)} minutes)`);
     
     // 4. Programmer la notification
-    setTimeout(async () => {
+    notificationTimeoutId = setTimeout(async () => {
       await envoyerNotificationDuJour();
-      
-      // Reprogrammer pour le lendemain
       programmerNotificationQuotidienne();
     }, delaiMs);
   } // ← fin de async function programmerNotificationQuotidienne()
