@@ -651,9 +651,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // ===========================================================
     // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
-    // ====== Changement de date, défi rattrapé, défi validé =====
+    // ✅ Le listener "markDoneButton" est attaché plus haut UNE SEULE FOIS
+    // (celui qui gère jourAffiche/jourCible + rattrapage)
+    
+    // (on continue directement avec les autres réglages UI)
+
     
     // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
     // ✅ Le listener "markDoneButton" est attaché plus haut UNE SEULE FOIS
@@ -794,6 +797,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // ========== INITIALISATION FINALE ==========
       verifierEtAvancerJour();
+      
+      // ✅ Afficher le défi du jour au chargement (le calendrier seul ne remplit pas le panneau)
+      afficherDefiDuJour(jourActuel);
+
 
 
 
