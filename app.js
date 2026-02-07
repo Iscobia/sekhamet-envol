@@ -325,7 +325,11 @@ document.addEventListener('DOMContentLoaded', function() {
     //============ FIN DE LA BANNIÈRE OFFLINE-ONLINE ==============
     //=============================================================
 
-    
+
+  
+    // ============================================================
+    // ===== DÉCLARATION DES VARIABLES :
+    // ================================
       
       // Vérification des boutons
       console.log('=== VÉRIFICATION BOUTONS ===');
@@ -345,13 +349,72 @@ document.addEventListener('DOMContentLoaded', function() {
       const challengeTitleElement = document.getElementById('challenge-title');
       const challengeDescriptionElement = document.getElementById('challenge-description');
       const markDoneButton = document.getElementById('mark-done-btn');
+  
+      // Récupérer le jour actuel
+      let jourAffiche = jourActuel; // le jour actuellement affiché (peut être un jour passé)
+
+      // Listener DU bouton "Marquer comme accompli" (à attacher UNE SEULE FOIS)
+        if (markDoneButton && !markDoneButton.dataset.listenerAttached) {
+          markDoneButton.dataset.listenerAttached = "true";
+        
+          markDoneButton.addEventListener('click', function() {
+            try {
+              const jourCourant = parseInt(localStorage.getItem('jour_actuel')) || 1;
+              const jourCible = parseInt(jourAffiche, 10) || jourCourant;
+
+        
+              const defi = getDefiByDay(jourCible);
+              if (!defi) return;
+        
+              console.log('✅ [VALIDATION] jourCible:', jourCible, 'jourCourant:', jourCourant);
+        
+              // Interdire le futur
+              if (jourCible > jourCourant) {
+                alert("⏳ Tu pourras valider ce défi le jour J (ou rattraper un défi passé).");
+                return;
+              }
+        
+              // Jour passé = rattrapage
+              if (jourCible < jourCourant) {
+                const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+                if (!madeupDefis.includes(jourCible)) {
+                  madeupDefis.push(jourCible);
+                  localStorage.setItem('defis_madeup', JSON.stringify(madeupDefis));
+                  alert("✨ Défi rattrapé avec succès !");
+                } else {
+                  alert("✨ Ce défi est déjà rattrapé.");
+                }
+              } else {
+                // Jour courant = validation normale
+                if (!defi.termine) {
+                  defi.termine = true;
+                  defi.dateValidation = new Date().toISOString();
+                  alert("✅ Défi validé ! À demain pour le prochain.");
+                } else {
+                  alert("✅ Ce défi est déjà accompli.");
+                }
+              }
+        
+              if (typeof saveProgression === 'function') saveProgression();
+        
+              // Rafraîchir l'affichage + calendrier
+              afficherDefiDuJour(jourCible);
+              if (typeof genererCalendrier === 'function') genererCalendrier();
+        
+            } catch (e) {
+              console.error("❌ Erreur validation défi:", e);
+              alert("Oh mince… une erreur est survenue pendant la validation. Essaie de recharger l’app.");
+            }
+          });
+        }
+
+  
       const calendarGrid = document.getElementById('calendar-grid');
       const notificationTimeSelect = document.getElementById('notification-time');
+  
       
     // ========== GESTION DES JOURS (AVEC JOURS MANQUÉS) ==========
-    
-    // Récupérer le jour actuel
-    let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+  
     
     // Nouvelle propriété : défis "rattrapés" (ratés mais validés après)
     function initMadeupDefis() {
@@ -489,41 +552,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
     
-    function afficherDefiDuJour(jour) {
+  function afficherDefiDuJour(jour) {
       const defi = getDefiByDay(jour);
       if (!defi) return;
+        
+      jourAffiche = jour; // 👈 IMPORTANT
+               
       
       if (currentDayElement) currentDayElement.textContent = jour;
       if (dayCurrentElement) dayCurrentElement.textContent = jour;
       if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
       if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
-      
-      if (markDoneButton) {
-        // Vérifier si c'est un défi manqué mais rattrapable
-        const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
-        const estDejaRattrape = madeupDefis.includes(jour);
-        
-        if (defi.termine) {
-          markDoneButton.textContent = '✅ Déjà accompli';
-          markDoneButton.disabled = true;
-          markDoneButton.classList.add('completed');
-        } else if (estDejaRattrape) {
-          markDoneButton.textContent = '✨ Déjà rattrapé';
-          markDoneButton.disabled = true;
-          markDoneButton.classList.add('madeup');
-        } else {
-          markDoneButton.textContent = '✅ Marquer comme accompli';
-          markDoneButton.disabled = false;
-          markDoneButton.classList.remove('completed', 'madeup');
-        }
-      }
-      
-      if (typeof genererCalendrier === 'function') {
-        genererCalendrier();
-        centrerCalendrierSurJour(jour);
-      }
+
+      console.log("📌 afficherDefiDuJour appelé avec:", jour, "=> jourAffiche =", jourAffiche);
+
     }    
 
+
+  
     function genererCalendrier() {
       if (!calendarGrid) return;
       calendarGrid.innerHTML = '';
