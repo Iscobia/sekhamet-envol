@@ -135,13 +135,19 @@ console.log('🔍 Boutons trouvés:', {
             console.warn('⚠️ OneSignal notifications échoué:', e);
           }
 
-          // 2B. Notifications natives (toujours essayer)
+         // 2B. Notifications natives (respecter le toggle ON/OFF)
           try {
-            await programmerNotificationQuotidienne();
-            console.log('✅ Notifications natives prêtes');
+            const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
+            if (pref !== 'false') {
+              await programmerNotificationQuotidienne();
+              console.log('✅ Notifications natives prêtes');
+            } else {
+              console.log('🔕 Programmation non lancée (toggle OFF)');
+            }
           } catch (e) {
             console.warn('⚠️ Notifications natives échouées:', e);
           }
+
           
         } catch (error) {
           console.error('❌ [Envol-Notifications] Erreur configuration:', error);
@@ -663,6 +669,23 @@ console.log('🔍 Boutons trouvés:', {
   
  async function programmerNotificationQuotidienne() {
   console.log('🔔 [Programmation] Début...');
+
+  const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
+   
+  if (pref === 'false') {
+    console.log('⏸️ [Programmation] Désactivée par l’utilisateur (toggle OFF)');
+    return;
+  }
+
+
+  // Respecter le choix utilisateur (toggle OFF)
+  const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
+  if (pref === 'false') {
+    console.log('⏸️ [Programmation] Désactivée par l’utilisateur (toggle OFF)');
+    return;
+  }
+
+   
 
   // Vérifier si déjà programmée
   if (notificationsProgrammees) {
