@@ -408,6 +408,35 @@ document.addEventListener('DOMContentLoaded', function() {
           });
         }
 
+
+      // Réception des actions venant du Service Worker (boutons de notification)
+      if ('serviceWorker' in navigator && !window.__envolSWMsgListenerAttached) {
+        window.__envolSWMsgListenerAttached = true;
+      
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          try {
+            const data = event.data || {};
+            if (data.action === 'MARK_DONE') {
+              const jourNotif = parseInt(data.jour, 10);
+              console.log('🔔 [SW->APP] MARK_DONE reçu pour jour:', jourNotif);
+      
+              if (!isNaN(jourNotif)) {
+                // Affiche le bon jour (met à jour jourAffiche)
+                afficherDefiDuJour(jourNotif);
+      
+                // Applique la validation/rattrapage via ton handler existant
+                if (markDoneButton) {
+                  setTimeout(() => markDoneButton.click(), 0);
+                }
+              }
+            }
+          } catch (e) {
+            console.error('❌ Erreur message SW:', e);
+          }
+        });
+      }
+
+
   
       const calendarGrid = document.getElementById('calendar-grid');
       const notificationTimeSelect = document.getElementById('notification-time');
