@@ -721,15 +721,17 @@ console.log('🔍 Boutons trouvés:', {
       // NOTIFICATION DE TEST vs QUOTIDIENNE
     const isTest = window.isTestNotification === true;
     
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller && !isTest) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       // Notification quotidienne via Service Worker
       navigator.serviceWorker.controller.postMessage({
-        action: 'SEND_NOTIFICATION',
-        jour: jourActuel,
-        titre: defi.titre,
-        description: defi.description,
-        tag: `envol-jour-${jourActuel}`
-      });
+          action: 'SEND_NOTIFICATION',
+          jour: jourActuel,
+          titre: defi.titre,
+          description: defi.description,
+          isTest: isTest,
+          tag: `envol-jour-${jourActuel}`
+        });
+
       
       console.log('✅ Notification quotidienne envoyée via Service Worker');
       
