@@ -49,7 +49,7 @@
           console.log('✅ [OneSignal] Initialisation réussie');
           
           // Vérifier l'état des notifications
-          const isSubscribed = await OneSignal.User.PushSubscription.optIn;
+          const isSubscribed = OneSignal.User.PushSubscription.optedIn;
           console.log('📱 [OneSignal] Abonnement actif:', isSubscribed);
           
           // Exposer OneSignal globalement pour vos autres scripts
