@@ -609,9 +609,57 @@ document.addEventListener('DOMContentLoaded', function() {
       if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
       if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
 
-      console.log("📌 afficherDefiDuJour appelé avec:", jour, "=> jourAffiche =", jourAffiche);
+  // ✅ Mettre à jour le bouton selon l'état du jour affiché
+  updateMarkDoneButtonUI(jour);
+  
+  console.log("📌 afficherDefiDuJour appelé avec:", jour, "=> jourAffiche =", jourAffiche);
+  }
+ 
 
-    }    
+
+
+  function updateMarkDoneButtonUI(jour) {
+    if (!markDoneButton) return;
+  
+    const jourCourant = jourActuel;
+    const jourCible = parseInt(jour, 10);
+    const defi = getDefiByDay(jourCible);
+    if (!defi) return;
+  
+    const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
+    const estRattrape = madeupDefis.includes(jourCible);
+  
+    // Par défaut
+    markDoneButton.disabled = false;
+  
+    if (jourCible > jourCourant) {
+      markDoneButton.textContent = "⏳ Disponible le jour J";
+      markDoneButton.disabled = true;
+      return;
+    }
+  
+    if (defi.termine) {
+      markDoneButton.textContent = "✅ Accompli !";
+      markDoneButton.disabled = true;
+      return;
+    }
+  
+    if (estRattrape) {
+      markDoneButton.textContent = "✨ Déjà rattrapé";
+      markDoneButton.disabled = true;
+      return;
+    }
+  
+    if (jourCible < jourCourant) {
+      markDoneButton.textContent = "✨ Rattraper ce défi";
+      return;
+    }
+  
+    // jourCible === jourCourant
+    markDoneButton.textContent = "✅ Marquer comme accompli";
+  }
+
+  
 
 
   
@@ -651,34 +699,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
-    // ✅ Le listener "markDoneButton" est attaché plus haut UNE SEULE FOIS
-    // (celui qui gère jourAffiche/jourCible + rattrapage)
-    
-    // (on continue directement avec les autres réglages UI)
-
-    
-    // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
+        // ========== RÉGLAGES UI ==========
     // ✅ Le listener "markDoneButton" est attaché plus haut UNE SEULE FOIS
     // (celui qui gère jourAffiche/jourCible et le rattrapage)
-    
-    if (notificationTimeSelect) {
+
+    // Sélecteur d'heure de notification (1 seul listener)
+    if (notificationTimeSelect && !notificationTimeSelect.dataset.listenerAttached) {
+      notificationTimeSelect.dataset.listenerAttached = "true";
+
       const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
       notificationTimeSelect.value = heureSauvegardee;
+
       notificationTimeSelect.addEventListener('change', function() {
         localStorage.setItem('heure_notification', notificationTimeSelect.value);
         console.log('⏰ Heure de notification sauvegardée:', notificationTimeSelect.value);
       });
     }
-    
-        
-        if (notificationTimeSelect) {
-          const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
-          notificationTimeSelect.value = heureSauvegardee;
-          notificationTimeSelect.addEventListener('change', function() {
-            localStorage.setItem('heure_notification', this.value);
-          });
-        }
+
 
     
   
