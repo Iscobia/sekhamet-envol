@@ -4,6 +4,9 @@ const CACHE_NAME = 'envol-pwa-v2.0';
 const userAgent = navigator.userAgent;
 const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
 
+let jourActuel = parseInt(localStorage.getItem('jour_actuel'), 10) || 1;
+let jourAffiche = jourActuel;
+
 // === On attend que envol-notifications.js soit chargé :
 
 // Au début de app.js
@@ -349,9 +352,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const challengeTitleElement = document.getElementById('challenge-title');
       const challengeDescriptionElement = document.getElementById('challenge-description');
       const markDoneButton = document.getElementById('mark-done-btn');
-  
-      // Récupérer le jour actuel (sans dépendre de jourActuel qui est défini plus bas)
-      let jourAffiche = parseInt(localStorage.getItem('jour_actuel'), 10) || 1; // le jour affiché (peut être un jour passé)
+      
+      // Synchroniser l'affichage avec l'état global (pas de "let" ici : on utilise le jourAffiche global)
+      jourAffiche = jourActuel;
 
 
       // Listener DU bouton "Marquer comme accompli" (à attacher UNE SEULE FOIS)
@@ -538,43 +541,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     function verifierEtAvancerJour() {
-  // 1) Lire le jour courant
-  let jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
+      try {
+        let jour = parseInt(localStorage.getItem('jour_actuel'), 10);
+        if (!jour || isNaN(jour)) jour = 1;
+    
+        // On synchronise la variable globale
+        const ancienJourActuel = jourActuel;
+        jourActuel = jour;
+    
+        // (si tu as cette fonction, garde-la)
+        if (typeof verifierJoursManques === 'function') {
+          verifierJoursManques();
+        }
+    
+        const peutAvancer = (typeof peutPasserAuJourSuivant === 'function')
+          ? peutPasserAuJourSuivant()
+          : false;
+    
+        console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
+        console.log('   Jour actuel:', jourActuel);
+        console.log('   Peut avancer?', peutAvancer);
+    
+        if (peutAvancer && jourActuel < 77) {
+          jourActuel++;
+          localStorage.setItem('jour_actuel', String(jourActuel));
+          console.log('🎯 AVANCÉ au jour:', jourActuel);
+    
+          // ✅ Ne change l’écran que si l’utilisateur regardait le jour J
+          if (jourAffiche === ancienJourActuel) {
+            afficherDefiDuJour(jourActuel); // mettra jourAffiche = jourActuel
+          } else {
+            console.log('👀 Affichage conservé sur jourAffiche:', jourAffiche);
+          }
+        } else {
+          // Pas d’avancement, on affiche au moins le jour actuel si l’écran est vide
+          if (!jourAffiche) jourAffiche = jourActuel;
+        }
+    
+        // Optionnel : rafraîchir le calendrier
+        if (typeof genererCalendrier === 'function') {
+          genererCalendrier();
+        }
+    
+        return jourActuel;
+      } catch (e) {
+        console.error('❌ Erreur verifierEtAvancerJour:', e);
+        return jourActuel;
+      }
+    }
 
-  // 2) Vérifier jours manqués
-  verifierJoursManques();
-
-  console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
-  console.log('   Jour actuel:', jourActuel);
-
-  // Check sécurité
-  if (!jourActuel || isNaN(jourActuel)) {
-    console.error('❌ ERREUR: jourActuel invalide:', jourActuel);
-    jourActuel = parseInt(localStorage.getItem('jour_actuel')) || 1;
-    console.log('📝 Correction: jourActuel =', jourActuel);
-  }
-
-  // IMPORTANT: n'appeler peutPasserAuJourSuivant() qu'UNE seule fois
-  const peutAvancer = peutPasserAuJourSuivant();
-  console.log('   Peut avancer?', peutAvancer);
-
-  if (peutAvancer && jourActuel < 77) {
-    jourActuel++;
-    localStorage.setItem('jour_actuel', String(jourActuel));
-    console.log('🎯 AVANCÉ au jour:', jourActuel);
-  } else {
-    console.log(
-      '⏸️ Reste au jour:',
-      jourActuel,
-      '(raison:',
-      (jourActuel >= 77 ? 'max 77' : 'même jour'),
-      ')'
-    );
-  }
-
-  afficherDefiDuJour(jourActuel);
-  return jourActuel;
-}
 
 
     
@@ -640,54 +655,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
     // ====== Changement de date, défi rattrapé, défi validé =====
     
-    if (markDoneButton) {
-      markDoneButton.addEventListener('click', function() {
-        const defi = getDefiByDay(jourActuel);
-        if (!defi) return;
-        
-        // Vérifier si c'est un défi passé (raté)
-        const aujourdhui = new Date().toLocaleDateString('fr-FR');
-        const dernierAcces = localStorage.getItem('dernier_acces');
-        let estUnRattrapage = false;
-        
-        if (dernierAcces) {
-          const dateDernierAcces = new Date(dernierAcces.split('/').reverse().join('-'));
-          const dateActuelle = new Date(aujourdhui.split('/').reverse().join('-'));
-          const diffJours = Math.floor((dateActuelle - dateDernierAcces) / (1000 * 60 * 60 * 24));
-          
-          // Si le défi est d'un jour antérieur
-          if (jourActuel < parseInt(localStorage.getItem('jour_actuel')) || diffJours > 0) {
-            estUnRattrapage = true;
-          }
-        }
-        
-        if (estUnRattrapage) {
-          // Marquer comme rattrapé
-          const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
-          if (!madeupDefis.includes(jourActuel)) {
-            madeupDefis.push(jourActuel);
-            localStorage.setItem('defis_madeup', JSON.stringify(madeupDefis));
-            alert("✨ Défi rattrapé avec succès !");
-          }
-        } else {
-          // Validation normale
-          defi.termine = true;
-          defi.dateValidation = new Date().toISOString();
-          alert("✅ Défi validé ! À demain pour le prochain.");
-        }
-        
-        if (typeof saveProgression === 'function') saveProgression();
-        afficherDefiDuJour(jourActuel);
-      });
-    }
+    // ========== ÉVÉNEMENTS PRINCIPAUX (MODIFIÉS) ===============
+    // ✅ Le listener "markDoneButton" est attaché plus haut UNE SEULE FOIS
+    // (celui qui gère jourAffiche/jourCible et le rattrapage)
     
     if (notificationTimeSelect) {
       const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
       notificationTimeSelect.value = heureSauvegardee;
       notificationTimeSelect.addEventListener('change', function() {
-        localStorage.setItem('heure_notification', this.value);
+        localStorage.setItem('heure_notification', notificationTimeSelect.value);
+        console.log('⏰ Heure de notification sauvegardée:', notificationTimeSelect.value);
       });
     }
+    
+        
+        if (notificationTimeSelect) {
+          const heureSauvegardee = localStorage.getItem('heure_notification') || '08:00';
+          notificationTimeSelect.value = heureSauvegardee;
+          notificationTimeSelect.addEventListener('change', function() {
+            localStorage.setItem('heure_notification', this.value);
+          });
+        }
 
     
   
