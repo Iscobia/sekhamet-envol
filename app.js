@@ -350,8 +350,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const challengeDescriptionElement = document.getElementById('challenge-description');
       const markDoneButton = document.getElementById('mark-done-btn');
   
-      // Récupérer le jour actuel
-      let jourAffiche = jourActuel; // le jour actuellement affiché (peut être un jour passé)
+      // Récupérer le jour actuel (sans dépendre de jourActuel qui est défini plus bas)
+      let jourAffiche = parseInt(localStorage.getItem('jour_actuel'), 10) || 1; // le jour affiché (peut être un jour passé)
+
 
       // Listener DU bouton "Marquer comme accompli" (à attacher UNE SEULE FOIS)
         if (markDoneButton && !markDoneButton.dataset.listenerAttached) {
