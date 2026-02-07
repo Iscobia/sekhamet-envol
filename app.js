@@ -484,9 +484,6 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 
-    // EXPOSER GLOBALEMENT pour débogage
-    window.verifierEtAvancerJour = verifierEtAvancerJour;
-    window.getDefiByDay = getDefiByDay; // Utile pour tests
     
 
     
@@ -840,12 +837,17 @@ console.log('✅ app.js chargé complètement');
 // Déclencher l'événement pour signaler que app.js est prêt
 window.dispatchEvent(new Event('app-ready'));
 
-// Exporter les fonctions nécessaires
-window.getDefiByDay = getDefiByDay; // Si elle n'est pas déjà globale
+// ===== Export / Debug =====
+
+// Exposer getDefiByDay (utile pour tests et notifications)
+if (typeof getDefiByDay === 'function') {
+  window.getDefiByDay = getDefiByDay;
+}
 
 console.log('📋 Fonctions disponibles:', {
   getDefiByDay: typeof getDefiByDay,
-  envoyerNotificationDuJour: typeof window.envoyerNotificationDuJour
+  envoyerNotificationDuJour_local: typeof envoyerNotificationDuJour,
+  envoyerNotificationDuJour_window: typeof window.envoyerNotificationDuJour
 });
 
 // Expositions globales sécurisées (évite ReferenceError si fonctions non globales)
@@ -856,8 +858,20 @@ if (typeof verifierEtAvancerJour === 'function') {
   window.verifierEtAvancerJour = verifierEtAvancerJour;
 }
 
-window.verifierEtAvancerJour = verifierEtAvancerJour;
+// Lancer l'avancement du jour de façon SAFE (évite soucis de timing)
+if (typeof window.verifierEtAvancerJour === 'function') {
+  setTimeout(() => {
+    try {
+      window.verifierEtAvancerJour();
+    } catch (e) {
+      console.error('❌ Erreur verifierEtAvancerJour():', e);
+    }
+  }, 0);
+} else {
+  console.warn('verifierEtAvancerJour indisponible (pas encore chargée ?)');
+}
 
 console.log('🔧 Fonctions debug app.js exposées:');
 console.log('- peutPasserAuJourSuivant()');
 console.log('- verifierEtAvancerJour()');
+
