@@ -1,16 +1,13 @@
-// service-worker.js - VERSION ULTRA SIMPLE ET STABLE
-console.log('[Service Worker] Chargement version simplifiée');
+// service-worker.js - STABLE (OneSignal + notifications natives + actions)
+console.log('[Service Worker] Chargement');
 
 try {
-  // IMPORTANT: OneSignal doit être importé AVANT tout autre code
   importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
   console.log('[SW] OneSignal SDK chargé');
 } catch (error) {
   console.log('[SW] OneSignal non chargé (Firefox protection)');
 }
 
-
-// Cache basique
 const CACHE_NAME = 'envol-cache-v1';
 const urlsToCache = [
   '/sekhamet-envol/',
@@ -19,8 +16,7 @@ const urlsToCache = [
   '/sekhamet-envol/data/defis.js',
 ];
 
-// Installation
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   console.log('[SW] Installation');
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -29,123 +25,75 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activation
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   console.log('[SW] Activation');
   event.waitUntil(self.clients.claim());
 });
 
-// Fetch
-self.addEventListener('fetch', event => {
-  // Laisser OneSignal gérer ses propres requêtes
-  if (event.request.url.includes('onesignal.com')) {
-    return;
-  }
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+self.addEventListener('fetch', (event) => {
+  if (event.request.url.includes('onesignal.com')) return;
+  event.respondWith(caches.match(event.request).then(r => r || fetch(event.request)));
 });
 
+// Notifications natives (quotidienne + test)
+self.addEventListener('message', (event) => {
+  try {
+    const data = event.data || {};
+    if (data.action !== 'SEND_NOTIFICATION') return;
 
-//=================================================
-//====== GESTION NOTIFICATIONS NATIVES ============
+    const { jour, titre, description, isTest } = data;
 
-self.addEventListener('message', event => {
-  if (event.data.action === 'SEND_NOTIFICATION') {
-    const { jour, titre, description } = event.data;
-    
-    self.registration.showNotification(`Jour ${jour} - ${titre}`, {
-      body: description.substring(0, 120) + '...',
+    const notifTitle = isTest
+      ? `🎯 Test - Jour ${jour} - ${titre}`
+      : `Jour ${jour} - ${titre}`;
+
+    self.registration.showNotification(notifTitle, {
+      body: (description || '').substring(0, 240),
       icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
       badge: '/sekhamet-envol/assets/icons/ENVOL-192.png',
       tag: `envol-jour-${jour}`,
       requireInteraction: true,
+      data: { jour: String(jour), url: '/sekhamet-envol/#notifications' },
       actions: [
-        {
-          action: 'view',
-          title: '👁️ Voir le défi'
-        },
-        {
-          action: 'mark-done',
-          title: '✅ Marquer comme accompli'
-        }
-      ]
+        { action: 'view', title: '👁️ Voir' },
+        { action: 'mark-done', title: '✅ Marquer' },
+        { action: 'settings', title: '⚙️ Paramètres' },
+      ],
     });
+
+    console.log('[SW] Notification affichée:', notifTitle);
+  } catch (e) {
+    console.error('[SW] Erreur message:', e);
   }
 });
 
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  
-  if (event.action === 'mark-done') {
-    // Envoyer un message à la page pour marquer comme accompli
-    event.waitUntil(
-      clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            action: 'MARK_DONE',
-            jour: event.notification.tag.replace('envol-jour-', '')
+// UN SEUL notificationclick
+self.addEventListener('notificationclick', (event) => {
+  try {
+    const action = event.action;
+    const data = event.notification.data || {};
+    event.notification.close();
+
+    if (action === 'mark-done') {
+      event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+          list.forEach((client) => {
+            client.postMessage({ action: 'MARK_DONE', jour: data.jour });
           });
-        });
+          if (!list || list.length === 0) return clients.openWindow('/sekhamet-envol/');
+        })
+      );
+      return;
+    }
+
+    // view / settings / clic normal -> ouvrir ou focus l'app
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+        if (list && list.length) return list[0].focus();
+        return clients.openWindow(data.url || '/sekhamet-envol/');
       })
     );
-  } else {
-    // Ouvrir/activer l'app
-    event.waitUntil(clients.openWindow('/sekhamet-envol/'));
-  }
-});
-
-
-
-// ======== GESTION DES NOTIFICATIONS PUSH ========= 
-self.addEventListener('push', function(event) {
-  console.log('[SW] Push reçu:', event);
-  
-  try {
-    let data = {};
-    
-    if (event.data) {
-      try {
-        data = event.data.json();
-      } catch (e) {
-        data = { body: event.data.text() };
-      }
-    }
-    
-    const options = {
-      body: data.body || 'Nouveau défi ENVOL !',
-      icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-      badge: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-      tag: data.tag || 'envol-notification',
-      requireInteraction: true,
-      vibrate: [200, 100, 200],
-      data: data,
-      actions: [
-        { action: 'open', title: '📖 Voir le défi' },
-        { action: 'later', title: '⏰ Plus tard' }
-      ]
-    };
-    
-    console.log('[SW] Affichage notification avec options:', options);
-    
-    event.waitUntil(
-      self.registration.showNotification('🎯 ENVOL', options)
-    );
-    
-  } catch (error) {
-    console.error('[SW] Erreur affichage notification:', error);
-  }
-}); // ← FIN de addEventListener('push')
-
-// Gardez séparément
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow('/sekhamet-envol/')
-    );
+  } catch (e) {
+    console.error('[SW] Erreur notificationclick:', e);
   }
 });
