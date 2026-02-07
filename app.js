@@ -618,46 +618,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-  function updateMarkDoneButtonUI(jour) {
+ function updateMarkDoneButtonUI(jour) {
     if (!markDoneButton) return;
   
-    const jourCourant = jourActuel;
+    const jourCourant = parseInt(jourActuel, 10) || 1;
     const jourCible = parseInt(jour, 10);
     const defi = getDefiByDay(jourCible);
-    if (!defi) return;
+    if (!defi || isNaN(jourCible)) return;
   
     const madeupDefis = JSON.parse(localStorage.getItem('defis_madeup') || '[]');
     const estRattrape = madeupDefis.includes(jourCible);
   
+    // Nettoyer les états couleur précédents (on garde tes classes de base)
+    markDoneButton.classList.remove(
+      'mark-future', 'mark-rattraper', 'mark-madeup', 'mark-done', 'mark-default'
+    );
+  
     // Par défaut
-    markDoneButton.disabled = false;
+    let label = "✅ Marquer comme accompli";
+    let disabled = false;
+    let stateClass = "mark-default";
   
     if (jourCible > jourCourant) {
-      markDoneButton.textContent = "⏳ Disponible le jour J";
-      markDoneButton.disabled = true;
-      return;
+      label = "⏳ Disponible le jour J";
+      disabled = true;
+      stateClass = "mark-future";     // gris
+    } else if (defi.termine) {
+      label = "✅ Accompli !";
+      disabled = true;
+      stateClass = "mark-done";       // (tu peux laisser vert ou neutre)
+    } else if (estRattrape) {
+      label = "✨ Déjà rattrapé";
+      disabled = true;
+      stateClass = "mark-madeup";     // jaune
+    } else if (jourCible < jourCourant) {
+      label = "✨ Rattraper ce défi";
+      stateClass = "mark-rattraper";  // rouge
     }
   
-    if (defi.termine) {
-      markDoneButton.textContent = "✅ Accompli !";
-      markDoneButton.disabled = true;
-      return;
-    }
-  
-    if (estRattrape) {
-      markDoneButton.textContent = "✨ Déjà rattrapé";
-      markDoneButton.disabled = true;
-      return;
-    }
-  
-    if (jourCible < jourCourant) {
-      markDoneButton.textContent = "✨ Rattraper ce défi";
-      return;
-    }
-  
-    // jourCible === jourCourant
-    markDoneButton.textContent = "✅ Marquer comme accompli";
+    markDoneButton.textContent = label;
+    markDoneButton.disabled = disabled;
+    markDoneButton.classList.add(stateClass);
   }
+
 
   
 
