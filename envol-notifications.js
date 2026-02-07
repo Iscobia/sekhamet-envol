@@ -661,7 +661,7 @@ console.log('🔍 Boutons trouvés:', {
   window.stopNotificationsQuotidiennes = stopNotificationsQuotidiennes;
 
   
-  async function programmerNotificationQuotidienne() {
+ async function programmerNotificationQuotidienne() {
   console.log('🔔 [Programmation] Début...');
 
   // Vérifier si déjà programmée
@@ -702,43 +702,8 @@ console.log('🔍 Boutons trouvés:', {
     await envoyerNotificationDuJour();
     programmerNotificationQuotidienne();
   }, delaiMs);
-}
+} // Fin de async function programmerNotificationQuotidienne()
 
-    
-    // MAINTENANT on peut marquer comme programmée
-    notificationsProgrammees = true;
-    
-    
-    // 1. Vérifier la permission 
-    if (Notification.permission !== 'granted') {
-      console.log('❌ Permission non accordée');
-      return;
-    }
-    
-    // 2. Récupérer l'heure configurée
-    const heureNotification = localStorage.getItem('heure_notification') || '09:00';
-    const [heures, minutes] = heureNotification.split(':').map(Number);
-    
-    // 3. Calculer l'heure de déclenchement
-    const maintenant = new Date();
-    const heureDeclenchement = new Date();
-    heureDeclenchement.setHours(heures, minutes, 0, 0);
-    
-    // Si l'heure est déjà passée aujourd'hui, programmer pour demain
-    if (heureDeclenchement < maintenant) {
-      heureDeclenchement.setDate(heureDeclenchement.getDate() + 1);
-    }
-    
-    const delaiMs = heureDeclenchement.getTime() - maintenant.getTime();
-    
-    console.log(`🔔 Notification programmée à ${heureNotification} (dans ${Math.round(delaiMs/1000/60)} minutes)`);
-    
-    // 4. Programmer la notification
-    notificationTimeoutId = setTimeout(async () => {
-      await envoyerNotificationDuJour();
-      programmerNotificationQuotidienne();
-    }, delaiMs);
-  } // ← fin de async function programmerNotificationQuotidienne()
   
   async function envoyerNotificationDuJour() {
     try {
