@@ -497,28 +497,28 @@ console.log('🔍 Boutons trouvés:', {
         resultats.push('✅ PERMISSION: Accordée');
       }
       
-      // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
+     // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
       if (permissionOk) {
         try {
-          const testNotif = new Notification('🎯 ENVOL - Test', {
-            body: 'Test notification native',
-            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-          });
-          
-          testNotif.onclick = function(event) {
-            event.preventDefault();
-            window.focus();
-            testNotif.close();
-          };
-          
-          resultats.push('✅ NATIVES: Fonctionnent');
-          setTimeout(() => testNotif.close(), 2000);
+          // ✅ Test "riche" = passe par le Service Worker + actions
+          window.isTestNotification = true;
+      
+          if (typeof window.envoyerNotificationDuJour === 'function') {
+            await window.envoyerNotificationDuJour();
+            resultats.push('✅ NATIVES: Test riche envoyé (Service Worker)');
+          } else {
+            resultats.push('⚠️ NATIVES: envoyerNotificationDuJour indisponible');
+          }
         } catch (e) {
+          console.error('❌ Test natif via SW:', e);
           resultats.push('❌ NATIVES: ' + e.message);
+        } finally {
+          window.isTestNotification = false;
         }
       } else {
         resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
       }
+
       
       // 3. TEST ONESIGNAL (toujours, même sans permission native)
       if (typeof OneSignal !== 'undefined') {
