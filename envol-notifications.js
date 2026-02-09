@@ -667,16 +667,8 @@ console.log('🔍 Boutons trouvés:', {
   window.stopNotificationsQuotidiennes = stopNotificationsQuotidiennes;
 
   
- async function programmerNotificationQuotidienne() {
+async function programmerNotificationQuotidienne() {
   console.log('🔔 [Programmation] Début...');
-
-  const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
-   
-  if (pref === 'false') {
-    console.log('⏸️ [Programmation] Désactivée par l’utilisateur (toggle OFF)');
-    return;
-  }
-
 
   // Respecter le choix utilisateur (toggle OFF)
   const pref = localStorage.getItem(ENVOL_NOTIF_PREF_KEY);
@@ -684,6 +676,7 @@ console.log('🔍 Boutons trouvés:', {
     console.log('⏸️ [Programmation] Désactivée par l’utilisateur (toggle OFF)');
     return;
   }
+
 
    
 
@@ -703,7 +696,7 @@ console.log('🔍 Boutons trouvés:', {
   notificationsProgrammees = true;
 
   // 2. Récupérer l'heure configurée
-  const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+  const heureNotification = localStorage.getItem('heure_notification') || '08:00';
   const [heures, minutes] = heureNotification.split(':').map(Number);
 
   // 3. Calculer l'heure de déclenchement
