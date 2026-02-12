@@ -835,11 +835,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 
+      // ========== EXPORTS DEBUG (dans le bon scope) ==========
+      window.verifierEtAvancerJour = verifierEtAvancerJour;
+      window.peutPasserAuJourSuivant = peutPasserAuJourSuivant;
+      
+      console.log('🔧 Exports debug (initApp):', {
+        verifierEtAvancerJour: typeof window.verifierEtAvancerJour,
+        peutPasserAuJourSuivant: typeof window.peutPasserAuJourSuivant
+      });
+      
       // ========== INITIALISATION FINALE ==========
       verifierEtAvancerJour();
       
       // ✅ Afficher le défi du jour au chargement (le calendrier seul ne remplit pas le panneau)
       afficherDefiDuJour(jourActuel);
+
 
 
 
