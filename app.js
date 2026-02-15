@@ -521,12 +521,13 @@ document.addEventListener('DOMContentLoaded', function() {
           jourActuel: parseInt(localStorage.getItem('jour_actuel'))
         });
         
-        // TOUJOURS autoriser si pas de dernier changement
+          // ✅ Premier accès : on initialise, mais on N'AVANCE PAS
         if (!dernierChangement) {
-          console.log('✅ Premier accès - autorisé');
+          console.log('✅ Premier accès - initialisation (pas d’avancement)');
           localStorage.setItem('dernier_changement_jour', aujourdhui);
-          return true;
+          return false;
         }
+
         
         // Autoriser si dates différentes
         if (dernierChangement !== aujourdhui) {
@@ -979,18 +980,6 @@ if (typeof verifierEtAvancerJour === 'function') {
   window.verifierEtAvancerJour = verifierEtAvancerJour;
 }
 
-// Lancer l'avancement du jour de façon SAFE (évite soucis de timing)
-if (typeof window.verifierEtAvancerJour === 'function') {
-  setTimeout(() => {
-    try {
-      window.verifierEtAvancerJour();
-    } catch (e) {
-      console.error('❌ Erreur verifierEtAvancerJour():', e);
-    }
-  }, 0);
-} else {
-  console.warn('verifierEtAvancerJour indisponible (pas encore chargée ?)');
-}
 
 console.log('🔧 Fonctions debug app.js exposées:');
 console.log('- peutPasserAuJourSuivant()');
