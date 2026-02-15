@@ -7,6 +7,10 @@ const ENVOL_NOTIF_PREF_KEY = 'envol_notifications_enabled';
 // Attendre que le DOM soit chargé
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🔔 [Envol-Notifications] DOM chargé, initialisation...');
+
+   
+  // ✅ Mettre à jour le toggle tout de suite (sans attendre OneSignal)
+  updateToggleButton();
   
   // Initialiser après un délai pour laisser OneSignal se charger
   setTimeout(initEnvolNotifications, 2000);
