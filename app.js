@@ -594,8 +594,6 @@ document.addEventListener('DOMContentLoaded', function() {
           return jourActuel; // on ne casse pas l’app
         }
         
-        const diffMs = nouvelleDate.getTime() - ancienneDate.getTime();
-        const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
         const diffMs = nouvelleDate.getTime() - ancienneDate.getTime();
         const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
