@@ -532,14 +532,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Autoriser si dates différentes
         if (dernierChangement !== aujourdhui) {
           console.log('✅ Nouveau jour - autorisé');
-          localStorage.setItem('dernier_changement_jour', aujourdhui);
-          return true;
+          return true; // pas d'écriture ici
         }
         
         console.log('❌ Même jour - bloqué');
         return false;
       }
 
+//==== PROTECTION pour bonne lecture des dates même en cas de changement futur ou autre formatage de dates :
+  function parseDateFRSafe(str) {
+  if (!str) return null;
+  const m = String(str).trim().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!m) return null;
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
+  const yyyy = Number(m[3]);
+  // Midi pour éviter les soucis de changement d’heure
+  return new Date(yyyy, mm - 1, dd, 12, 0, 0);
+  }
+  //======FIN de la protection / du helper  
+  
     
     function verifierEtAvancerJour() {
   try {
@@ -573,11 +585,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Si la date a changé, on calcule combien de jours se sont écoulés
       if (dernierStr !== aujourdhuiStr) {
         // Parse FR "dd/mm/yyyy" -> Date à MIDI (évite bugs changement d’heure)
-        const [d1, m1, y1] = dernierStr.split('/').map(Number);
-        const ancienneDate = new Date(y1, m1 - 1, d1, 12, 0, 0);
-
-        const [d2, m2, y2] = aujourdhuiStr.split('/').map(Number);
-        const nouvelleDate = new Date(y2, m2 - 1, d2, 12, 0, 0);
+        const ancienneDate = parseDateFRSafe(dernierStr);
+        const nouvelleDate = parseDateFRSafe(aujourdhuiStr);
+        
+        if (!ancienneDate || !nouvelleDate) {
+          console.warn('⚠️ Date invalide détectée -> resync dernier_changement_jour', { dernierStr, aujourdhuiStr });
+          localStorage.setItem('dernier_changement_jour', aujourdhuiStr);
+          return jourActuel; // on ne casse pas l’app
+        }
+        
+        const diffMs = nouvelleDate.getTime() - ancienneDate.getTime();
+        const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
         const diffMs = nouvelleDate.getTime() - ancienneDate.getTime();
         const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
