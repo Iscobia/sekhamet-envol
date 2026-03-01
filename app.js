@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
           jourActuel: parseInt(localStorage.getItem('jour_actuel'))
         });
         
-          // ✅ Premier accès : on initialise, mais on N'AVANCE PAS
+         // ✅ Premier accès : on initialise, mais on N'AVANCE PAS
         if (!dernierChangement) {
           console.log('✅ Premier accès - initialisation (pas d’avancement)');
           localStorage.setItem('dernier_changement_jour', aujourdhui);
@@ -542,54 +542,92 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
     function verifierEtAvancerJour() {
-      try {
-        let jour = parseInt(localStorage.getItem('jour_actuel'), 10);
-        if (!jour || isNaN(jour)) jour = 1;
-    
-        // On synchronise la variable globale
-        const ancienJourActuel = jourActuel;
-        jourActuel = jour;
-    
-        // (si tu as cette fonction, garde-la)
-        if (typeof verifierJoursManques === 'function') {
-          verifierJoursManques();
-        }
-    
-        const peutAvancer = (typeof peutPasserAuJourSuivant === 'function')
-          ? peutPasserAuJourSuivant()
-          : false;
-    
-        console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
-        console.log('   Jour actuel:', jourActuel);
-        console.log('   Peut avancer?', peutAvancer);
-    
-        if (peutAvancer && jourActuel < 77) {
-          jourActuel++;
-          localStorage.setItem('jour_actuel', String(jourActuel));
-          console.log('🎯 AVANCÉ au jour:', jourActuel);
-    
-          // ✅ Ne change l’écran que si l’utilisateur regardait le jour J
-          if (jourAffiche === ancienJourActuel) {
-            afficherDefiDuJour(jourActuel); // mettra jourAffiche = jourActuel
+  try {
+    let jour = parseInt(localStorage.getItem('jour_actuel'), 10);
+    if (!jour || isNaN(jour)) jour = 1;
+
+    // On synchronise la variable globale
+    const ancienJourActuel = jourActuel;
+    jourActuel = jour;
+
+    // (si tu as cette fonction, garde-la)
+    if (typeof verifierJoursManques === 'function') {
+      verifierJoursManques();
+    }
+
+    console.log('🚀 [DEBUG] verifierEtAvancerJour appelé');
+    console.log('   Jour actuel (stocké):', jourActuel);
+
+    // ======= NOUVEAU : calcul delta jours (multi-jours) =======
+    const aujourdhuiStr = new Date().toLocaleDateString('fr-FR'); // "dd/mm/yyyy"
+    const dernierStr = localStorage.getItem('dernier_changement_jour'); // "dd/mm/yyyy" ou null
+
+    console.log('   Date aujourd’hui:', aujourdhuiStr);
+    console.log('   Dernier changement:', dernierStr);
+
+    // Premier lancement : on pose juste la référence, sans avancer
+    if (!dernierStr) {
+      localStorage.setItem('dernier_changement_jour', aujourdhuiStr);
+      console.log('✅ Premier lancement : dernier_changement_jour initialisé (pas d’avancement)');
+    } else {
+      // Si la date a changé, on calcule combien de jours se sont écoulés
+      if (dernierStr !== aujourdhuiStr) {
+        // Parse FR "dd/mm/yyyy" -> Date à MIDI (évite bugs changement d’heure)
+        const [d1, m1, y1] = dernierStr.split('/').map(Number);
+        const ancienneDate = new Date(y1, m1 - 1, d1, 12, 0, 0);
+
+        const [d2, m2, y2] = aujourdhuiStr.split('/').map(Number);
+        const nouvelleDate = new Date(y2, m2 - 1, d2, 12, 0, 0);
+
+        const diffMs = nouvelleDate.getTime() - ancienneDate.getTime();
+        const diffJours = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        console.log('📅 [DEBUG] Différence réelle en jours:', diffJours);
+
+        if (diffJours > 0) {
+          const nouveauJour = Math.min(77, jourActuel + diffJours);
+          if (nouveauJour !== jourActuel) {
+            jourActuel = nouveauJour;
+            localStorage.setItem('jour_actuel', String(jourActuel));
+            console.log(`🎯 AVANCÉ de ${diffJours} jour(s) -> jour_actuel:`, jourActuel);
           } else {
-            console.log('👀 Affichage conservé sur jourAffiche:', jourAffiche);
+            console.log('⏸️ Déjà au max (77), pas d’avancement');
           }
+
+          // Important : on met à jour la date de référence
+          localStorage.setItem('dernier_changement_jour', aujourdhuiStr);
         } else {
-          // Pas d’avancement, on affiche au moins le jour actuel si l’écran est vide
-          if (!jourAffiche) jourAffiche = jourActuel;
+          console.log('⏸️ Date différente mais diffJours <= 0 (heure/date système ?) — pas d’avancement');
+          // On peut quand même resynchroniser la date si tu veux être stricte :
+          // localStorage.setItem('dernier_changement_jour', aujourdhuiStr);
         }
-    
-        // Optionnel : rafraîchir le calendrier
-        if (typeof genererCalendrier === 'function') {
-          genererCalendrier();
-        }
-    
-        return jourActuel;
-      } catch (e) {
-        console.error('❌ Erreur verifierEtAvancerJour:', e);
-        return jourActuel;
+      } else {
+        console.log('❌ Même jour - bloqué');
       }
     }
+    // ======= FIN NOUVEAU =======
+
+    // ✅ Ne change l’écran que si l’utilisateur regardait le jour J (ou si rien n’est affiché)
+    if (!jourAffiche) {
+      jourAffiche = jourActuel;
+      afficherDefiDuJour(jourActuel);
+    } else if (jourAffiche === ancienJourActuel && jourActuel !== ancienJourActuel) {
+      afficherDefiDuJour(jourActuel); // mettra jourAffiche = jourActuel
+    } else {
+      console.log('👀 Affichage conservé sur jourAffiche:', jourAffiche);
+    }
+
+    // Rafraîchir le calendrier
+    if (typeof genererCalendrier === 'function') {
+      genererCalendrier();
+    }
+
+    return jourActuel;
+  } catch (e) {
+    console.error('❌ Erreur verifierEtAvancerJour:', e);
+    return jourActuel;
+  }
+}
 
 
 
@@ -851,7 +889,12 @@ document.addEventListener('DOMContentLoaded', function() {
       // ✅ Afficher le défi du jour au chargement (le calendrier seul ne remplit pas le panneau)
       afficherDefiDuJour(jourActuel);
 
-
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          console.log('👁️ [APP] Retour au premier plan -> resync jour');
+          verifierEtAvancerJour();
+        }
+      });
 
 
 
