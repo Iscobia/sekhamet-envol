@@ -200,7 +200,7 @@ body {
 }
 
 #mark-done-btn.mark-madeup {
-  background: #e0c14a !important;
+  background: #f0f147 !important;
   color: #1a1a1a !important;
 }
 
@@ -285,7 +285,7 @@ body {
 }
 
 .calendar-day.madeup:hover {
-  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  background: linear-gradient(135deg, #f59e0b 0%, #e6c200 100%);
   transform: translateY(-2px);
 }
 
