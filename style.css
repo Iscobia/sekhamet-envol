@@ -200,7 +200,7 @@ body {
 }
 
 #mark-done-btn.mark-madeup {
-  background: #f4f522 !important;
+  background: #ffd03c !important;
   color: #1a1a1a !important;
 }
 
@@ -281,17 +281,17 @@ body {
 .calendar-day.madeup {
   background: linear-gradient(135deg, #f3b900 0%, #f3b900 100%);
   color: white;
-  border: 2px solid #f3b900;
+  border: 2px solid #fac827;
 }
 
 .calendar-day.madeup:hover {
-  background: linear-gradient(135deg, #f3b900 0%, #e6c200 100%);
+  background: #f3b900;
   transform: translateY(-2px);
 }
 
 /* Bouton rattrapé */
 button.madeup {
-  background: linear-gradient(135deg, #f3b900 0%, #e6c200 100%) !important;
+  background: #fac827 !important;
 }
 /*----------------------------------------------*/
 
