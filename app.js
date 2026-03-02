@@ -665,6 +665,7 @@ function verifierEtAvancerJour() {
 
 // ====== Notification journalière au lancement de l'app ===== //
 
+// ====== Notification journalière au réveil de l'app (1 fois / jour) ======
 async function showDailyWakeNotificationIfNeeded() {
   const today = new Date().toLocaleDateString('fr-FR');
   const lastShown = localStorage.getItem('last_daily_notif_shown');
@@ -674,38 +675,27 @@ async function showDailyWakeNotificationIfNeeded() {
   if (Notification.permission !== 'granted') return false;
 
   try {
-    // ✅ 1) Chemin PWA (le plus fiable)
-    if ('serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg && reg.showNotification) {
-        await reg.showNotification("ENVOL — Défi du jour", {
-          body: "Ton défi du jour t’attend ✨",
-          icon: "./assets/icons/ENVOL-192.png",
-          badge: "./assets/icons/ENVOL-192.png",
-          tag: "envol-daily",
-          renotify: false,
-          data: { date: today }
-        });
-
-        localStorage.setItem('last_daily_notif_shown', today);
-        return true;
-      }
+    // ✅ Utiliser la même notif riche que celle des notifications quotidiennes
+    if (typeof window.envoyerNotificationDuJour === 'function') {
+      await window.envoyerNotificationDuJour(); // passe par SW -> actions "Marquer"
+      localStorage.setItem('last_daily_notif_shown', today);
+      return true;
     }
 
-    // ✅ 2) Fallback navigateur
-    const n = new Notification("ENVOL — Défi du jour", {
-      body: "Ton défi du jour t’attend ✨",
-      tag: "envol-daily"
-    });
-
-    if (n) {
+    // Fallback minimal si envoyerNotificationDuJour n'est pas encore dispo
+    const reg = await navigator.serviceWorker?.getRegistration?.();
+    if (reg?.showNotification) {
+      await reg.showNotification("ENVOL — Défi du jour", {
+        body: "Ton défi du jour t’attend ✨",
+        tag: "envol-daily"
+      });
       localStorage.setItem('last_daily_notif_shown', today);
       return true;
     }
 
     return false;
   } catch (e) {
-    console.warn("Notif quotidienne impossible:", e);
+    console.warn("Notif wake impossible:", e);
     return false;
   }
 }
