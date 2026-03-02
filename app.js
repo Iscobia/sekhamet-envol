@@ -731,6 +731,7 @@ function setNoteForDay(day, text) {
     
   // ✅ Mettre à jour le bouton selon l'état du jour affiché
   updateMarkDoneButtonUI(jour);
+  refreshNotesUIForDay(jour);
   
   console.log("📌 afficherDefiDuJour appelé avec:", jour, "=> jourAffiche =", jourAffiche);
   }
@@ -840,7 +841,94 @@ function setNoteForDay(day, text) {
     }
 
 
+// ========== NOTES (par jour) ==========
+  
+    // 1) Références DOM
+    const notesTextarea = document.getElementById('notes-textarea');
+    const clearNotesBtn = document.getElementById('clear-notes-btn');
+    const notesStatusEl = document.getElementById('notes-status');
+    let notesSaveTimer = null;
     
+    // 2) Helpers stockage
+    function getNotesMap() {
+      try {
+        return JSON.parse(localStorage.getItem('envol_notes_by_day') || '{}');
+      } catch {
+        return {};
+      }
+    }
+    
+    function setNotesMap(map) {
+      localStorage.setItem('envol_notes_by_day', JSON.stringify(map));
+    }
+    
+    function getNoteForDay(day) {
+      const map = getNotesMap();
+      return map[String(day)] || '';
+    }
+    
+    function setNoteForDay(day, text) {
+      const map = getNotesMap();
+      const key = String(day);
+      if (!text || !text.trim()) {
+        delete map[key];
+      } else {
+        map[key] = text;
+      }
+      setNotesMap(map);
+    }
+    
+    function setNotesStatus(msg) {
+      if (!notesStatusEl) return;
+      notesStatusEl.textContent = msg || '';
+    }
+    
+    // 3) Charger les notes du jour affiché (à appeler quand on change de jour)
+    function refreshNotesUIForDay(day) {
+      if (!notesTextarea) return;
+      notesTextarea.value = getNoteForDay(day);
+      setNotesStatus('');
+    }
+    
+    // 4) Listeners
+    if (notesTextarea) {
+      notesTextarea.addEventListener('input', () => {
+        const day =
+          parseInt(jourAffiche, 10) ||
+          (parseInt(localStorage.getItem('jour_actuel'), 10) || 1);
+    
+        setNotesStatus('Sauvegarde…');
+        clearTimeout(notesSaveTimer);
+    
+        notesSaveTimer = setTimeout(() => {
+          setNoteForDay(day, notesTextarea.value);
+          setNotesStatus('✅ Sauvegardé');
+          setTimeout(() => setNotesStatus(''), 1500);
+        }, 350);
+      });
+    }
+    
+    if (clearNotesBtn && notesTextarea) {
+      clearNotesBtn.addEventListener('click', () => {
+        const day =
+          parseInt(jourAffiche, 10) ||
+          (parseInt(localStorage.getItem('jour_actuel'), 10) || 1);
+    
+        if (!confirm('Effacer les notes de ce jour ?')) return;
+    
+        notesTextarea.value = '';
+        setNoteForDay(day, '');
+        setNotesStatus('🧹 Notes effacées');
+        setTimeout(() => setNotesStatus(''), 1500);
+      });
+    }
+    
+    // 5) Premier chargement (jour actuel affiché au démarrage)
+    refreshNotesUIForDay(jourAffiche);
+
+// =========== NOTES fin =================
+    
+
   
       // ========== BOUTONS DÉPANNAGE ==========
       
@@ -886,7 +974,7 @@ function setNoteForDay(day, text) {
           jourActuel: localStorage.getItem('jour_actuel'),
           dernierChangement: localStorage.getItem('dernier_changement_jour'),
           heureNotification: localStorage.getItem('heure_notification'),
-          notes: JSON.parse(localStorage.getItem('envol_notes') || '{}')
+          notesByDay: JSON.parse(localStorage.getItem('envol_notes_by_day') || '{}'),
         };
         const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -921,8 +1009,25 @@ function setNoteForDay(day, text) {
               if (backupData.dernierChangement) localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
               if (backupData.heureNotification) localStorage.setItem('heure_notification', backupData.heureNotification);
               
-              // ✅ Notes
-              if (backupData.notes) localStorage.setItem('envol_notes', JSON.stringify(backupData.notes));
+              // ✅ Notes (par jour)
+              if (backupData.notesByDay) {
+                localStorage.setItem('envol_notes_by_day', JSON.stringify(backupData.notesByDay));
+              } else if (backupData.notes) {
+                // Compatibilité ancienne sauvegarde "notes"
+                // Si c'était une string -> on la met sur le jourActuel importé
+                if (typeof backupData.notes === 'string') {
+                  const day = String(backupData.jourActuel || 1);
+                  localStorage.setItem('envol_notes_by_day', JSON.stringify({ [day]: backupData.notes }));
+                } else if (typeof backupData.notes === 'object') {
+                  // Si c'était déjà un map -> on le reprend tel quel
+                  localStorage.setItem('envol_notes_by_day', JSON.stringify(backupData.notes));
+                }
+              } else {
+                localStorage.removeItem('envol_notes_by_day');
+              }
+              
+              // (Optionnel) on supprime l’ancienne clé si tu veux éviter la confusion
+              localStorage.removeItem('envol_notes');
               
               alert('✅ Progression importée !');
               window.location.reload();
