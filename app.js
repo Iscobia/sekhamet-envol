@@ -654,17 +654,15 @@ function verifierEtAvancerJour() {
 // ====== Notification journalière au lancement de l'app ===== //
 
 async function showDailyWakeNotificationIfNeeded() {
-  const today = getDateStrFR(); // <-- ta fonction qui renvoie "JJ/MM/AAAA"
+  const today = new Date().toLocaleDateString('fr-FR'); // cohérent avec ton code existant
   const lastShown = localStorage.getItem('last_daily_notif_shown');
-
   if (lastShown === today) return false;
 
-  // permission navigateur
   if (!('Notification' in window)) return false;
   if (Notification.permission !== 'granted') return false;
 
   try {
-    // Essaie via Service Worker si dispo (meilleur en PWA)
+    // ✅ 1) Chemin PWA (le plus fiable)
     if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg && reg.showNotification) {
@@ -672,15 +670,35 @@ async function showDailyWakeNotificationIfNeeded() {
           body: "Ton défi du jour t’attend ✨",
           icon: "./assets/icons/ENVOL-192.png",
           badge: "./assets/icons/ENVOL-192.png",
-          tag: "envol-daily", // évite l'empilement
+          tag: "envol-daily",
           renotify: false,
           data: { date: today }
         });
 
+        // ✅ On marque seulement APRÈS le succès du await
         localStorage.setItem('last_daily_notif_shown', today);
         return true;
       }
     }
+
+    // ✅ 2) Fallback navigateur
+    const n = new Notification("ENVOL — Défi du jour", {
+      body: "Ton défi du jour t’attend ✨",
+      tag: "envol-daily"
+    });
+
+    // Ici, pas de promise : on considère “succès” si ça ne throw pas
+    if (n) {
+      localStorage.setItem('last_daily_notif_shown', today);
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    console.warn("Notif quotidienne impossible:", e);
+    return false;
+  }
+}
 
     // Fallback direct (parfois moins fiable en PWA)
     new Notification("ENVOL — Défi du jour", {
@@ -695,11 +713,6 @@ async function showDailyWakeNotificationIfNeeded() {
   }
 }
 
-// Puis on appelle la fonction précédemment déclarée :
-  
-document.addEventListener('DOMContentLoaded', () => {
-  showDailyWakeNotificationIfNeeded();
-});
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
@@ -963,15 +976,25 @@ document.addEventListener('visibilitychange', () => {
       });
       
       // ========== INITIALISATION FINALE ==========
+
+      // On vérifie d'abord le jour avant d'avancer :
       verifierEtAvancerJour();
+
+      const jourActuelApresSync = parseInt(localStorage.getItem('jour_actuel'), 10) || 1;
+      afficherDefiDuJour(jourActuelApresSync);
+      
+      showDailyWakeNotificationIfNeeded().then(ok => console.log('🔔 Notif wake envoyée ?', ok));
       
       // ✅ Afficher le défi du jour au chargement (le calendrier seul ne remplit pas le panneau)
       afficherDefiDuJour(jourActuel);
+      // Montrer la Notif du jour à l'ouverture de l'app :
+      showDailyWakeNotificationIfNeeded();
 
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           console.log('👁️ [APP] Retour au premier plan -> resync jour');
           verifierEtAvancerJour();
+          showDailyWakeNotificationIfNeeded();
         }
       });
 
