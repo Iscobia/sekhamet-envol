@@ -842,7 +842,6 @@ function setNoteForDay(day, text) {
 // ========== NOTES (par jour) ==========
   
     // 1) Références DOM
-    const notesTextarea = document.getElementById('notes-textarea');
     const clearNotesBtn = document.getElementById('clear-notes-btn');
     const notesStatusEl = document.getElementById('notes-status');
     let notesSaveTimer = null;
