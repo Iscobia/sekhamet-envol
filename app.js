@@ -724,7 +724,6 @@ function setNoteForDay(day, text) {
       if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
 
   // Notes : charger celles du jour affiché
-  const notesTextarea = document.getElementById('notes-textarea');
   const notesStatus = document.getElementById('notes-status');
   if (notesTextarea) notesTextarea.value = getNoteForDay(jour);
   if (notesStatus) notesStatus.textContent = '';
