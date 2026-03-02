@@ -668,33 +668,50 @@ function verifierEtAvancerJour() {
 // ====== Notification journalière au réveil de l'app (1 fois / jour) ======
 async function showDailyWakeNotificationIfNeeded() {
   const today = new Date().toLocaleDateString('fr-FR');
-  const lastShown = localStorage.getItem('last_daily_notif_shown');
-  if (lastShown === today) return false;
+
+  // Déjà montré aujourd'hui -> stop
+  if (localStorage.getItem('last_daily_notif_shown') === today) return false;
+
+  // Anti-double déclenchement la même seconde (DOMContentLoaded + visibilitychange)
+  const lockKey = 'daily_notif_lock';
+  if (localStorage.getItem(lockKey) === today) return false;
+  localStorage.setItem(lockKey, today);
 
   if (!('Notification' in window)) return false;
   if (Notification.permission !== 'granted') return false;
 
   try {
-    // ✅ Utiliser la même notif riche que celle des notifications quotidiennes
+    // ✅ Priorité: notif riche via ton pipeline existant
     if (typeof window.envoyerNotificationDuJour === 'function') {
-      await window.envoyerNotificationDuJour(); // passe par SW -> actions "Marquer"
+      await window.envoyerNotificationDuJour();
       localStorage.setItem('last_daily_notif_shown', today);
       return true;
     }
 
-    // Fallback minimal si envoyerNotificationDuJour n'est pas encore dispo
+    // ✅ Fallback minimaliste (SEULEMENT si la riche n'est pas dispo)
     const reg = await navigator.serviceWorker?.getRegistration?.();
     if (reg?.showNotification) {
       await reg.showNotification("ENVOL — Défi du jour", {
         body: "Ton défi du jour t’attend ✨",
-        tag: "envol-daily"
+        icon: "./assets/icons/ENVOL-192.png",
+        badge: "./assets/icons/ENVOL-192.png",
+        tag: "envol-daily",
+        renotify: false
       });
       localStorage.setItem('last_daily_notif_shown', today);
       return true;
     }
 
-    return false;
+    // Dernier fallback: Notification directe
+    new Notification("ENVOL — Défi du jour", {
+      body: "Ton défi du jour t’attend ✨",
+      tag: "envol-daily"
+    });
+    localStorage.setItem('last_daily_notif_shown', today);
+    return true;
   } catch (e) {
+    // si échec -> on retire le lock pour retenter au prochain wake
+    localStorage.removeItem(lockKey);
     console.warn("Notif wake impossible:", e);
     return false;
   }
