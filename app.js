@@ -541,17 +541,27 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
 //==== PROTECTION pour bonne lecture des dates même en cas de changement futur ou autre formatage de dates :
+  // parseDateFRSafe() sert à lire/convertir une string en Date :
   function parseDateFRSafe(str) {
-  if (!str) return null;
-  const m = String(str).trim().match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  if (!m) return null;
-  const dd = Number(m[1]);
-  const mm = Number(m[2]);
-  const yyyy = Number(m[3]);
-  // Midi pour éviter les soucis de changement d’heure
-  return new Date(yyyy, mm - 1, dd, 12, 0, 0);
+    if (!str) return null;
+    const m = String(str).trim().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!m) return null;
+    const dd = Number(m[1]);
+    const mm = Number(m[2]);
+    const yyyy = Number(m[3]);
+    // Midi pour éviter les soucis de changement d’heure
+    return new Date(yyyy, mm - 1, dd, 12, 0, 0);
   }
-  //======FIN de la protection / du helper  
+
+  // Ici on génère une string de date “canonique” pour comparer
+  function getDateStrFR(date = new Date()) {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+  
+  //======FIN de la protection du helper  
   
     
 function verifierEtAvancerJour() {
@@ -653,8 +663,10 @@ function verifierEtAvancerJour() {
   
 // ====== Notification journalière au lancement de l'app ===== //
 
+// ====== Notification journalière au lancement de l'app ===== //
+
 async function showDailyWakeNotificationIfNeeded() {
-  const today = new Date().toLocaleDateString('fr-FR'); // cohérent avec ton code existant
+  const today = new Date().toLocaleDateString('fr-FR');
   const lastShown = localStorage.getItem('last_daily_notif_shown');
   if (lastShown === today) return false;
 
@@ -675,7 +687,6 @@ async function showDailyWakeNotificationIfNeeded() {
           data: { date: today }
         });
 
-        // ✅ On marque seulement APRÈS le succès du await
         localStorage.setItem('last_daily_notif_shown', today);
         return true;
       }
@@ -687,7 +698,6 @@ async function showDailyWakeNotificationIfNeeded() {
       tag: "envol-daily"
     });
 
-    // Ici, pas de promise : on considère “succès” si ça ne throw pas
     if (n) {
       localStorage.setItem('last_daily_notif_shown', today);
       return true;
@@ -699,26 +709,6 @@ async function showDailyWakeNotificationIfNeeded() {
     return false;
   }
 }
-
-    // Fallback direct (parfois moins fiable en PWA)
-    new Notification("ENVOL — Défi du jour", {
-      body: "Ton défi du jour t’attend ✨",
-      tag: "envol-daily"
-    });
-    localStorage.setItem('last_daily_notif_shown', today);
-    return true;
-  } catch (e) {
-    console.warn("Notif quotidienne impossible:", e);
-    return false;
-  }
-}
-
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    showDailyWakeNotificationIfNeeded();
-  }
-});
   
 
 // ===== FIN de Notification Jouralière à l'ouverture de l'app ===== //    
