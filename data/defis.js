@@ -180,7 +180,7 @@ const DefisEnvol = [
   {
     jour: 26,
     titre: "Les doshas comme boussole",
-    description: "Note ce qui t'échauffe, te calme ou te stabilise.",
+    description: "Note ce qui semble te donner de l’énergie en excès, ce qui te vide ou te stabilise.\nÇa peut être un aliment, une activité, une relation, un détail quotidien.",
     termine: false,
     dateValidation: null
   },
