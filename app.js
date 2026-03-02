@@ -447,7 +447,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
       
     // ========== GESTION DES JOURS (AVEC JOURS MANQUÉS) ==========
-  
+
+ 
     
     // Nouvelle propriété : défis "rattrapés" (ratés mais validés après)
     function initMadeupDefis() {
@@ -553,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
   //======FIN de la protection / du helper  
   
     
-    function verifierEtAvancerJour() {
+function verifierEtAvancerJour() {
   try {
     let jour = parseInt(localStorage.getItem('jour_actuel'), 10);
     if (!jour || isNaN(jour)) jour = 1;
@@ -623,6 +624,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     // ======= FIN NOUVEAU =======
 
+
+    
+
     // ✅ Ne change l’écran que si l’utilisateur regardait le jour J (ou si rien n’est affiché)
     if (!jourAffiche) {
       jourAffiche = jourActuel;
@@ -646,8 +650,65 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 
+  
+// ====== Notification journalière au lancement de l'app ===== //
 
-    
+async function showDailyWakeNotificationIfNeeded() {
+  const today = getDateStrFR(); // <-- ta fonction qui renvoie "JJ/MM/AAAA"
+  const lastShown = localStorage.getItem('last_daily_notif_shown');
+
+  if (lastShown === today) return false;
+
+  // permission navigateur
+  if (!('Notification' in window)) return false;
+  if (Notification.permission !== 'granted') return false;
+
+  try {
+    // Essaie via Service Worker si dispo (meilleur en PWA)
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) {
+        await reg.showNotification("ENVOL — Défi du jour", {
+          body: "Ton défi du jour t’attend ✨",
+          icon: "./assets/icons/ENVOL-192.png",
+          badge: "./assets/icons/ENVOL-192.png",
+          tag: "envol-daily", // évite l'empilement
+          renotify: false,
+          data: { date: today }
+        });
+
+        localStorage.setItem('last_daily_notif_shown', today);
+        return true;
+      }
+    }
+
+    // Fallback direct (parfois moins fiable en PWA)
+    new Notification("ENVOL — Défi du jour", {
+      body: "Ton défi du jour t’attend ✨",
+      tag: "envol-daily"
+    });
+    localStorage.setItem('last_daily_notif_shown', today);
+    return true;
+  } catch (e) {
+    console.warn("Notif quotidienne impossible:", e);
+    return false;
+  }
+}
+
+// Puis on appelle la fonction précédemment déclarée :
+  
+document.addEventListener('DOMContentLoaded', () => {
+  showDailyWakeNotificationIfNeeded();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    showDailyWakeNotificationIfNeeded();
+  }
+});
+  
+
+// ===== FIN de Notification Jouralière à l'ouverture de l'app ===== //    
 
     
     // ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
