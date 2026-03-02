@@ -842,7 +842,7 @@ window.setupNotificationUI = setupNotificationUI; // Pour debug
 window.debugOneSignalState = debugOneSignalState;
 window.getNotificationStatus = getNotificationStatus;
 window.updateToggleButton = updateToggleButton;
-window.showDailyWakeNotificationIfNeeded = showDailyWakeNotificationIfNeeded;
+window.showDailyWakeNotificationIfNeeded?.();
 
 console.log('🔧 Fonctions debug disponibles:');
 console.log('- debugOneSignalState()');
