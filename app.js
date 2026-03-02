@@ -659,9 +659,35 @@ function verifierEtAvancerJour() {
   }
 } // Fin de VérifierEtAvancerJour
 
+// ===== FIN de Notification Jouralière à l'ouverture de l'app ===== // 
 
+// ===== Notes (stockées localement) =====
+const NOTES_KEY = 'envol_notes';
 
-// ===== FIN de Notification Jouralière à l'ouverture de l'app ===== //    
+function getAllNotes() {
+  try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function getNoteForDay(day) {
+  const notes = getAllNotes();
+  return notes[String(day)] || '';
+}
+
+function setNoteForDay(day, text) {
+  const notes = getAllNotes();
+  const k = String(day);
+  const v = String(text || '');
+
+  if (v.trim() === '') {
+    delete notes[k];
+  } else {
+    notes[k] = v;
+  }
+  localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+}
+
+// ===== Fin des Notes (stockées localement) =====
 
     
     // ========== FONCTIONS D'AFFICHAGE (MODIFIÉES) ==========
