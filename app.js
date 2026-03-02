@@ -352,6 +352,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const challengeTitleElement = document.getElementById('challenge-title');
       const challengeDescriptionElement = document.getElementById('challenge-description');
       const markDoneButton = document.getElementById('mark-done-btn');
+      const notesTextarea = document.getElementById('notes-textarea');
+      const notesStatus = document.getElementById('notes-status');
+      const clearNotesBtn = document.getElementById('clear-notes-btn');
+    
+    let notesSaveTimer = null;
+    
+    function setNotesStatus(msg) {
+      if (!notesStatus) return;
+      notesStatus.textContent = msg || '';
+    }
       
       // Synchroniser l'affichage avec l'état global (pas de "let" ici : on utilise le jourAffiche global)
       jourAffiche = jourActuel;
@@ -695,6 +705,15 @@ function setNoteForDay(day, text) {
   function afficherDefiDuJour(jour) {
       const defi = getDefiByDay(jour);
       if (!defi) return;
+    
+
+    // Pour que quand on clique un jour du calendrier ou quand le jour avance,
+    // les notes affichées suivent: ==========================================
+      const notesTextarea = document.getElementById('notes-textarea');
+      const notesStatus = document.getElementById('notes-status');
+      if (notesTextarea) notesTextarea.value = getNoteForDay(jour);
+      if (notesStatus) notesStatus.textContent = '';
+    // =======================================================================
         
       jourAffiche = jour; // 👈 IMPORTANT
                
@@ -704,6 +723,12 @@ function setNoteForDay(day, text) {
       if (challengeTitleElement) challengeTitleElement.textContent = defi.titre;
       if (challengeDescriptionElement) challengeDescriptionElement.textContent = defi.description;
 
+  // Notes : charger celles du jour affiché
+  const notesTextarea = document.getElementById('notes-textarea');
+  const notesStatus = document.getElementById('notes-status');
+  if (notesTextarea) notesTextarea.value = getNoteForDay(jour);
+  if (notesStatus) notesStatus.textContent = '';
+    
   // ✅ Mettre à jour le bouton selon l'état du jour affiché
   updateMarkDoneButtonUI(jour);
   
@@ -860,7 +885,8 @@ function setNoteForDay(day, text) {
           progression: JSON.parse(localStorage.getItem('defis_envol') || '[]'),
           jourActuel: localStorage.getItem('jour_actuel'),
           dernierChangement: localStorage.getItem('dernier_changement_jour'),
-          heureNotification: localStorage.getItem('heure_notification')
+          heureNotification: localStorage.getItem('heure_notification'),
+          notes: JSON.parse(localStorage.getItem('envol_notes') || '{}')
         };
         const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -890,12 +916,16 @@ function setNoteForDay(day, text) {
               const backupData = JSON.parse(event.target.result);
               if (!backupData.progression || !backupData.jourActuel) throw new Error('Format invalide');
               if (confirm(`Importer la sauvegarde du ${new Date(backupData.timestamp).toLocaleDateString('fr-FR')} ?`)) {
-                localStorage.setItem('defis_envol', JSON.stringify(backupData.progression));
-                localStorage.setItem('jour_actuel', backupData.jourActuel);
-                if (backupData.dernierChangement) localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
-                if (backupData.heureNotification) localStorage.setItem('heure_notification', backupData.heureNotification);
-                alert('✅ Progression importée !');
-                window.location.reload();
+              localStorage.setItem('defis_envol', JSON.stringify(backupData.progression));
+              localStorage.setItem('jour_actuel', backupData.jourActuel);
+              if (backupData.dernierChangement) localStorage.setItem('dernier_changement_jour', backupData.dernierChangement);
+              if (backupData.heureNotification) localStorage.setItem('heure_notification', backupData.heureNotification);
+              
+              // ✅ Notes
+              if (backupData.notes) localStorage.setItem('envol_notes', JSON.stringify(backupData.notes));
+              
+              alert('✅ Progression importée !');
+              window.location.reload();
               }
             } catch (error) {
               console.error('Erreur import:', error);
