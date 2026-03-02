@@ -1081,6 +1081,8 @@ setTimeout(() => {
       }
     } // FIn des Notification journalières au réveil de l'app
 
+window.showDailyWakeNotificationIfNeeded = showDailyWakeNotificationIfNeeded;
+
 //==========================================================
 //================== DEBOGG SECTION =========================
 
