@@ -3,6 +3,7 @@ console.log('🔔 [Envol-Notifications] Chargement du module...');
 
 // Préférence utilisateur (ON/OFF) pour les rappels (indépendant de la permission navigateur)
 const ENVOL_NOTIF_PREF_KEY = 'envol_notifications_enabled';
+const ENABLE_ONESIGNAL = false; // passe à true quand backend prêt
 
 // Attendre que le DOM soit chargé
 document.addEventListener('DOMContentLoaded', function() {
@@ -34,6 +35,14 @@ console.log('🔍 Boutons trouvés:', {
 
     function debugOneSignalState() {
       console.log('=== DEBUG ÉTAT ONESIGNAL ===');
+      if (!ENABLE_ONESIGNAL) {
+        console.warn('🛑 OneSignal désactivé -> debugOneSignalState ignoré');
+        return;
+      }
+      if (typeof ENABLE_ONESIGNAL !== 'undefined' && ENABLE_ONESIGNAL === false) {
+        console.warn('🛑 debugOneSignalState() ignoré: OneSignal désactivé');
+        return;
+      }
       
       // 1. Permission native
       console.log('1. Notification.permission:', Notification.permission);
@@ -66,8 +75,8 @@ console.log('🔍 Boutons trouvés:', {
       console.log('=== FIN DEBUG ===');
     }
     
-    // Exécutez
-    debugOneSignalState();
+    // Exécutez (si on veut que OneSignal s'active)
+    // debugOneSignalState(); // désactivé en prod / tant que OneSignal off
 
 
 
@@ -841,6 +850,7 @@ window.setupNotificationUI = setupNotificationUI; // Pour debug
 window.debugOneSignalState = debugOneSignalState;
 window.getNotificationStatus = getNotificationStatus;
 window.updateToggleButton = updateToggleButton;
+window.showDailyWakeNotificationIfNeeded = showDailyWakeNotificationIfNeeded;
 
 console.log('🔧 Fonctions debug disponibles:');
 console.log('- debugOneSignalState()');
