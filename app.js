@@ -884,6 +884,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         localStorage.setItem('heure_notification', '08:00');
         localStorage.removeItem('install_prompt_shown');
+        // ✅ Reset des défis rattrapés (sinon le calendrier garde des jours jaunes)
+        localStorage.setItem('defis_madeup', JSON.stringify([]));
         alert('🗑️ Progression supprimée.');
         window.location.reload();
       });
