@@ -352,9 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const challengeTitleElement = document.getElementById('challenge-title');
       const challengeDescriptionElement = document.getElementById('challenge-description');
       const markDoneButton = document.getElementById('mark-done-btn');
-      const notesTextarea = document.getElementById('notes-textarea');
-      const notesStatus = document.getElementById('notes-status');
-      const clearNotesBtn = document.getElementById('clear-notes-btn');
     
     let notesSaveTimer = null;
     
@@ -842,6 +839,9 @@ function setNoteForDay(day, text) {
 // ========== NOTES (par jour) ==========
   
     // 1) Références DOM
+    const notesTextarea = document.getElementById('notes-textarea');
+    const clearNotesBtn = document.getElementById('clear-notes-btn');
+    const notesStatusEl = document.getElementById('notes-status');  
     const clearNotesBtn = document.getElementById('clear-notes-btn');
     const notesStatusEl = document.getElementById('notes-status');
     let notesSaveTimer = null;
