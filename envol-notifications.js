@@ -39,10 +39,6 @@ console.log('🔍 Boutons trouvés:', {
         console.warn('🛑 OneSignal désactivé -> debugOneSignalState ignoré');
         return;
       }
-      if (typeof ENABLE_ONESIGNAL !== 'undefined' && ENABLE_ONESIGNAL === false) {
-        console.warn('🛑 debugOneSignalState() ignoré: OneSignal désactivé');
-        return;
-      }
       
       // 1. Permission native
       console.log('1. Notification.permission:', Notification.permission);
@@ -64,11 +60,7 @@ console.log('🔍 Boutons trouvés:', {
           console.log('   - raw object:', JSON.stringify(sub, null, 2));
           
           // Teste optIn()
-          if (typeof sub.optIn === 'function') {
-            sub.optIn().then(result => {
-              console.log('   - optIn() result:', result);
-            });
-          }
+          console.log('   - optIn available?', typeof sub.optIn === 'function');
         }
       }
       
