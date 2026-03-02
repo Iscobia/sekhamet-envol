@@ -842,8 +842,6 @@ function setNoteForDay(day, text) {
     const notesTextarea = document.getElementById('notes-textarea');
     const clearNotesBtn = document.getElementById('clear-notes-btn');
     const notesStatusEl = document.getElementById('notes-status');  
-    const clearNotesBtn = document.getElementById('clear-notes-btn');
-    const notesStatusEl = document.getElementById('notes-status');
     let notesSaveTimer = null;
     
     // 2) Helpers stockage
