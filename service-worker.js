@@ -12,17 +12,17 @@ try {
 }
 */
 
-const CACHE_NAME = 'evolution-cache-v3';
+const CACHE_NAME = 'envol-cache-v4';
 const urlsToCache = [
-  '/base-pwa-coaching/',
-  '/base-pwa-coaching/index.html',
-  '/base-pwa-coaching/config.js',
-  '/base-pwa-coaching/manifest.json',
-  '/base-pwa-coaching/theme.css',
-  '/base-pwa-coaching/data/defis.js',
-  '/base-pwa-coaching/core/style.css',
-  '/base-pwa-coaching/core/app.js',
-  '/base-pwa-coaching/core/notifications.js'
+  '/sekhamet-envol/',
+  '/sekhamet-envol/index.html',
+  '/sekhamet-envol/config.js',
+  '/sekhamet-envol/manifest.json',
+  '/sekhamet-envol/theme.css',
+  '/sekhamet-envol/data/defis.js',
+  '/sekhamet-envol/core/style.css',
+  '/sekhamet-envol/core/app.js',
+  '/sekhamet-envol/core/notifications.js'
 ];
 
 
