@@ -47,7 +47,7 @@ window.APP_CONFIGS = {
     NOTIF_TITLE: "ENVOL — Défi du jour",
     INSTALL_TITLE: "Installer ENVOL ?",
     INSTALL_LABEL: "📱 Installer ENVOL sur l'écran d'accueil",
-    MAIN_TITLE: "Comprendre et utiliser les mécanismes de mon corps et de mon esprit en 77 jours",
+    MAIN_TITLE: "Me retrouver grâce aux mécanismes naturels de mon corps et de ma psychée en 77 jours",
     BROWSER_TITLE: "ENVOL - Défi Quotidien",
     TOTAL_DAYS: 77,
     SUPPORT_URL: "https://coaching.sekhamet.com/school/course/envol/"
