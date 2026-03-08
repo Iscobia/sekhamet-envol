@@ -12,7 +12,7 @@ try {
 }
 */
 
-const CACHE_NAME = 'envol-cache-v1.0.0';
+const CACHE_NAME = 'envol-cache-v1.0.1';
 const urlsToCache = [
   '/sekhamet-envol/',
   '/sekhamet-envol/index.html',
