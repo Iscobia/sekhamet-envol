@@ -47,7 +47,7 @@ window.APP_CONFIGS = {
     NOTIF_TITLE: "ENVOL — Défi du jour",
     INSTALL_TITLE: "Installer ENVOL ?",
     INSTALL_LABEL: "📱 Installer ENVOL sur l'écran d'accueil",
-    MAIN_TITLE: "Me retrouver grâce aux mécanismes naturels de mon corps et de ma psychée en 77 jours",
+    MAIN_TITLE: "Évoluer grâce à mon Corps et ma Psychée",
     BROWSER_TITLE: "ENVOL - Défi Quotidien",
     TOTAL_DAYS: 77,
     SUPPORT_URL: "https://coaching.sekhamet.com/school/course/envol/"
@@ -63,7 +63,7 @@ window.APP_CONFIGS = {
     NOTIF_TITLE: "ORIGINE — Défi du jour",
     INSTALL_TITLE: "Installer ORIGINE ?",
     INSTALL_LABEL: "📱 Installer ORIGINE sur l'écran d'accueil",
-    MAIN_TITLE: "Vers une alimentation consciente en 21 jours",
+    MAIN_TITLE: "Vers l'Alimentation consciente",
     BROWSER_TITLE: "ORIGINE - Défi Quotidien",
     TOTAL_DAYS: 21,
     SUPPORT_URL: "https://coaching.sekhamet.com/school/course/origine/"
@@ -79,7 +79,7 @@ window.APP_CONFIGS = {
     NOTIF_TITLE: "ENVELOPPE — Défi du jour",
     INSTALL_TITLE: "Installer ENVELOPPE ?",
     INSTALL_LABEL: "📱 Installer ENVELOPPE sur l'écran d'accueil",
-    MAIN_TITLE: "Je fais de mon corps mon Sanctuaire en 30 jours",
+    MAIN_TITLE: "Le Corps comme Outil de Retour à Soi",
     BROWSER_TITLE: "ENVELOPPE - Défi Quotidien",
     TOTAL_DAYS: 31,
     SUPPORT_URL: "https://coaching.sekhamet.com/school/course/enveloppe/"
@@ -95,7 +95,7 @@ window.APP_CONFIGS = {
     NOTIF_TITLE: "EMERGENCE — Défi du jour",
     INSTALL_TITLE: "Installer EMERGENCE ?",
     INSTALL_LABEL: "📱 Installer EMERGENCE sur l'écran d'accueil",
-    MAIN_TITLE: "Je fais de mon Inconscient mon Allié évolutif en 66 jours",
+    MAIN_TITLE: "Mon Inconscient comme Allié",
     BROWSER_TITLE: "EMERGENCE - Défi Quotidien",
     TOTAL_DAYS: 62,
     SUPPORT_URL: "https://coaching.sekhamet.com/school/course/emergence/"
