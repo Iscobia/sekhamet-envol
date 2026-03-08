@@ -54,7 +54,7 @@ self.addEventListener('message', (event) => {
     self.registration.showNotification(notifTitle, {
       body: (description || '').substring(0, 240),
       icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
-      badge: '/sekhamet-envol/assets/icons/ENVOL-192.png',
+      badge: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png',
       tag: `envol-jour-${jour}`,
       requireInteraction: true,
       data: { jour: String(jour), url: '/sekhamet-envol/#notifications' },
