@@ -546,11 +546,9 @@ console.log('🔍 Boutons trouvés:', {
      // 2. TEST NOTIFICATIONS NATIVES (seulement si permission)
       if (permissionOk) {
         try {
-          // ✅ Test "riche" = passe par le Service Worker + actions
-          window.isTestNotification = true;
-      
+
           if (typeof window.envoyerNotificationDuJour === 'function') {
-            await window.envoyerNotificationDuJour();
+            await window.envoyerNotificationDuJour(true);
             resultats.push('✅ NATIVES: Test riche envoyé (Service Worker)');
           } else {
             resultats.push('⚠️ NATIVES: envoyerNotificationDuJour indisponible');
@@ -558,8 +556,6 @@ console.log('🔍 Boutons trouvés:', {
         } catch (e) {
           console.error('❌ Test natif via SW:', e);
           resultats.push('❌ NATIVES: ' + e.message);
-        } finally {
-          window.isTestNotification = false;
         }
       } else {
         resultats.push('⚠️ NATIVES: Test impossible (permission manquante)');
@@ -655,36 +651,15 @@ console.log('🔍 Boutons trouvés:', {
   // 5. Fallback (plan B) - FONCTION SÉPARÉE !
     
     function setupFallbackNotifications() {
-    console.log('🔔 [Notifications] Utilisation fallback (notifications natives)');
-  
-      // Détecter Firefox
-    if (/Firefox/i.test(navigator.userAgent)) {
-      console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
-    }
-    
-    // Code de fallback simple
-    const testBtn = document.getElementById('test-notification-android-btn');
-    if (testBtn) {
-      testBtn.addEventListener('click', function() {
-        if ('Notification' in window && Notification.permission === 'granted') {
-          const jourActuel = localStorage.getItem('jour_actuel') || 1;
-          const notif = new Notification(`🎯 ${APP_NAME} - Jour ${jourActuel}`, {
-            body: 'Notification de test',
-            icon: '/sekhamet-envol/assets/icons/ENVOL-192_sansMarges.png'
-          });
-          
-          notif.onclick = () => {
-            window.focus();
-            notif.close();
-          };
-          
-          alert('✅ Notification native envoyée !');
-        } else {
-          alert('❌ Les notifications ne sont pas autorisées dans les paramètres de ton navigateur :\nvérifies tes autorisations et réessaie. 🙂\nSi ça ne fonctionne toujours pas, envoie-moi une capture d\'écran à contact@sekhamet.com');
-        }
-      });
-    }
-  } // ← fin de function setupFallbackNotifications()
+  console.log('🔔 [Notifications] Utilisation fallback (notifications natives)');
+
+  if (/Firefox/i.test(navigator.userAgent)) {
+    console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
+  }
+
+  // En mode fallback, on garde cette fonction pour les logs / avertissements éventuels.
+  // Le bouton test est géré uniquement par setupNotificationUI().
+} // ← fin de function setupFallbackNotifications()
   
   
   
@@ -916,7 +891,7 @@ setTimeout(function() {
         
         // Utiliser la fonction globale
         if (typeof window.envoyerNotificationDuJour === 'function') {
-          await window.envoyerNotificationDuJour();
+          await window.envoyerNotificationDuJour(true);
           alert('✅ Notification de test envoyée !');
         } else {
           alert('❌ Fonction non disponible. Essayez depuis la console.');
