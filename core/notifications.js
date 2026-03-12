@@ -169,7 +169,7 @@ console.log('🔍 Boutons trouvés:', {
 
          // 2B. Notifications natives (respecter le toggle ON/OFF)
           try {
-            const pref = localStorage.getItem(NOTIF_PREF_KEY);
+            const pref = notifLsGet('notifications_enabled', 'true');
             if (pref !== 'false') {
               await programmerNotificationQuotidienne();
               console.log('✅ Notifications natives prêtes');
@@ -203,7 +203,7 @@ console.log('🔍 Boutons trouvés:', {
         console.log('🔔 [Notifications] Configuration notifications quotidiennes...');
         
         // Récupérer l'heure configurée
-        const heureNotification = localStorage.getItem('heure_notification') || '09:00';
+        const heureNotification = notifLsGet('heure_notification', '09:00');
         const [heures, minutes] = heureNotification.split(':').map(Number);
         
         console.log(`🔔 [Notifications] Heure configurée: ${heures}h${minutes}`);
@@ -213,7 +213,7 @@ console.log('🔍 Boutons trouvés:', {
         
         // Méthode simplifiée: utiliser les tags
         await oneSignal.User.addTag('notification_time', heureNotification);
-        await oneSignal.User.addTag('app_name', 'ENVOL');
+        await oneSignal.User.addTag('app_name', APP_NAME);
         
         console.log('✅ [Notifications] Tags configurés');
       }
@@ -239,7 +239,7 @@ console.log('🔍 Boutons trouvés:', {
       const hasPermission = (permission === "granted");
     
       // Préférence utilisateur (ON/OFF) pour ENVOL (indépendant de la permission navigateur)
-      const pref = localStorage.getItem(NOTIF_PREF_KEY);
+      const pref = notifLsGet('notifications_enabled', 'true');
       const enabledByUser = (pref !== "false"); // par défaut: true si jamais rien n'est stocké
     
       // Si pas de permission, on ne peut pas considérer "actif", même si l'utilisateur veut ON
@@ -376,7 +376,7 @@ console.log('🔍 Boutons trouvés:', {
           if (confirm('Voudrais-tu désactiver tes notifications quotidiennes ?\n\nTu pourras les réactiver à tout moment si tu changes d\'avis 😊')) {
             try {
               // 1) Préférence OFF (c'est CE qui pilote le bouton)
-              localStorage.setItem(NOTIF_PREF_KEY, 'false');
+              notifLsSet('notifications_enabled', 'false');
       
               // 2) Stopper les notifications locales programmées (si l'app est ouverte)
               if (typeof window.stopNotificationsQuotidiennes === 'function') {
@@ -432,7 +432,7 @@ console.log('🔍 Boutons trouvés:', {
       
               } else {
                 // Permission refusée -> on remet OFF pour ne pas être incohérent
-                localStorage.setItem(NOTIF_PREF_KEY, 'false');
+                notifLsSet('notifications_enabled', 'false');
       
                 if (Notification.permission === "denied") {
                   alert('Je comprends ! Tu as choisi de ne pas recevoir de notifications.\n\nSi tu changes d\'avis, tu peux les autoriser dans les paramètres de ton navigateur.\n\nTon parcours continue quand même ! 🌈');
@@ -448,7 +448,7 @@ console.log('🔍 Boutons trouvés:', {
             console.error('Erreur activation:', error);
       
             // échec -> remettre OFF sinon bouton incohérent
-            localStorage.setItem(NOTIF_PREF_KEY, 'false');
+            notifLsSet('notifications_enabled', 'false');
       
             alert('Oups ! Je n\'ai pas réussi à afficher la demande de permission...\n\nPeut-être qu\'un bloqueur ou une protection de navigateur empêche ça.\n\nEssaie avec Chrome ou désactive temporairement les protections 💡');
           }
@@ -651,15 +651,46 @@ console.log('🔍 Boutons trouvés:', {
   // 5. Fallback (plan B) - FONCTION SÉPARÉE !
     
     function setupFallbackNotifications() {
-  console.log('🔔 [Notifications] Utilisation fallback (notifications natives)');
+      console.log('🔔 [Notifications] Utilisation fallback (notifications natives)');
 
-  if (/Firefox/i.test(navigator.userAgent)) {
-    console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
-  }
+      const toggleBtn = document.getElementById('notifications-toggle-btn');
+      const allowBtn = document.getElementById('allow-notifications-btn');
+      const testBtn = document.getElementById('test-notification-android-btn');
 
-  // En mode fallback, on garde cette fonction pour les logs / avertissements éventuels.
-  // Le bouton test est géré uniquement par setupNotificationUI().
-} // ← fin de function setupFallbackNotifications()
+      if (!('Notification' in window)) {
+        console.warn('❌ [Notifications] API Notification non disponible sur ce navigateur');
+
+        if (toggleBtn) {
+          toggleBtn.disabled = true;
+          toggleBtn.classList.remove('toggle-on');
+          toggleBtn.classList.add('toggle-off');
+          toggleBtn.innerHTML = '🚫 Notifications non supportées sur ce navigateur';
+        }
+
+        if (allowBtn) {
+          allowBtn.disabled = true;
+          allowBtn.textContent = '🚫 Notifications non supportées';
+        }
+
+        if (testBtn) {
+          testBtn.disabled = true;
+          testBtn.textContent = '🚫 Test indisponible';
+        }
+
+        return;
+      }
+
+      if (/Firefox/i.test(navigator.userAgent)) {
+        console.log('ℹ️ Firefox détecté - OneSignal bloqué par la protection');
+      }
+
+      console.log(`🔔 [Notifications] Permission actuelle : ${Notification.permission}`);
+
+      // Remet l’interface dans un état cohérent en mode natif
+      if (typeof updateToggleButton === 'function') {
+        updateToggleButton();
+      }
+    } // ← fin de function setupFallbackNotifications()
   
   
   
@@ -690,7 +721,7 @@ async function programmerNotificationQuotidienne() {
     return;
   }
 
-  const pref = localStorage.getItem(NOTIF_PREF_KEY);
+  const pref = notifLsGet('notifications_enabled', 'true');
   if (pref === 'false') {
     console.log(`⏸️ [Programmation ${APP_NAME}] Désactivée par l’utilisateur (toggle OFF)`);
     return;
@@ -715,7 +746,7 @@ async function programmerNotificationQuotidienne() {
   notificationsProgrammees = true;
 
   // 2. Récupérer l'heure configurée
-  const heureNotification = localStorage.getItem('heure_notification') || '08:00';
+  const heureNotification = notifLsGet('heure_notification', '08:00');
   const [heures, minutes] = heureNotification.split(':').map(Number);
 
   // 3. Calculer l'heure de déclenchement
@@ -824,7 +855,7 @@ async function envoyerNotificationDuJour(isTest = false) {
           window.focus();
           if (confirm(`Marquer le défi jour ${jourActuel} comme accompli ?`)) {
             // Marquer comme fait (si c'est le jour actuel)
-            if (jourActuel === parseInt(localStorage.getItem('jour_actuel'))) {
+            if (jourActuel === parseInt(notifLsGet('jour_actuel', '1'), 10)) {
               const defiObj = getDefiByDay(jourActuel);
               if (defiObj) {
                 defiObj.termine = true;
