@@ -1,10 +1,10 @@
 {
-  "id": "/sekhamet-envol/",
+  "id": "/",
   "name": "ENVOL - Défis quotidiens et Supports d'apprentissages",
   "short_name": "ENVOL",
   "description": "Evoluer grâce à mon Corps et ma Psychée",
-  "start_url": "/sekhamet-envol/",
-  "scope": "/sekhamet-envol/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0b252f",
   "theme_color": "#0b252f",

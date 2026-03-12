@@ -14,15 +14,15 @@ try {
 
 const CACHE_NAME = 'envol-cache-v1.0.1';
 const urlsToCache = [
-  '/sekhamet-envol/',
-  '/sekhamet-envol/index.html',
-  '/sekhamet-envol/config.js',
-  '/sekhamet-envol/manifest.json',
-  '/sekhamet-envol/theme.css',
-  '/sekhamet-envol/data/defis.js',
-  '/sekhamet-envol/core/style.css',
-  '/sekhamet-envol/core/app.js',
-  '/sekhamet-envol/core/notifications.js'
+  '/',
+  '/index.html',
+  '/config.js',
+  '/manifest.json',
+  '/theme.css',
+  '/data/defis.js',
+  '/core/style.css',
+  '/core/app.js',
+  '/core/notifications.js'
 ];
 
 
