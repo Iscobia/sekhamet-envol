@@ -107,6 +107,7 @@ console.log('🔍 Boutons trouvés:', {
         if (!ENABLE_ONESIGNAL) {
           console.log('🛑 [Notifications] OneSignal désactivé, notifications natives uniquement');
           setupFallbackNotifications();
+          await setupNotificationUI(null);
           return;
         }
 
@@ -413,7 +414,11 @@ console.log('🔍 Boutons trouvés:', {
       
           try {
             // Demande de permission via OneSignal
-            await oneSignal.Slidedown.promptPush();
+            if (ENABLE_ONESIGNAL && oneSignal?.Slidedown) {
+              await oneSignal.Slidedown.promptPush();
+            } else if ('Notification' in window) {
+              await Notification.requestPermission();
+            }
       
             setTimeout(async () => {
               if (Notification.permission === "granted") {
@@ -485,7 +490,11 @@ console.log('🔍 Boutons trouvés:', {
           console.log('Permission actuelle:', currentPermission);
           
           if (currentPermission === "default") {
-            await oneSignal.Slidedown.promptPush();
+            if (ENABLE_ONESIGNAL && oneSignal?.Slidedown) {
+              await oneSignal.Slidedown.promptPush();
+            } else if ('Notification' in window) {
+              await Notification.requestPermission();
+            }
             
             setTimeout(() => {
               if (Notification.permission === "granted") {
