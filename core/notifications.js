@@ -686,10 +686,11 @@ console.log('🔍 Boutons trouvés:', {
 
       console.log(`🔔 [Notifications] Permission actuelle : ${Notification.permission}`);
 
-      // Remet l’interface dans un état cohérent en mode natif
       if (typeof updateToggleButton === 'function') {
         updateToggleButton();
       }
+
+      // Le bouton test est géré uniquement par setupNotificationUI()
     } // ← fin de function setupFallbackNotifications()
   
   
@@ -791,25 +792,25 @@ async function envoyerNotificationDuJour(isTest = false) {
       // NOTIFICATION DE TEST vs QUOTIDIENNE
     const isTestMode = isTest === true;
     
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Notification quotidienne via Service Worker
-      navigator.serviceWorker.controller.postMessage({
-          action: 'SEND_NOTIFICATION',
-          appId: APP_ID,
-          appName: APP_NAME,
-          jour: jourActuel,
-          titre: defi.titre,
-          description: defi.description,
-          isTest: isTestMode,
-          icon: APP_ICON_192,
-          badge: APP_ICON_192,
-          url: window.location.href,
-          tag: `${APP_ID}-jour-${jourActuel}`
-        });
+    const reg = ('serviceWorker' in navigator) ? await navigator.serviceWorker.ready.catch(() => null) : null;
 
-      
+    if (reg?.active) {
+      reg.active.postMessage({
+        action: 'SEND_NOTIFICATION',
+        appId: APP_ID,
+        appName: APP_NAME,
+        jour: jourActuel,
+        titre: defi.titre,
+        description: defi.description,
+        isTest: isTestMode,
+        icon: APP_ICON_192,
+        badge: APP_ICON_192,
+        url: window.location.href,
+        tag: `${APP_ID}-jour-${jourActuel}`
+      });
+
       console.log('✅ Notification quotidienne envoyée via Service Worker');
-      
+
     } else {
       // NOTIFICATION DE TEST avec plus d'options
       const options = {
@@ -902,34 +903,3 @@ console.log('✅ envol-notifications.js - Toutes les fonctions disponibles');
 //=================================================================================
 
 
-// ===========================================================================
-// FALLBACK MANUEL : À MODIFIER
-// ===========================================================================
-setTimeout(function() {
-  console.log('🔔 [FALLBACK] Vérification attachement manuel...');
-  
-  // 1. BOUTON TEST - Ne s'attacher QUE si pas déjà d'écouteur
-  const testBtn = document.getElementById('test-notification-android-btn');
-  if (testBtn) {
-    // Vérifier si le bouton a déjà un gestionnaire d'événements
-    const hasOriginalHandler = testBtn.getAttribute('data-has-handler') === 'true';
-    
-    if (!hasOriginalHandler) {
-      console.log('⚠️ [FALLBACK] Pas d\'écouteur original, attachement manuel');
-      
-      testBtn.addEventListener('click', async function() {
-        console.log('🔔 [FALLBACK] Clic sur bouton test détecté!');
-        
-        // Utiliser la fonction globale
-        if (typeof window.envoyerNotificationDuJour === 'function') {
-          await window.envoyerNotificationDuJour(true);
-          alert('✅ Notification de test envoyée !');
-        } else {
-          alert('❌ Fonction non disponible. Essayez depuis la console.');
-        }
-      }, { once: false });
-    } else {
-      console.log('✅ [FALLBACK] Écouteur original déjà présent');
-    }
-  }
-}, 5000);
