@@ -854,8 +854,8 @@ backup-p {margin: 30px 0 2px 0px;}
 .program-selector-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .program-selector-grid[data-layout="duo-with-fondation"] {
@@ -872,7 +872,7 @@ backup-p {margin: 30px 0 2px 0px;}
   text-align: center;
   background: rgba(11, 37, 47, 0.08);
   color: #0b252f;
-  margin-bottom: 40px;
+  margin-bottom: 0;
 }
 
 .program-chip:hover:not(:disabled) {
@@ -938,8 +938,8 @@ backup-p {margin: 30px 0 2px 0px;}
 
 @media (min-width: 900px) {
   .program-selector-grid {
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 24px;
   }
 
   .program-chip {
@@ -969,4 +969,41 @@ backup-p {margin: 30px 0 2px 0px;}
   font-size: 0.85rem;
   line-height: 1.35;
   text-align: left;
+}
+
+
+/* ================ OVERLAY de  =============== */
+/* =============  défis terminés  ============= */
+
+.program-complete-overlay {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(5, 150, 105, 0.28);
+  text-align: center;
+}
+
+.program-complete-overlay[hidden] {
+  display: none;
+}
+
+.program-complete-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.program-complete-text {
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.program-complete-reset-link {
+  border: none;
+  background: transparent;
+  color: #047857;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
 }

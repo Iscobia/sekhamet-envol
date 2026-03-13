@@ -418,6 +418,7 @@ console.log('🔍 Boutons trouvés:', {
               await oneSignal.Slidedown.promptPush();
             } else if ('Notification' in window) {
               await Notification.requestPermission();
+              updateToggleButton();
             }
       
             setTimeout(async () => {
@@ -494,6 +495,7 @@ console.log('🔍 Boutons trouvés:', {
               await oneSignal.Slidedown.promptPush();
             } else if ('Notification' in window) {
               await Notification.requestPermission();
+              updateToggleButton();
             }
             
             setTimeout(() => {

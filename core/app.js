@@ -215,6 +215,91 @@ function renderProgramSelector() {
 }
 
 
+function getProgramFlow() {
+  const allowedIds = Array.isArray(window.ALLOWED_APP_IDS) ? window.ALLOWED_APP_IDS : [window.APP_ID];
+  const flow = Array.isArray(window.PROGRAM_FLOW) ? window.PROGRAM_FLOW : [];
+
+  return flow.filter(appId =>
+    allowedIds.includes(appId) &&
+    window.APP_CONFIGS &&
+    window.APP_CONFIGS[appId] &&
+    window.DEFIS_BY_APP &&
+    Array.isArray(window.DEFIS_BY_APP[appId])
+  );
+}
+
+function isProgramCompleted(appId) {
+  const defis = window.DEFIS_BY_APP?.[appId];
+  if (!Array.isArray(defis) || defis.length === 0) return false;
+
+  return defis.every(defi => defi.termine === true);
+}
+
+
+function isCurrentProgramCompleted() {
+  const defis = window.DEFIS;
+  if (!Array.isArray(defis) || defis.length === 0) return false;
+
+  return defis.every(defi => defi.termine === true);
+}
+
+function updateProgramCompleteOverlay() {
+  const overlay = document.getElementById('program-complete-overlay');
+  const resetLink = document.getElementById('program-complete-reset-link');
+  if (!overlay) return;
+
+  const completed = isCurrentProgramCompleted();
+  overlay.hidden = !completed;
+
+  if (resetLink && !resetLink.dataset.listenerAttached) {
+    resetLink.dataset.listenerAttached = "true";
+    resetLink.addEventListener('click', function () {
+      const resetBtn = document.getElementById('reset-progress-btn');
+      if (resetBtn) {
+        resetBtn.click();
+      }
+    });
+  }
+}
+
+
+
+function getRecommendedFlowAppId() {
+  const flow = getProgramFlow();
+
+  if (!flow.length) return window.DEFAULT_APP_ID || window.APP_ID;
+
+  for (const appId of flow) {
+    if (!isProgramCompleted(appId)) {
+      return appId;
+    }
+  }
+
+  return window.DEFAULT_APP_ID || flow[0] || window.APP_ID;
+}
+
+function ensureRecommendedFlowAppSelection() {
+  const allowedIds = Array.isArray(window.ALLOWED_APP_IDS) ? window.ALLOWED_APP_IDS : [window.APP_ID];
+
+  if (allowedIds.length <= 1) return false;
+
+  const url = new URL(window.location.href);
+  const explicitApp = url.searchParams.get("app");
+
+  // Si l'utilisateur a explicitement choisi une page, on respecte son choix
+  if (explicitApp) return false;
+
+  const recommendedAppId = getRecommendedFlowAppId();
+
+  if (!recommendedAppId || recommendedAppId === window.APP_ID) return false;
+
+  url.searchParams.set("app", recommendedAppId);
+  window.location.replace(url.toString());
+  return true;
+}
+
+
+
 function applyAppBranding() {
   document.title = APP_BROWSER_TITLE;
 
@@ -763,9 +848,11 @@ function checkForUpdates() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log(`🚀 Initialisation ${APP_NAME}...`);
-      setupTechnicalErrorCapture();
-      await loadInstallAppNameFromManifest();
-      debugOneSignal();
+    if (ensureRecommendedFlowAppSelection()) return;
+
+    setupTechnicalErrorCapture();
+    await loadInstallAppNameFromManifest();
+    debugOneSignal();
     
 
     //=============================================================
@@ -1272,6 +1359,8 @@ function setNoteForDay(day, text) {
   // ✅ Mettre à jour le bouton selon l'état du jour affiché
   updateMarkDoneButtonUI(jour);
   refreshNotesUIForDay(jour);
+  // Vérifier s'il faut mettre l'overlay de défis terminés
+  updateProgramCompleteOverlay();
 
   console.log("📌 afficherDefiDuJour appelé avec:", jour, "=> jourAffiche =", jourAffiche);
   }
@@ -1654,6 +1743,7 @@ function setNoteForDay(day, text) {
       if (typeof genererCalendrier === 'function') {
         genererCalendrier();
       }
+      updateProgramCompleteOverlay();
 
       showDailyWakeNotificationsForConfiguredApps().then(results => console.log('🔔 Notifs wake envoyées ?', results));
 
