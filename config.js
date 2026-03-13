@@ -22,6 +22,8 @@ window.NOTIFICATION_APP_IDS = window.ALLOWED_APP_IDS;
 window.DEFAULT_APP_ID = "envol";
 window.TECH_SUPPORT_EMAIL = "contact@sekhamet.com";
 
+// Ordre de progression par défault
+window.PROGRAM_FLOW = ["envol"]
 
 // OneSignal : laisser sur false tant que tu veux seulement les notifs natives
 window.ENABLE_ONESIGNAL = false;
