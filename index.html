@@ -91,17 +91,28 @@
         
         <!-- Calendrier -->
         <section class="calendar-section">
-            <h3>📅 Progression</h3>
-            <div id="calendar-grid" class="calendar-grid">
-                <!-- Les jours seront ajoutés par JavaScript -->
-            </div>
+    <h3>📅 Progression</h3>
 
-            <div class="pause-progression-wrap">
-              <button id="pause-progression-btn" class="pause-progression-btn" type="button">
-                ⏸️ Mettre ma progression en pause
-              </button>
-            </div>
-        </section>
+    <div id="program-complete-overlay" class="program-complete-overlay" hidden>
+      <div class="program-complete-title">🎉 Tu as terminé tous tes défis !</div>
+      <div class="program-complete-text">
+        Si tu veux recommencer, tu peux toujours
+        <button id="program-complete-reset-link" type="button" class="program-complete-reset-link">
+          réinitialiser ta progression
+        </button>
+      </div>
+    </div>
+
+    <div id="calendar-grid" class="calendar-grid">
+        <!-- Les jours seront ajoutés par JavaScript -->
+    </div>
+
+    <div class="pause-progression-wrap">
+      <button id="pause-progression-btn" class="pause-progression-btn" type="button">
+        ⏸️ Mettre ma progression en pause
+      </button>
+    </div>
+</section>
 
         <!-- Mes notes -->
         <section class="notes-box" aria-label="Mes notes">
