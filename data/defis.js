@@ -923,7 +923,7 @@ const DefisEmergence = [
   },
   {
     jour: 2,
-    titre: "Écouter sans interpréter",
+    titre: "Ecouter sans interpréter",
     description: "Pendant 2 minutes, écoute les sons autour de toi sans les nommer. Laisse-les simplement te traverser.",
     termine: false,
     dateValidation: null
@@ -1029,7 +1029,7 @@ const DefisEmergence = [
   },
   {
     jour: 17,
-    titre: "Évolution spontanée",
+    titre: "Evolution spontanée",
     description: "Comme hier, offre-toi un moment de solitude régénérante et choisis de te déconnecter de ton environnement. Observe si ta sensation interne évolue d’elle-même pendant 5 minutes.",
     termine: false,
     dateValidation: null
@@ -1079,7 +1079,7 @@ const DefisEmergence = [
   },
   {
     jour: 24,
-    titre: "Écriture automatique",
+    titre: "Ecriture automatique",
     description: "Donne-toi 5 minutes pour écrire ce que tu as sur le cœur à l’instant T : positif ou négatif, peu importe. Le but est que tes émotions s’organisent sous forme de mots conscients.",
     termine: false,
     dateValidation: null
@@ -1388,7 +1388,7 @@ const DefisReset = [
   {
   jour: 4,
   titre: "Marcher en silence",
-  description: "Marche pendant deux minutes en silence. Écoute les sons autour de toi et observe tes sensations. Laisse simplement l’expérience te traverser.",
+  description: "Marche pendant deux minutes en silence. Ecoute les sons autour de toi et observe tes sensations. Laisse simplement l’expérience te traverser.",
   termine: false,
   dateValidation: null
   },
@@ -1403,7 +1403,7 @@ const DefisReset = [
 
   {
   jour: 6,
-  titre: "Écouter sans nommer",
+  titre: "Ecouter sans nommer",
   description: "Pendant deux minutes, écoute les sons autour de toi sans essayer de les identifier. Laisse-les simplement apparaître et disparaître.",
   termine: false,
   dateValidation: null
@@ -1459,7 +1459,7 @@ const DefisReset = [
 
   {
   jour: 13,
-  titre: "Écouter son corps",
+  titre: "Ecouter son corps",
   description: "Pose intérieurement la question : « De quoi ai-je besoin ? » Accueille la première réponse qui apparaît, même si elle semble simple.",
   termine: false,
   dateValidation: null
@@ -1507,7 +1507,7 @@ const DefisReset = [
 
   {
   jour: 19,
-  titre: "Écrire une intention",
+  titre: "Ecrire une intention",
   description: "Écris une intention simple pour demain. Quel petit pas aimerais-tu faire vers ce qui compte pour toi ?",
   termine: false,
   dateValidation: null
@@ -1563,7 +1563,7 @@ const DefisReset = [
 
   {
   jour: 26,
-  titre: "Bonus - Écouter son corps",
+  titre: "Bonus - Ecouter son corps",
   description: "Ferme les yeux quelques instants et écoute ton corps. Quelles sensations sont présentes ?",
   termine: false,
   dateValidation: null
@@ -1623,7 +1623,7 @@ const DefisFondation = [
   },
   {
     jour: 7,
-    titre: "Expansion ou contraction - Écouter ton corps",
+    titre: "Expansion ou contraction - Ecouter ton corps",
     description: "À plusieurs moments de la journée, prends quelques secondes pour sentir ton état intérieur. Observe si une situation, une personne ou une pensée te met plutôt en expansion ou en contraction. Laisse ton corps devenir un repère simple pour discerner ce qui est bon pour toi.",
     termine: false,
     dateValidation: null
