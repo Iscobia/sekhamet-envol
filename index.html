@@ -75,7 +75,7 @@
         <div id="program-selector"></div>
         <!-- En-tête -->
         <header class="app-header">
-              <h1 id="app-main-title">Mon Défi Quotidien</h1>
+              <h1 id="app-main-title">Evoluer grâce à mon Corps et ma Psyché</h1>
               <div class="day-progress">Jour <span id="day-current">1</span>/<span id="day-total">77</span></div>
         </header>
         
@@ -91,28 +91,28 @@
         
         <!-- Calendrier -->
         <section class="calendar-section">
-    <h3>📅 Progression</h3>
+            <h3>📅 Progression</h3>
 
-    <div id="program-complete-overlay" class="program-complete-overlay" hidden>
-      <div class="program-complete-title">🎉 Tu as terminé tous tes défis !</div>
-      <div class="program-complete-text">
-        Si tu veux recommencer, tu peux toujours
-        <button id="program-complete-reset-link" type="button" class="program-complete-reset-link">
-          réinitialiser ta progression
-        </button>
-      </div>
-    </div>
+            <div id="program-complete-overlay" class="program-complete-overlay" hidden>
+              <div class="program-complete-title">🎉 Tu as terminé tous tes défis !</div>
+              <div class="program-complete-text">
+                Si tu veux recommencer, tu peux toujours
+                <button id="program-complete-reset-link" type="button" class="program-complete-reset-link">
+                  réinitialiser ta progression
+                </button>
+              </div>
+            </div>
 
-    <div id="calendar-grid" class="calendar-grid">
-        <!-- Les jours seront ajoutés par JavaScript -->
-    </div>
+            <div id="calendar-grid" class="calendar-grid">
+                <!-- Les jours seront ajoutés par JavaScript -->
+            </div>
 
-    <div class="pause-progression-wrap">
-      <button id="pause-progression-btn" class="pause-progression-btn" type="button">
-        ⏸️ Mettre ma progression en pause
-      </button>
-    </div>
-</section>
+            <div class="pause-progression-wrap">
+              <button id="pause-progression-btn" class="pause-progression-btn" type="button">
+                ⏸️ Mettre ma progression en pause
+              </button>
+            </div>
+        </section>
 
         <!-- Mes notes -->
         <section class="notes-box" aria-label="Mes notes">
@@ -225,23 +225,23 @@
     </div>
 
     <div id="error-banner" class="error-banner" hidden>
-  <div class="error-banner-head">
-    <div class="error-banner-title">⚠️ Un souci technique a été détecté</div>
-    <button id="error-banner-close" class="error-banner-close" type="button" aria-label="Fermer">✕</button>
-  </div>
-  <div id="error-banner-text" class="error-banner-text">
-    L’application a rencontré une erreur. Tu peux ignorer ce message ou envoyer un signalement au support.
-  </div>
-  <div class="error-banner-actions">
-    <button id="error-banner-mail" class="error-banner-btn primary" type="button">
-      📩 Envoyer au support
-    </button>
-    <button id="error-banner-copy" class="error-banner-btn secondary" type="button">
-      📋 Copier les détails
-    </button>
-  </div>
-</div>
-
+      <div class="error-banner-head">
+        <div class="error-banner-title">⚠️ Un souci technique a été détecté</div>
+        <button id="error-banner-close" class="error-banner-close" type="button" aria-label="Fermer">✕</button>
+      </div>
+      <div id="error-banner-text" class="error-banner-text">
+        L’application a rencontré une erreur. Tu peux ignorer ce message ou envoyer un signalement au support.
+      </div>
+      <div class="error-banner-actions">
+        <button id="error-banner-mail" class="error-banner-btn primary" type="button">
+          📩 Envoyer au support
+        </button>
+        <button id="error-banner-copy" class="error-banner-btn secondary" type="button">
+          📋 Copier les détails
+        </button>
+      </div>
+    </div>
+    
 
     <!-- Service Worker Registration -->
     <script>
