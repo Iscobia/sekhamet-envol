@@ -1,0 +1,997 @@
+/* =========================================================
+   FONDATION - OVERLAY SUPPORT
+   Styles dédiés à la fenêtre plein écran du support FONDATION
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   Variables du support
+   - Couleurs principales du lecteur
+   - La couleur d’accent reprend l’esprit de la chip FONDATION
+   --------------------------------------------------------- */
+:root {
+  --support-bg: rgba(8, 17, 23, 0.72);
+  --support-surface: #ffffff;
+  --support-surface-soft: #f8f6fc;
+  --support-text: #2d2233;
+  --support-text-soft: #5c4b66;
+  --support-border: rgba(91, 43, 115, 0.14);
+  --support-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+
+  --support-accent-start: #9c4fc2;
+  --support-accent-end: #5b2b73;
+  --support-accent-solid: #7a3f99;
+
+  --support-success-bg: #dff7e7;
+  --support-success-text: #0f6a3f;
+  --support-success-border: rgba(15, 106, 63, 0.22);
+
+  --support-note-bg: #f6f0fb;
+  --support-note-border: rgba(156, 79, 194, 0.22);
+
+  --support-bonus-bg: #fff5e9;
+  --support-bonus-border: rgba(245, 158, 11, 0.22);
+
+  --support-exercise-bg: #f4effb;
+  --support-exercise-border: rgba(156, 79, 194, 0.10);
+
+  --support-source-bg: #f7f7f8;
+  --support-source-border: rgba(0, 0, 0, 0.08);
+}
+
+/*Thème BASALTE */
+
+html[data-skin="basalte"] {
+  --support-bg: rgba(0, 0, 0, 0.78);
+
+  --support-surface: #181719;
+  --support-surface-soft: #242126;
+
+  --support-text: #f3eef5;
+  --support-text-soft: #c9becd;
+
+  --support-border: rgba(156, 79, 194, 0.30);
+  --support-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+
+  /* Même identité violette, mais plus lumineuse sur fond sombre */
+  --support-accent-start: #a95acb;
+  --support-accent-end: #c186dc;
+  --support-accent-solid: #a85bc8;
+
+  --support-success-bg: rgba(34, 163, 94, 0.18);
+  --support-success-text: #9ee7bb;
+  --support-success-border: rgba(94, 210, 137, 0.30);
+
+  --support-note-bg: rgba(156, 79, 194, 0.12);
+  --support-note-border: rgba(177, 102, 211, 0.30);
+
+  --support-bonus-bg: rgba(245, 158, 11, 0.11);
+  --support-bonus-border: rgba(245, 158, 11, 0.28);
+
+  --support-exercise-bg: rgba(156, 79, 194, 0.10);
+  --support-exercise-border: rgba(177, 102, 211, 0.24);
+
+  --support-source-bg: rgba(255, 255, 255, 0.045);
+  --support-source-border: rgba(255, 255, 255, 0.10);
+}
+
+/* ---------------------------------------------------------
+   Couche globale de l’overlay
+   - Plein écran
+   - Fond assombri
+   - Masqué par défaut
+   --------------------------------------------------------- */
+.support-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: none;
+  background: var(--support-bg);
+  backdrop-filter: blur(4px);
+}
+
+.support-overlay.is-open {
+  display: flex;
+}
+
+/* ---------------------------------------------------------
+   Coquille interne
+   - Contient sidebar + zone de lecture
+   - Grande carte centrée dans l’écran
+   --------------------------------------------------------- */
+.support-shell {
+  width: min(1320px, calc(100vw - 24px));
+  height: min(92vh, calc(100vh - 24px));
+  margin: auto;
+  background: var(--support-surface);
+  color: var(--support-text);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--support-shadow);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+
+/* ---------------------------------------------------------
+   Barre latérale desktop
+   - Visible sur PC
+   - Contient le titre + le sommaire
+   --------------------------------------------------------- */
+.support-sidebar {
+  border-right: 1px solid var(--support-border);
+  background:
+    linear-gradient(180deg, rgba(156, 79, 194, 0.08) 0%, rgba(156, 79, 194, 0.02) 100%);
+  padding: 20px 18px 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.support-sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.support-sidebar-titles {
+  min-width: 0;
+}
+
+.support-sidebar-kicker {
+  font-size: 0.82rem;
+  color: var(--support-text-soft);
+  margin-bottom: 4px;
+}
+
+.support-sidebar-title {
+  font-family: var(--font-titre, 'Cinzel', serif);
+  font-size: 1.9rem;
+  line-height: 1.05;
+  color: var(--support-accent-end);
+}
+
+.support-sidebar-subtitle {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: var(--support-text-soft);
+  line-height: 1.35;
+}
+
+/* ---------------------------------------------------------
+   Boutons d’icône
+   - Burger à gauche sur mobile
+   - Croix à droite pour fermer
+   --------------------------------------------------------- */
+.support-icon-btn {
+  appearance: none;
+  border: 1px solid var(--support-border);
+  background: #fff;
+  color: var(--support-accent-end);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.support-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(91, 43, 115, 0.12);
+  background: #fcfaff;
+}
+
+/* ---------------------------------------------------------
+   Résumé de progression
+   - Affiche X/Y chapitres terminés
+   - Pas de barre continue
+   --------------------------------------------------------- */
+.support-progress-box {
+  margin-bottom: 16px;
+  border: 1px solid var(--support-border);
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.support-progress-label {
+  font-size: 0.82rem;
+  color: var(--support-text-soft);
+  margin-bottom: 6px;
+}
+
+.support-progress-value {
+  font-weight: 700;
+  color: var(--support-accent-end);
+  font-size: 1rem;
+}
+
+.support-progress-meta {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: var(--support-text-soft);
+}
+
+/* ---------------------------------------------------------
+   Sommaire
+   - Liste scrollable des chapitres
+   - Les chapitres terminés passent en vert
+   - Le chapitre actif reçoit un accent visuel
+   --------------------------------------------------------- */
+.support-toc {
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.support-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.support-toc-item + .support-toc-item {
+  margin-top: 8px;
+}
+
+.support-toc-btn {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--support-text);
+  border-radius: 14px;
+  padding: 11px 12px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.support-toc-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--support-border);
+}
+
+.support-toc-btn.is-active {
+  background: linear-gradient(160deg, rgba(156, 79, 194, 0.14) 0%, rgba(91, 43, 115, 0.12) 100%);
+  border-color: rgba(91, 43, 115, 0.24);
+}
+
+.support-toc-btn.is-completed {
+  background: var(--support-success-bg);
+  color: var(--support-success-text);
+  border-color: var(--support-success-border);
+}
+
+.support-toc-title {
+  display: block;
+  font-size: 0.93rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.support-toc-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  opacity: 0.86;
+}
+
+/* ---------------------------------------------------------
+   Colonne principale de lecture
+   - Header sticky
+   - Contenu scrollable
+   --------------------------------------------------------- */
+.support-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.support-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--support-border);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.support-topbar-left,
+.support-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.support-topbar-title {
+  min-width: 0;
+}
+
+.support-topbar-current {
+  font-weight: 700;
+  color: var(--support-accent-end);
+  font-size: 0.96rem;
+}
+
+.support-topbar-sub {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: var(--support-text-soft);
+}
+
+.support-menu-btn {
+  display: none;
+}
+
+.support-content-wrap {
+  overflow: auto;
+  padding: 0;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------
+   Contenu du support
+   - Largeur de lecture confortable
+   - Typo, interlignes, titres
+   --------------------------------------------------------- */
+.support-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 28px 42px;
+}
+
+.support-content .support-section + .support-section {
+  margin-top: 30px;
+}
+
+.support-content h1,
+.support-content h2 {
+  font-family: var(--font-titre, 'Cinzel', serif);
+  font-weight: normal;
+  letter-spacing: 0.2px;
+  color: var(--support-accent-end);
+}
+
+.support-content h1 {
+  font-size: 2rem;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.support-content h2 {
+  font-size: 1.6rem;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.support-content h3 {
+  font-family: var(--font-texte, 'Lora', serif);
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.support-content p,
+.support-content li {
+  font-family: var(--font-texte, 'Lora', Georgia, serif);
+  font-size: 1.06rem;
+  line-height: 1.72;
+  color: var(--support-text);
+}
+
+.support-content p + p {
+  margin-top: 14px;
+}
+
+.support-content ul,
+.support-content ol {
+  margin: 10px 0 0 20px;
+}
+
+.support-content li + li {
+  margin-top: 10px;
+}
+
+.support-content strong {
+  font-weight: 700;
+}
+
+.support-content em {
+  font-style: italic;
+}
+
+.support-kicker {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  color: var(--support-accent-end);
+  background: rgba(156, 79, 194, 0.1);
+}
+
+/* ---------------------------------------------------------
+   Cartes de contenu / encadrés
+   - Notes
+   - Bonus
+   - Exercices
+   - Sources
+   - Focus
+   --------------------------------------------------------- */
+.support-card {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--support-border);
+  background: #fff;
+}
+
+.support-card--soft {
+  background: var(--support-surface-soft);
+}
+
+.support-card--note {
+  background: var(--support-note-bg);
+  border-color: var(--support-note-border);
+}
+
+.support-card--bonus {
+  background: var(--support-bonus-bg);
+  border-color: var(--support-bonus-border);
+}
+
+.support-card--exercise,
+.support-card--practice {
+  background: var(--support-exercise-bg);
+  border-color: var(--support-exercise-border);
+}
+
+.support-card--source {
+  background: var(--support-source-bg);
+  border-color: var(--support-source-border);
+}
+
+.support-card--focus {
+  background: linear-gradient(160deg, rgba(156, 79, 194, 0.1) 0%, rgba(91, 43, 115, 0.08) 100%);
+  border-color: rgba(91, 43, 115, 0.18);
+}
+
+.support-card h3 {
+  margin-bottom: 10px;
+  /* margin-top: 25px; Supprimé à cause des encadrés de II- 4)*/
+}
+
+/* ---------------------------------------------------------
+   Barre d’actions basse
+   - Bouton terminer le chapitre
+   - Bouton chapitre précédent / suivant
+   --------------------------------------------------------- */
+.support-bottombar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--support-border);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.support-nav-actions,
+.support-main-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.support-btn {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.94rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.support-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.support-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.support-btn--ghost {
+  background: rgba(91, 43, 115, 0.08);
+  color: var(--support-accent-end);
+}
+
+.support-btn--primary {
+  background: linear-gradient(160deg, var(--support-accent-start) 0%, var(--support-accent-end) 100%);
+  color: #fff;
+  box-shadow: 0 12px 20px rgba(91, 43, 115, 0.18);
+}
+
+.support-btn--success {
+  background: linear-gradient(160deg, #22a35e 0%, #15803d 100%);
+  color: #fff;
+}
+
+.support-btn--done {
+  background: var(--support-success-bg);
+  color: var(--support-success-text);
+  border: 1px solid var(--support-success-border);
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------
+   Badge d’état
+   - Affiché près du titre courant
+   --------------------------------------------------------- */
+.support-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.support-status-badge.is-pending {
+  background: rgba(91, 43, 115, 0.08);
+  color: var(--support-accent-end);
+}
+
+.support-status-badge.is-done {
+  background: var(--support-success-bg);
+  color: var(--support-success-text);
+}
+
+/* ---------------------------------------------------------
+   Sommaire mobile
+   - Panneau coulissant
+   - Utilisé quand l’écran est étroit
+   --------------------------------------------------------- */
+.support-mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 21000;
+  display: none;
+}
+
+.support-mobile-drawer.is-open {
+  display: block;
+}
+
+.support-mobile-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.support-mobile-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(88vw, 360px);
+  height: 100%;
+  background: #fff;
+  box-shadow: 12px 0 30px rgba(0, 0, 0, 0.18);
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.support-mobile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ---------------------------------------------------------
+   États de masquage utilitaires
+   --------------------------------------------------------- */
+.support-hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   Responsive tablette/mobile
+   - Sidebar desktop masquée
+   - Burger visible
+   - Lecture optimisée
+   --------------------------------------------------------- */
+@media (max-width: 980px) {
+  .support-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .support-sidebar {
+    display: none;
+  }
+
+  .support-menu-btn {
+    display: inline-flex;
+  }
+
+  .support-content {
+    padding: 24px 20px 36px;
+  }
+}
+
+@media (max-width: 700px) {
+  .support-shell {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .support-topbar {
+    padding: 12px 14px;
+  }
+
+  .support-content {
+    padding: 20px 16px 30px;
+  }
+
+  .support-content h1 {
+    font-size: 1.7rem;
+  }
+
+  .support-content h2 {
+    font-size: 1.42rem;
+    margin-top: 20px;
+  }
+
+  .support-content h3 {
+    font-size: 1.12rem;
+  }
+
+  .support-content p,
+  .support-content li {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .support-bottombar {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .support-nav-actions,
+  .support-main-actions {
+    width: 100%;
+  }
+
+  .support-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+
+/* ---------------------------------------------------------
+   Formulaires dynamiques FONDATION
+   --------------------------------------------------------- */
+.support-form-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.support-field {
+  display: grid;
+  gap: 8px;
+}
+
+.support-field-label,
+.support-mini-title {
+  font-weight: 700;
+  color: var(--support-accent-end);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.support-textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 14px;
+  border: 1px solid var(--support-border);
+  background: #fff;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--support-text);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.support-textarea:focus {
+  outline: 2px solid rgba(156, 79, 194, 0.18);
+  border-color: rgba(91, 43, 115, 0.28);
+}
+
+.support-inline-note {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+.support-form-meta {
+  margin-top: 14px;
+  font-size: 0.86rem;
+  color: var(--support-text-soft);
+}
+
+.support-form-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.support-people-list {
+  display: grid;
+  gap: 16px;
+}
+
+.support-person-card {
+  border: 1px solid var(--support-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 14px;
+}
+
+.support-person-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.support-person-head h3 {
+  margin: 0;
+}
+
+.support-remove-person-btn {
+  appearance: none;
+  border: 1px solid rgba(145, 65, 65, 0.18);
+  background: rgba(185, 28, 28, 0.08);
+  color: #991b1b;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.support-remove-person-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.support-person-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.support-mini-card {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(91, 43, 115, 0.12);
+  background: #fff;
+}
+
+.support-mini-card--gauge {
+  justify-content: start;
+  align-content: start;
+}
+
+.support-textarea--mini {
+  min-height: 96px;
+}
+
+.support-gauge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 42px;
+}
+
+.support-gauge-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.support-gauge-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.support-gauge-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 2px solid rgba(45, 34, 51, 0.14);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.support-gauge-option.is-gauge-1 .support-gauge-dot { background: #d84b4b; }
+.support-gauge-option.is-gauge-2 .support-gauge-dot { background: #f28a4b; }
+.support-gauge-option.is-gauge-3 .support-gauge-dot { background: #f1c94a; }
+.support-gauge-option.is-gauge-4 .support-gauge-dot { background: #82c96b; }
+.support-gauge-option.is-gauge-5 .support-gauge-dot { background: #32a66a; }
+
+.support-gauge-option input:checked + .support-gauge-dot {
+  transform: scale(1.08);
+  border-color: var(--support-accent-end);
+  box-shadow: 0 0 0 4px rgba(156, 79, 194, 0.14);
+}
+
+.support-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------
+   Galerie Bonhommes aux allumettes
+   --------------------------------------------------------- */
+.support-bonhommes-steps {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.support-bonhommes-step {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.support-bonhommes-media {
+  display: block;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--support-border);
+  background: #fff;
+}
+
+.support-bonhommes-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 860px) {
+  .support-bonhommes-step {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .support-person-grid {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .support-mini-card {
+    flex: 1 1 auto;
+  }
+}
+
+
+
+/*Thème BASALTE */
+html[data-skin="basalte"] .support-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(156, 79, 194, 0.13) 0%,
+      rgba(18, 17, 19, 0.96) 100%
+    );
+}
+
+html[data-skin="basalte"] .support-topbar,
+html[data-skin="basalte"] .support-bottombar {
+  background: rgba(24, 23, 25, 0.94);
+}
+
+html[data-skin="basalte"] .support-progress-box,
+html[data-skin="basalte"] .support-card,
+html[data-skin="basalte"] .support-textarea,
+html[data-skin="basalte"] .support-person-card,
+html[data-skin="basalte"] .support-mini-card,
+html[data-skin="basalte"] .support-bonhommes-media,
+html[data-skin="basalte"] .support-icon-btn,
+html[data-skin="basalte"] .support-mobile-panel {
+  background: var(--support-surface-soft);
+  color: var(--support-text);
+}
+
+html[data-skin="basalte"] .support-toc-btn {
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--support-text);
+}
+
+html[data-skin="basalte"] .support-toc-btn.is-active {
+  background:
+    linear-gradient(
+      160deg,
+      rgba(169, 90, 203, 0.24),
+      rgba(91, 43, 115, 0.30)
+    );
+  border-color: rgba(193, 134, 220, 0.42);
+}
+
+html[data-skin="basalte"] .support-card--soft {
+  background: var(--support-surface-soft);
+}
+
+html[data-skin="basalte"] .support-card--note {
+  background: var(--support-note-bg);
+}
+
+html[data-skin="basalte"] .support-card--bonus {
+  background: var(--support-bonus-bg);
+}
+
+html[data-skin="basalte"] .support-card--exercise,
+html[data-skin="basalte"] .support-card--practice {
+  background: var(--support-exercise-bg);
+}
+
+html[data-skin="basalte"] .support-card--source {
+  background: var(--support-source-bg);
+}
+
+html[data-skin="basalte"] .support-content p,
+html[data-skin="basalte"] .support-content li,
+html[data-skin="basalte"] .support-textarea {
+  color: var(--support-text);
+}
+
+html[data-skin="basalte"] .support-textarea {
+  color-scheme: dark;
+}
+
+html[data-skin="basalte"] .support-icon-btn:hover {
+  background: rgba(156, 79, 194, 0.16);
+}

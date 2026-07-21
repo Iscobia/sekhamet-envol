@@ -1,0 +1,15 @@
+FONDATION — architecture stabilisée
+
+Remplacer :
+- data/fondation/support-overlay.js
+- data/fondation/fondation-support.js
+
+Corrections :
+- un seul système de sauvegarde, situé dans support-overlay.js ;
+- initialisation automatique par data-support-form, sans dépendre de l’id du chapitre ;
+- sauvegarde des deux encadrés d’Effet miroir ;
+- première personne affichée immédiatement ;
+- suppression du double ajout de personnes ;
+- migration des anciennes clés de localStorage, y compris weighs -> burdens.
+
+Après remplacement, vider le cache de la PWA pour forcer le chargement des nouveaux scripts.
