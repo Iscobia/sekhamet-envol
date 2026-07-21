@@ -1,8 +1,172 @@
-// theme.css
+/* =========================================================
+   IDENTITÉ VISUELLE & SKINS
+   Une seule source de vérité pour toutes les couleurs.
+   ========================================================= */
 
 :root {
-  --app-bg: linear-gradient(160deg, #0b252f 0%, #0e303d 100%);
-  --primary-gradient: linear-gradient(160deg, #0b252f 0%, #0e303d 100%);
-  --secundary-gradient: linear-gradient(160deg, #0e303d 0%, #014055 100%);
-  --primary-text: #0b252f;
+  --font-titre: "Cinzel", Georgia, serif;
+  --font-texte: "Lora", Georgia, serif;
+
+  --radius-net: 4px;
+  --radius-standard: 10px;
+  --radius-pill: 999px;
+
+  /* COULEURS MÉTIER : identiques dans les deux skins */
+  --etat-valide: linear-gradient(135deg, #1e7b53 0%, #0bca7e 40%, #1c9b64 55%, #097540 100%);
+  --etat-manque: linear-gradient(135deg, #b8161d 0%, #e42b2f 40%, #b40e16 55%, #890006 100%);
+  --etat-rattrape: linear-gradient(135deg, #ba6b00 0%, #f2ba3e 40%, #d67900 55%, #9d5500 100%);
+  --etat-jour-courant: linear-gradient(135deg, #b66d32 0%,  #a96025 10%, #e49c62 35%, #d07c38 45%, #a96025 70%, #704019 100%);
+  --etat-jour-courant-bordure: #d97706;
+  --etat-texte: #ffffff;
+
+  --danger: linear-gradient(160deg, #dc2626 0%, #991b1b 100%);
+  --attention: linear-gradient(160deg, #f97316 0%, #ea580c 100%);
+
+  --programme-fondation: linear-gradient(160deg, #8e5aa8 0%, #563565 100%);
+  --programme-envol: linear-gradient(160deg, #223d45 0%, #152c34 100%);
+  --programme-origine: linear-gradient(160deg, #c5302f 0%, #b91f1e 100%);
+  --programme-enveloppe: linear-gradient(160deg, #4f8068 0%, #37604c 100%);
+  --programme-emergence: linear-gradient(135deg, #e38b26 0%, #c96e06 100%);
+  --programme-reset: linear-gradient(160deg, #4f8068 0%, #37604c 100%);
+  --installation: linear-gradient(135deg, #1e7b53 0%, #0bca7e 40%, #1c9b64 55%, #097540 100%);
+
+  /* MARBRE */
+  --background-img-marbre: url("./assets/pictures/BG_Marbre.webp");
+  --app-surface-marbre: rgba(255,255,255,.50);
+  --surface-pleine-marbre: #ffffff;
+  --surface-douce-marbre: rgba(255,255,255,.72);
+  --surface-challenge-marbre: rgba(250,249,247,.86);
+  --surface-technique-marbre: rgba(255,248,239,.88);
+  --surface-attention-marbre: rgba(246,227,210,.92);
+  --surface-danger-marbre: rgba(243,218,218,.92);
+  --jour-futur-fond-marbre: rgba(11,37,47,.08);
+  --jour-futur-texte-marbre: #0b252f;
+  --texte-principal-marbre: #2c2926;
+  --texte-secondaire-marbre: #625d56;
+  --titre-principal-marbre: #273c43;
+  --texte-attention-marbre: #824919;
+  --texte-danger-marbre: #702020;
+  --bordure-marbre: rgba(48,43,38,.18);
+  --bordure-douce-marbre: rgba(48,43,38,.10);
+  --ombre-app-marbre: 0 20px 60px rgba(34,28,24,.24);
+  --couleur-action-marbre: linear-gradient(135deg, #b66d32 0%,  #a96025 10%, #e49c62 35%, #d07c38 45%, #a96025 70%, #704019 100%);
+
+  /* BASALTE */
+  --background-img-basalte: url("./assets/pictures/BG_Basalte.webp");
+  --app-surface-basalte: rgba(28,20,21,.50);
+  --surface-pleine-basalte: #252829;
+  --surface-douce-basalte: rgba(4,7,8,.30);
+  --surface-challenge-basalte: rgba(39,42,43,.88);
+  --surface-technique-basalte: rgba(45,40,35,.90);
+  --surface-attention-basalte: rgba(105,72,39,.48);
+  --surface-danger-basalte: rgba(92,34,34,.46);
+  --jour-futur-fond-basalte: rgba(200,200,200,.10);
+  --jour-futur-texte-basalte: #ffffff;
+  --texte-principal-basalte: #f0ece5;
+  --texte-secondaire-basalte: #c9c1b7;
+  --titre-principal-basalte: #efe5d5;
+  --texte-attention-basalte: #f2d0aa;
+  --texte-danger-basalte: #f1c1c1;
+  --bordure-basalte: rgba(239,229,213,.24);
+  --bordure-douce-basalte: rgba(239,229,213,.13);
+  --ombre-app-basalte: 0 24px 70px rgba(0,0,0,.48);
+  --couleur-action-basalte: linear-gradient(135deg, #b66d32 0%,  #a96025 10%, #e49c62 35%, #d07c38 45%, #a96025 70%, #704019 100%);
+
+  /* BLOC TECHNIQUE — MARBRE */
+  --tech-button-fond-marbre: linear-gradient(165deg, #fafafa 0%, #f3f3f3 100%);
+  --tech-button-texte-marbre: #4a4a4a;
+  --tech-button-bordure-marbre: #777777;
+  --tech-cache-fond-marbre: linear-gradient(135deg, #b66d32 0%,  #a96025 10%, #e49c62 35%, #d07c38 45%, #a96025 70%, #704019 100%);
+  --tech-cache-texte-marbre: #ffffff;
+  --tech-info-fond-marbre: rgba(255,255,255,.18);
+  --tech-info-bordure-marbre: rgba(199,121,45,.34);
+
+  --danger-cadre-fond-marbre:  rgba(150,0,0,.2);
+  --danger-cadre-bordure-marbre: #a7282d;
+  --danger-bouton-fond-marbre: linear-gradient(135deg, #a83236 0%, #7f2024 100%);
+  --danger-bouton-texte-marbre: #ffffff;
+
+  /* BLOC TECHNIQUE — BASALTE */
+  --tech-button-fond-basalte: linear-gradient(160deg, #252525 0%, #0c0c0c 100%);
+  --tech-button-texte-basalte: #f4f1ec;
+  --tech-button-bordure-basalte: #65676a;
+  --tech-cache-fond-basalte: linear-gradient(135deg, #b66d32 0%,  #a96025 10%, #e49c62 35%, #d07c38 45%, #a96025 70%, #704019 100%);
+  --tech-cache-texte-basalte: #ffffff;
+  --tech-info-fond-basalte: rgba(255,255,255,.035);
+  --tech-info-bordure-basalte: rgba(201,178,143,.30);
+
+  --danger-cadre-fond-basalte: rgba(150,0,0,.2);
+  --danger-cadre-bordure-basalte: #bd4b50;
+  --danger-bouton-fond-basalte: linear-gradient(135deg, #8d2b30 0%, #59191d 100%);
+  --danger-bouton-texte-basalte: #ffffff;
+
+  /* Variables actives : Marbre par défaut */
+  --background-img: var(--background-img-marbre);
+  --app-surface: var(--app-surface-marbre);
+  --surface-pleine: var(--surface-pleine-marbre);
+  --surface-douce: var(--surface-douce-marbre);
+  --surface-challenge: var(--surface-challenge-marbre);
+  --surface-technique: var(--surface-technique-marbre);
+  --surface-attention: var(--surface-attention-marbre);
+  --surface-danger: var(--surface-danger-marbre);
+  --jour-futur-fond: var(--jour-futur-fond-marbre);
+  --jour-futur-texte: var(--jour-futur-texte-marbre);
+  --texte-principal: var(--texte-principal-marbre);
+  --texte-secondaire: var(--texte-secondaire-marbre);
+  --titre-principal: var(--titre-principal-marbre);
+  --texte-attention: var(--texte-attention-marbre);
+  --texte-danger: var(--texte-danger-marbre);
+  --bordure: var(--bordure-marbre);
+  --bordure-douce: var(--bordure-douce-marbre);
+  --ombre-app: var(--ombre-app-marbre);
+  --couleur-action: var(--couleur-action-marbre);
+
+  --tech-button-fond: var(--tech-button-fond-marbre);
+  --tech-button-texte: var(--tech-button-texte-marbre);
+  --tech-button-bordure: var(--tech-button-bordure-marbre);
+  --tech-cache-fond: var(--tech-cache-fond-marbre);
+  --tech-cache-texte: var(--tech-cache-texte-marbre);
+  --tech-info-fond: var(--tech-info-fond-marbre);
+  --tech-info-bordure: var(--tech-info-bordure-marbre);
+  --danger-cadre-fond: var(--danger-cadre-fond-marbre);
+  --danger-cadre-bordure: var(--danger-cadre-bordure-marbre);
+  --danger-bouton-fond: var(--danger-bouton-fond-marbre);
+  --danger-bouton-texte: var(--danger-bouton-texte-marbre);
+}
+
+html[data-skin="marbre"] { color-scheme: light; }
+
+html[data-skin="basalte"] {
+  color-scheme: dark;
+  --background-img: var(--background-img-basalte);
+  --app-surface: var(--app-surface-basalte);
+  --surface-pleine: var(--surface-pleine-basalte);
+  --surface-douce: var(--surface-douce-basalte);
+  --surface-challenge: var(--surface-challenge-basalte);
+  --surface-technique: var(--surface-technique-basalte);
+  --surface-attention: var(--surface-attention-basalte);
+  --surface-danger: var(--surface-danger-basalte);
+  --jour-futur-fond: var(--jour-futur-fond-basalte);
+  --jour-futur-texte: var(--jour-futur-texte-basalte);
+  --texte-principal: var(--texte-principal-basalte);
+  --texte-secondaire: var(--texte-secondaire-basalte);
+  --titre-principal: var(--titre-principal-basalte);
+  --texte-attention: var(--texte-attention-basalte);
+  --texte-danger: var(--texte-danger-basalte);
+  --bordure: var(--bordure-basalte);
+  --bordure-douce: var(--bordure-douce-basalte);
+  --ombre-app: var(--ombre-app-basalte);
+  --couleur-action: var(--couleur-action-basalte);
+
+  --tech-button-fond: var(--tech-button-fond-basalte);
+  --tech-button-texte: var(--tech-button-texte-basalte);
+  --tech-button-bordure: var(--tech-button-bordure-basalte);
+  --tech-cache-fond: var(--tech-cache-fond-basalte);
+  --tech-cache-texte: var(--tech-cache-texte-basalte);
+  --tech-info-fond: var(--tech-info-fond-basalte);
+  --tech-info-bordure: var(--tech-info-bordure-basalte);
+  --danger-cadre-fond: var(--danger-cadre-fond-basalte);
+  --danger-cadre-bordure: var(--danger-cadre-bordure-basalte);
+  --danger-bouton-fond: var(--danger-bouton-fond-basalte);
+  --danger-bouton-texte: var(--danger-bouton-texte-basalte);
 }

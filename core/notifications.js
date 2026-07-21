@@ -7,10 +7,18 @@ const APP_ID = APP.ID || 'app';
 const APP_NAME = APP.NAME || 'APP';
 const STORAGE_PREFIX = APP.STORAGE_PREFIX || `${APP_ID}_`;
 const APP_ICON_192 = APP.ICON_192 || './core/assets/icons/default-192.png';
-const APP_ICON_512 = APP.ICON_512 || APP_ICON_192;
 
 const NOTIF_PREF_KEY = `${STORAGE_PREFIX}notifications_enabled`;
 const ENABLE_ONESIGNAL = window.ENABLE_ONESIGNAL === true;
+
+const allowedAppIds =
+  Array.isArray(window.ALLOWED_APP_IDS)
+    ? window.ALLOWED_APP_IDS
+    : [APP_ID];
+
+const hasMultiplePrograms =
+  allowedAppIds.length > 1;
+
 
 function notifLsGet(key, fallback = null) {
   const value = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
@@ -28,15 +36,12 @@ function isProgressPaused() {
 
 
 // Attendre que le DOM soit chargé
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('🔔 [Notifications] DOM chargé, initialisation...');
 
-   
-  // ✅ Mettre à jour le toggle tout de suite (sans attendre OneSignal)
-  updateToggleButton();
-  
-  // Initialiser après un délai pour laisser OneSignal se charger
-  setTimeout(initEnvolNotifications, 2000);
+  setTimeout(() => {
+    void initEnvolNotifications();
+  }, 300);
 });
 
 
@@ -331,7 +336,7 @@ console.log('🔍 Boutons trouvés:', {
       
       // Message pour Firefox
       const firefoxWarning = document.createElement('div');
-      firefoxWarning.className = 'browser-warning.firefox';
+      firefoxWarning.className = 'browser-warning firefox';
       firefoxWarning.innerHTML = `
         <p><strong>🦊 Firefox détecté :</strong></p>
         <p>Tes notifications peuvent être bloquées par la "Protection renforcée".</p>
@@ -399,6 +404,23 @@ console.log('🔍 Boutons trouvés:', {
           // ACTIVER
           // =========================
       
+          if (
+            'Notification' in window &&
+            Notification.permission === 'denied'
+          ) {
+            notifLsSet('notifications_enabled', 'false');
+
+            alert(
+              '🔒 Les notifications sont bloquées dans les paramètres de ton navigateur.\n\n' +
+              'Je ne peux pas rouvrir automatiquement la demande d’autorisation.\n\n' +
+              'Clique sur l’icône à gauche de l’adresse du site, puis autorise les notifications avant de réessayer.'
+            );
+
+            updateToggleButton();
+            return;
+          }
+
+
           // On enregistre l'intention ON tout de suite (le bouton passera ON)
           localStorage.setItem(NOTIF_PREF_KEY, 'true');
       
@@ -781,20 +803,26 @@ async function envoyerNotificationDuJour(isTest = false) {
       return;
     }
 
-    const jourActuel = parseInt(notifLsGet('jour_actuel', '1'), 10) || 1;
+    const jourActuel =
+      parseInt(notifLsGet('jour_actuel', '1'), 10) || 1;
 
-      // 2. Récupérer le défi du jour
-      const defi = getDefiByDay(jourActuel);
-      
-      if (!defi) {
-        console.error('❌ Défi non trouvé pour le jour', jourActuel);
-        return;
-      }
-      
-      // NOTIFICATION DE TEST vs QUOTIDIENNE
+    const defi = getDefiByDay(jourActuel);
+
+    if (!defi) {
+      console.error('❌ Défi non trouvé pour le jour', jourActuel);
+      return;
+    }
+
     const isTestMode = isTest === true;
-    
-    const reg = ('serviceWorker' in navigator) ? await navigator.serviceWorker.ready.catch(() => null) : null;
+
+    const reg =
+      ('serviceWorker' in navigator)
+        ? await navigator.serviceWorker.ready.catch(() => null)
+        : null;
+
+
+    const notificationBadge =
+      "./core/assets/icons/EVOLUTION-192.png";
 
     if (reg?.active) {
       reg.active.postMessage({
@@ -805,8 +833,12 @@ async function envoyerNotificationDuJour(isTest = false) {
         titre: defi.titre,
         description: defi.description,
         isTest: isTestMode,
+
         icon: APP_ICON_192,
-        badge: APP_ICON_192,
+        badge: hasMultiplePrograms
+          ? notificationBadge
+          : undefined,
+
         url: window.location.href,
         tag: `${APP_ID}-jour-${jourActuel}`
       });
@@ -814,68 +846,11 @@ async function envoyerNotificationDuJour(isTest = false) {
       console.log('✅ Notification quotidienne envoyée via Service Worker');
 
     } else {
-      // NOTIFICATION DE TEST avec plus d'options
-      const options = {
-        body: `Jour ${jourActuel}: ${defi.titre}\n\n${defi.description.substring(0, 100)}...`,
-        icon: APP_ICON_192,
-        tag: `test-${Date.now()}`,
-        requireInteraction: true,
-        data: {
-          jour: jourActuel,
-          url: window.location.href,
-          type: 'test'
-        }
-      };
-      
-      const notification = new Notification(
-        isTestMode ? `🎯 ${APP_NAME} - Test Notification` : `🔔 ${APP_NAME} - Jour ${jourActuel}`,
-        options
+      console.warn(
+        `⚠️ [Notification ${APP_NAME}] Service Worker indisponible : notification ignorée pour éviter une notification Chrome simplifiée.`
       );
-      
-      // Gestion des clics sur la notification
-      notification.onclick = function(event) {
-        event.preventDefault();
-        window.focus();
-        
-        // Action par défaut
-        if (defi.termine) {
-          alert(`Défi du jour ${jourActuel} déjà validé !`);
-        } else {
-          alert(`Défi du jour ${jourActuel}: ${defi.titre}`);
-        }
-        
-        notification.close();
-      };
-      
-      // Gestion des boutons d'action
-      notification.addEventListener('click', function(event) {
-        const action = event.action;
-        
-        if (action === 'voir') {
-          window.focus();
-          alert(`📖 Défi du jour ${jourActuel}:\n\n${defi.titre}\n\n${defi.description}`);
-        } else if (action === 'marquer') {
-          window.focus();
-          if (confirm(`Marquer le défi jour ${jourActuel} comme accompli ?`)) {
-            // Marquer comme fait (si c'est le jour actuel)
-            if (jourActuel === parseInt(notifLsGet('jour_actuel', '1'), 10)) {
-              const defiObj = getDefiByDay(jourActuel);
-              if (defiObj) {
-                defiObj.termine = true;
-                defiObj.dateValidation = new Date().toISOString();
-                alert('✅ Défi marqué comme accompli !');
-              }
-            }
-          }
-        }
-      });
-      
-      // Auto-fermeture après 10 secondes (au lieu de 30)
-      setTimeout(() => notification.close(), 10000);
-      
-      console.log('✅ Notification de test envoyée (native avec actions)');
     }
-    
+
   } catch (error) {
     console.error('❌ Erreur envoi notification:', error);
   }

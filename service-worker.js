@@ -12,7 +12,7 @@ try {
 }
 */
 
-const CACHE_NAME = 'evolution-cache-v1.0.1';
+const CACHE_NAME = 'evolution-cache-v1.2.2';
 const DEFAULT_ICON = '/core/assets/icons/default-192.png';
 
 const urlsToCache = [
@@ -24,8 +24,13 @@ const urlsToCache = [
   '/data/defis.js',
   '/core/style.css',
   '/core/app.js',
-  '/core/notifications.js'
+  '/core/notifications.js',
+  '/assets/pictures/BG_Marbre.webp',
+  '/assets/pictures/BG_Basalte.webp',
+  '/core/assets/fonts/Cinzel-Medium.ttf',
+  '/core/assets/fonts/Lora-Regular.ttf'
 ];
+
 
 
 self.addEventListener('install', (event) => {
@@ -44,6 +49,7 @@ self.addEventListener('install', (event) => {
     await self.skipWaiting();
   })());
 });
+
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
@@ -68,16 +74,40 @@ self.addEventListener('message', (event) => {
     const data = event.data || {};
     if (data.action !== 'SEND_NOTIFICATION') return;
 
-    const { appId, appName, jour, titre, description, isTest, icon, badge, url, tag } = data;
+    const {
+      appId,
+      appName,
+      jour,
+      titre,
+      description,
+      isTest,
+      icon,
+      badge,
+      url,
+      tag
+    } = data;
 
     const notifTitle = isTest
       ? `🎯 ${appName} - Test - Jour ${jour} - ${titre}`
       : `${appName} - Jour ${jour} - ${titre}`;
 
+    // Transforme toujours les chemins reçus en URL absolues.
+    const notificationIcon = new URL(
+      icon || DEFAULT_ICON,
+      self.location.origin
+    ).href;
+
+    const notificationBadge = badge
+      ? new URL(
+          badge,
+          self.location.origin
+        ).href
+      : undefined;
+
     self.registration.showNotification(notifTitle, {
       body: (description || '').substring(0, 240),
-      icon: icon || DEFAULT_ICON,
-      badge: badge || icon || DEFAULT_ICON,
+      icon: notificationIcon,
+      badge: notificationBadge,
       tag: tag || `${appId || 'app'}-jour-${jour}`,
       requireInteraction: true,
       data: { jour: String(jour), url: url || self.location.origin },
@@ -95,36 +125,84 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-  try {
-    const action = event.action;
-    const data = event.notification.data || {};
-    event.notification.close();
+  const action = event.action;
+  const data = event.notification.data || {};
+  const appUrl = data.url || self.location.origin;
 
-    const appUrl = data.url || self.location.origin;
+  console.log('[SW] Clic notification :', {
+    action,
+    jour: data.jour,
+    url: appUrl
+  });
 
-    event.waitUntil((async () => {
-      const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+  event.notification.close();
 
-      if (action === 'mark-done') {
-        list.forEach((client) => {
-          client.postMessage({
-            action: 'MARK_DONE',
-            jour: data.jour
-          });
+  event.waitUntil((async () => {
+    const windowClients = await clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    });
+
+    // ✅ Marquer le défi, sans remettre l’application au premier plan
+    if (action === 'mark-done') {
+      windowClients.forEach((client) => {
+        client.postMessage({
+          action: 'MARK_DONE',
+          jour: data.jour
         });
-      }
+      });
 
-      const matchingClient = list.find((client) => client.url === appUrl);
+      return;
+    }
 
-      if (matchingClient) {
-        await matchingClient.focus();
+    // ⚙️ Ouvrir directement la zone de dépannage / paramètres
+    if (action === 'settings') {
+      const targetClient = windowClients.find((client) => {
+        return client.url === appUrl;
+      });
+
+      if (targetClient) {
+        targetClient.postMessage({
+          action: 'OPEN_NOTIFICATION_SETTINGS'
+        });
+
+        await targetClient.focus();
         return;
       }
 
-      await clients.openWindow(appUrl);
-    })());
+      await clients.openWindow(`${appUrl}#notification-settings`);
+      return;
+    }
 
-  } catch (e) {
-    console.error('[SW] Erreur notificationclick:', e);
-  }
-});
+    // 👁️ Bouton Voir, ou clic sur le corps de la notification
+    if (action === 'view' || action === '') {
+      const targetClient = windowClients.find((client) => {
+        return client.url === appUrl;
+      });
+
+      if (targetClient) {
+        // 1. Ramener d’abord l’application au premier plan
+        const focusedClient = await targetClient.focus();
+
+        // 2. Laisser brièvement le navigateur rendre la page visible
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
+        // 3. Demander ensuite l’affichage du défi et le défilement
+        (focusedClient || targetClient).postMessage({
+          action: 'VIEW_CHALLENGE',
+          jour: data.jour
+        });
+
+        return;
+      }
+
+      await clients.openWindow(`${appUrl}#challenge`);
+      return;
+    }
+
+    // Sécurité : une action inconnue ne valide jamais le défi
+    console.warn('[SW] Action de notification inconnue :', action);
+      })().catch((error) => {
+        console.error('[SW] Erreur notificationclick:', error);
+      }));
+    });
